@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Adaptedl</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{
+  --encre:#22303C; --ardoise:#E4EBEF; --craie:#FFFFFF; --trait:#C3D2DA;
+  --action:#1F7A8C; --action-fonce:#155E6D;
+  --etiquette:#FFE7A3; --etiquette-bord:#E0B85A;
+  --juste:#3E8E5A; --pose:#CDE8EE; --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--ardoise);color:var(--encre);
+  font-family:"Trebuchet MS",Verdana,-apple-system,system-ui,sans-serif;
+  font-size:17px;line-height:1.5;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer}
+.ecran{display:none;min-height:100%;flex-direction:column}
+.ecran.actif{display:flex}
+.masque{display:none !important}
+:focus-visible{outline:3px solid var(--action);outline-offset:2px}
+.btn{border:none;border-radius:var(--r);background:var(--action);color:#fff;
+  padding:13px 20px;font-weight:bold;font-size:17px;box-shadow:0 2px 0 var(--action-fonce)}
+.btn:active{transform:translateY(2px);box-shadow:none}
+.btn.secondaire{background:var(--craie);color:var(--encre);border:2px solid var(--trait);box-shadow:none}
+.btn.discret{background:none;border:none;box-shadow:none;color:var(--action);text-decoration:underline;padding:8px}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.grand{width:100%;padding:17px;font-size:19px}
+.colonne-page{max-width:720px;margin:0 auto;padding:24px 20px 40px;width:100%}
+.titre-appli{font-size:32px;margin:6px 0 4px;letter-spacing:-.5px}
+.sous-titre{margin:0 0 22px;color:#5B707D}
+.carte{background:var(--craie);border-radius:18px;padding:18px;margin-bottom:16px;border:1px solid var(--trait)}
+.carte h2{font-size:18px;margin:0 0 10px}
+.choix{display:grid;gap:10px}
+input[type=text]{width:100%;padding:12px;border:2px solid var(--trait);border-radius:10px;font:inherit;background:#fff}
+.champ{display:block;margin-bottom:4px}
+.champ span{display:block;font-size:14px;color:#5B707D;margin-bottom:4px}
+textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);border-radius:12px;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;line-height:1.7;resize:vertical;background:#fff;color:inherit}
+.apercu-page{width:100%;border-radius:10px;border:1px solid var(--trait);margin-top:12px;display:block}
+.outils{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.jauge{height:10px;background:var(--craie);border-radius:6px;overflow:hidden;margin:20px 0;border:1px solid var(--trait)}
+.jauge i{display:block;height:100%;background:var(--action);width:0;transition:width .3s}
+.centre{margin:auto;text-align:center;padding:30px;max-width:520px}
+.erreur{background:#FBE6E2;border:1px solid #C25A4A;border-radius:12px;padding:14px;margin-top:14px;font-size:15px}
+.fiche{border-left:4px solid var(--action);padding:2px 0 2px 14px;margin:14px 0}
+.fiche.hs{border-color:#C9A227;opacity:.75}
+.fiche b{display:block;margin-bottom:4px}
+.fiche p{margin:2px 0;font-size:16px}
+.fiche .t{display:inline-block;min-width:64px;border-bottom:2px solid var(--action)}
+.fiche small{color:#5B707D}
+.memo{font-size:15px;color:#465A66;background:#F2F7F9;border-radius:12px;padding:14px;line-height:1.9}
+.memo code{background:#fff;border:1px solid var(--trait);border-radius:6px;padding:1px 6px;font-size:14px}
+/* --- exercice --- */
+.entete{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--craie);border-bottom:1px solid var(--trait)}
+.points{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.point{width:11px;height:11px;border-radius:50%;background:var(--trait)}
+.point.fait{background:var(--juste)}
+.point.actuel{background:var(--action);transform:scale(1.35)}
+.consigne{padding:16px 20px;background:var(--craie);display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--trait)}
+.consigne .texte{flex:1;font-size:20px}
+.hp{flex:0 0 auto;width:52px;height:52px;border-radius:50%;border:none;background:var(--action);
+  color:#fff;font-size:24px;display:grid;place-items:center;box-shadow:0 2px 0 var(--action-fonce)}
+.hp:active{transform:translateY(2px);box-shadow:none}
+.hp.parle{animation:pulse 1s infinite}
+@keyframes pulse{50%{background:var(--action-fonce)}}
+.corps{flex:1;overflow:auto;padding:20px;-webkit-overflow-scrolling:touch}
+.travail{max-width:720px;margin:0 auto}
+.item{background:var(--craie);border:1px solid var(--trait);border-radius:var(--r);
+  padding:14px 18px;margin-bottom:12px;font-size:21px;line-height:2.1}
+.mot{padding:2px 3px;border-radius:5px}
+.mot:active{background:var(--pose)}
+.mot.marquable{border-bottom:2px solid transparent}
+.mot.marque{background:#FFF1C4;border-bottom:3px solid #C9A227;font-weight:bold}
+.cible{font-size:15px;color:#5B707D;text-align:center;margin:0 0 12px}
+.trou{display:inline-block;min-width:112px;height:44px;vertical-align:middle;
+  border-bottom:3px dashed var(--action);border-radius:6px 6px 0 0;background:#F2F8FA;
+  margin:0 4px;text-align:center;line-height:44px}
+.trou.survol{background:var(--pose);border-bottom-style:solid}
+.trou.rempli{border-bottom-style:solid;background:transparent}
+.colonnes{display:flex;gap:12px;flex-wrap:wrap}
+.colonne{flex:1 1 170px;background:var(--craie);border:1px solid var(--trait);border-radius:var(--r);padding:12px}
+.colonne h3{margin:0 0 10px;font-size:17px;text-align:center;padding-bottom:8px;border-bottom:2px solid var(--trait)}
+.colonne .zone{min-height:110px;display:flex;flex-direction:column;gap:8px;align-items:center;border-radius:10px;padding:4px}
+.colonne .zone.survol{background:var(--pose)}
+.etq{display:inline-block;background:var(--etiquette);border:2px solid var(--etiquette-bord);
+  border-radius:9px;padding:8px 14px;font-size:20px;line-height:1.2;font-weight:bold;
+  box-shadow:0 2px 3px rgba(34,48,60,.18);touch-action:none;user-select:none;-webkit-user-select:none}
+.etq.choisie{outline:4px solid var(--action);outline-offset:2px}
+.etq.utilisee{visibility:hidden}
+.etq.posee{box-shadow:none;margin:0;vertical-align:middle}
+.etq.fantome{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-50%) rotate(-3deg) scale(1.06);box-shadow:0 8px 18px rgba(34,48,60,.3)}
+.plateau{background:var(--craie);border-top:1px solid var(--trait);padding:14px 16px;
+  display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+.plateau .vide{color:#8CA0AC;font-size:15px}
+.pied{display:flex;gap:10px;justify-content:center;padding:12px 16px;background:var(--craie);border-top:1px solid var(--trait)}
+</style>
+</head>
+<body>
+
+<!-- ===================== ACCUEIL ===================== -->
+<section id="ecran-accueil" class="ecran actif">
+  <div class="colonne-page">
+    <h1 class="titre-appli">Adaptedl</h1>
+    <p class="sous-titre">Photographie une page de manuel. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+
+    <div class="carte">
+      <h2>La page</h2>
+      <div class="choix">
+        <button class="btn" id="b-photo">Prendre une photo</button>
+        <button class="btn secondaire" id="b-image">Choisir une image</button>
+        <button class="btn secondaire" id="b-pdf">Ouvrir un PDF</button>
+      </div>
+      <input type="file" id="f-photo" accept="image/*" capture="environment" class="masque">
+      <input type="file" id="f-image" accept="image/*" class="masque">
+      <input type="file" id="f-pdf" accept="application/pdf" class="masque">
+      <img id="apercu" class="apercu-page masque" alt="Page choisie">
+      <div class="outils masque" id="outils-page">
+        <button class="btn secondaire" id="b-pivoter">Pivoter</button>
+        <button class="btn secondaire" id="p-prec">◀ page</button>
+        <span id="p-num" style="align-self:center;color:#5B707D"></span>
+        <button class="btn secondaire" id="p-suiv">page ▶</button>
+      </div>
+    </div>
+
+    <div class="carte">
+      <label class="champ"><span>Prénom de l'élève, imprimé sur la fiche</span>
+        <input type="text" id="prenom" placeholder="Prénom" autocomplete="off"></label>
+    </div>
+
+    <button class="btn grand" id="b-analyser" disabled>Analyser sur l'appareil</button>
+    <button class="btn grand secondaire" id="b-analyser-ia" style="margin-top:10px" disabled>Analyser avec l'IA</button>
+    <p id="etat-ia" style="font-size:14px;color:#5B707D;text-align:center;margin:8px 0 0"></p>
+    <div style="text-align:center;margin-top:14px">
+      <button class="btn discret" id="b-vers-atelier">Écrire les exercices à la main</button>
+    </div>
+    <div id="err-accueil" class="erreur masque"></div>
+  </div>
+</section>
+
+<!-- ===================== ANALYSE ===================== -->
+<section id="ecran-analyse" class="ecran">
+  <div class="centre">
+    <h2 id="a-titre">Lecture de la page…</h2>
+    <div class="jauge"><i id="jauge"></i></div>
+    <p id="a-detail" style="color:#5B707D">Le premier passage est le plus long : l'iPad charge son moteur de lecture.</p>
+    <div id="err-analyse" class="erreur masque"></div>
+    <button class="btn secondaire masque" id="b-retour-analyse" style="margin-top:16px">Revenir</button>
+  </div>
+</section>
+
+<!-- ===================== RÉSULTAT ===================== -->
+<section id="ecran-resultat" class="ecran">
+  <div class="colonne-page">
+    <h2 id="r-titre">Exercices reconnus</h2>
+    <p id="r-source" class="cible" style="text-align:left"></p>
+    <div id="r-liste"></div>
+    <button class="btn grand" id="b-commencer">Donner l'iPad à l'élève</button>
+    <div class="outils" style="justify-content:center">
+      <button class="btn discret" id="b-corriger">Corriger ce qui a été lu</button>
+      <button class="btn discret" id="b-refaire-photo">Reprendre la photo</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ATELIER ===================== -->
+<section id="ecran-atelier" class="ecran">
+  <div class="colonne-page">
+    <h2>Atelier</h2>
+    <p class="sous-titre">À n'ouvrir que si la lecture automatique s'est trompée.</p>
+    <div class="carte">
+      <label class="champ"><span>Titre de la fiche</span><input type="text" id="titre" autocomplete="off"></label>
+      <textarea id="source" spellcheck="false"></textarea>
+      <div class="outils">
+        <button class="btn secondaire" id="b-exemple">Exemple</button>
+        <button class="btn secondaire" id="b-ouvrir">Ouvrir une fiche</button>
+        <button class="btn secondaire" id="b-enregistrer">Enregistrer</button>
+        <input type="file" id="f-fiche" accept=".json,application/json" class="masque">
+      </div>
+    </div>
+    <div class="carte"><h2>Syntaxe</h2><div class="memo">
+      Une ligne vide sépare deux exercices. Première ligne : la <b>consigne</b>.<br>
+      <code>[réponse]</code> crée un trou et son étiquette. <code>+ mot, mot</code> ajoute des intrus.<br>
+      <code>* phrase</code> : consigne simplifiée, lue à voix haute.<br>
+      <code>&gt; Colonne : mot, mot</code> : exercice de classement.<br>
+      <code>= cible</code> : exercice à souligner, l'élève touche les mots.
+    </div></div>
+    <div class="carte"><h2>Aperçu</h2><div id="apercu-atelier"></div></div>
+    <button class="btn grand" id="b-commencer2" disabled>Donner l'iPad à l'élève</button>
+  </div>
+</section>
+
+<!-- ===================== EXERCICE ===================== -->
+<section id="ecran-exo" class="ecran">
+  <div class="entete">
+    <div class="points" id="points"></div>
+    <button class="btn discret" id="b-quitter">Arrêter</button>
+  </div>
+  <div class="consigne">
+    <button class="hp" id="b-consigne" aria-label="Écouter la consigne">🔊</button>
+    <div class="texte" id="consigne-texte"></div>
+  </div>
+  <div class="corps"><div class="travail" id="travail"></div></div>
+  <div class="plateau" id="plateau"></div>
+  <div class="pied">
+    <button class="btn secondaire" id="b-effacer">Tout enlever</button>
+    <button class="btn" id="b-suivant">J'ai fini</button>
+  </div>
+</section>
+
+<!-- ===================== FIN ===================== -->
+<section id="ecran-fin" class="ecran">
+  <div class="centre">
+    <h2>Bravo, c'est terminé.</h2>
+    <p id="fin-detail" style="color:#5B707D"></p>
+    <label id="bloc-correction" class="masque" style="display:flex;gap:10px;align-items:center;justify-content:center;margin:18px 0">
+      <input type="checkbox" id="opt-correction" style="width:24px;height:24px;accent-color:var(--action)">
+      <span style="font-size:16px">Signaler les réponses justes</span>
+    </label>
+    <div class="choix">
+      <button class="btn" id="b-pdf-export">Créer la fiche PDF</button>
+      <button class="btn secondaire" id="b-refaire">Refaire les exercices</button>
+      <button class="btn secondaire" id="b-accueil">Nouvelle page</button>
+    </div>
+    <div id="err-fin" class="erreur masque"></div>
+  </div>
+</section>
+
+<script src="https://js.puter.com/v2/" onerror="window.__sansIA=true"></script>
+<script src="./vendor/tesseract.min.js"></script>
+<script src="./vendor/pdf.min.js"></script>
+<script src="./analyse.js"></script>
+<script>
+const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
+const S = {exercices:[], ignores:[], index:0, titre:'Exercices', canvas:null, rotation:0,
+           pdfDoc:null, pdfPage:1, source:null};
+function ecran(id){ $$('.ecran').forEach(e=>e.classList.toggle('actif', e.id===id)); window.scrollTo(0,0); }
+function echapper(t){ return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function erreur(sel,msg){ const e=$(sel); if(!msg){e.classList.add('masque');return;} e.textContent=msg; e.classList.remove('masque'); }
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdf.worker.min.js';
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+/* ---------------- voix (moteur du système, hors ligne) ---------------- */
+const Voix = {
+  voix:null,
+  init(){ const c=()=>{ const v=speechSynthesis.getVoices().filter(x=>x.lang&&x.lang.toLowerCase().startsWith('fr'));
+      this.voix = v.find(x=>/Audrey|Thomas|Amelie|Amélie|Marie/i.test(x.name))||v[0]||null; };
+    c(); speechSynthesis.onvoiceschanged=c; },
+  dire(t, vitesse=0.9, bouton=null){
+    if(!t) return; speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; u.rate=vitesse;
+    if(this.voix) u.voice=this.voix;
+    if(bouton){ bouton.classList.add('parle'); u.onend=u.onerror=()=>bouton.classList.remove('parle'); }
+    speechSynthesis.speak(u);
+  },
+  stop(){ speechSynthesis.cancel(); $$('.parle').forEach(b=>b.classList.remove('parle')); }
+};
+Voix.init();
+
+/* ================= IMPORT DE LA PAGE ================= */
+$('#b-photo').onclick=()=>$('#f-photo').click();
+$('#b-image').onclick=()=>$('#f-image').click();
+$('#b-pdf').onclick  =()=>$('#f-pdf').click();
+$('#f-photo').onchange=e=>chargerImage(e.target.files[0]);
+$('#f-image').onchange=e=>chargerImage(e.target.files[0]);
+$('#f-pdf').onchange  =e=>chargerPdf(e.target.files[0]);
+$('#b-pivoter').onclick=()=>{ S.rotation=(S.rotation+90)%360; appliquer(); };
+$('#p-prec').onclick=()=>{ if(S.pdfDoc&&S.pdfPage>1){S.pdfPage--; rendrePdf();} };
+$('#p-suiv').onclick=()=>{ if(S.pdfDoc&&S.pdfPage<S.pdfDoc.numPages){S.pdfPage++; rendrePdf();} };
+
+function afficher(){
+  $('#apercu').src = S.canvas.toDataURL('image/jpeg',0.7);
+  $('#apercu').classList.remove('masque');
+  $('#outils-page').classList.remove('masque');
+  $$('#p-prec,#p-suiv,#p-num').forEach(n=>n.classList.toggle('masque', !S.pdfDoc || S.pdfDoc.numPages<2));
+  $('#b-analyser').disabled=false; erreur('#err-accueil',''); etatIA();
+}
+function appliquer(){
+  const src=S.source, r=S.rotation, pivot=(r===90||r===270);
+  const c=document.createElement('canvas');
+  c.width = pivot ? src.height : src.width;
+  c.height= pivot ? src.width  : src.height;
+  const x=c.getContext('2d');
+  x.translate(c.width/2,c.height/2); x.rotate(r*Math.PI/180);
+  x.drawImage(src,-src.width/2,-src.height/2);
+  S.canvas=c; afficher();
+}
+function versCanvas(img, maxi){
+  const e=Math.min(1, maxi/Math.max(img.width,img.height));
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.width*e); c.height=Math.round(img.height*e);
+  const x=c.getContext('2d'); x.drawImage(img,0,0,c.width,c.height);
+  // niveaux de gris + contraste : l'OCR y gagne beaucoup sur une photo
+  const d=x.getImageData(0,0,c.width,c.height), p=d.data;
+  for(let i=0;i<p.length;i+=4){
+    let g=(p[i]*0.299+p[i+1]*0.587+p[i+2]*0.114);
+    g = g<110 ? g*0.6 : g>170 ? Math.min(255,g*1.25) : g;
+    p[i]=p[i+1]=p[i+2]=g;
+  }
+  x.putImageData(d,0,0);
+  return c;
+}
+async function chargerImage(f){
+  if(!f) return; S.pdfDoc=null; S.rotation=0;
+  try{
+    const url=await new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ko;r.readAsDataURL(f);});
+    const img=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=url;});
+    S.source=versCanvas(img, 2000); appliquer();
+  }catch(e){ erreur('#err-accueil',"Cette image n'a pas pu être ouverte."); }
+}
+async function chargerPdf(f){
+  if(!f) return; S.rotation=0;
+  try{
+    S.pdfDoc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+    S.pdfPage=1; await rendrePdf();
+  }catch(e){ erreur('#err-accueil',"Ce PDF n'a pas pu être ouvert. Essaie une photo de la page."); }
+}
+async function rendrePdf(){
+  const page=await S.pdfDoc.getPage(S.pdfPage);
+  const base=page.getViewport({scale:1});
+  const vp=page.getViewport({scale:Math.min(3, 2000/Math.max(base.width,base.height))});
+  const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+  const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  await page.render({canvasContext:x, viewport:vp}).promise;
+  S.source=c; $('#p-num').textContent=`${S.pdfPage} / ${S.pdfDoc.numPages}`;
+  appliquer();
+}
+
+/* ================= OCR ================= */
+let moteur=null;
+async function ocr(canvas, avance){
+  if(!moteur){
+    avance(0.05,"Chargement du moteur de lecture…");
+    moteur = await Tesseract.createWorker('fra', 1, {
+      workerPath:'./vendor/worker.min.js',
+      corePath:'./vendor/',
+      langPath:'./vendor',
+      gzip:false,
+      logger:m=>{ if(m.status==='recognizing text') avance(0.25+m.progress*0.7,"Lecture de la page…");
+                  else if(m.progress) avance(0.05+m.progress*0.18, "Chargement du moteur de lecture…"); }
+    });
+  }
+  avance(0.25,"Lecture de la page…");
+  const {data} = await moteur.recognize(canvas);
+  return (data.lines||[]).map(l=>({words:(l.words||[]).map(w=>({
+    text:w.text, conf:w.confidence,
+    x0:w.bbox.x0, y0:w.bbox.y0, x1:w.bbox.x1, y1:w.bbox.y1 }))}));
+}
+
+$('#b-analyser').onclick = async ()=>{
+  ecran('ecran-analyse'); erreur('#err-analyse',''); $('#b-retour-analyse').classList.add('masque');
+  const avance=(p,t)=>{ $('#jauge').style.width=Math.round(p*100)+'%'; if(t) $('#a-titre').textContent=t; };
+  try{
+    const lignes = await ocr(S.canvas, avance);
+    avance(0.98,"Repérage des exercices…");
+    const res = Analyse.analyser(lignes); S.origine='ocr';
+    S.exercices = res.exercices.map(preparer);
+    S.ignores = res.ignores;
+    S.titre = titreDePage(lignes) || 'Exercices';
+    if(!S.exercices.length && !S.ignores.length) throw new Error("Aucun exercice n'a été reconnu. Reprends la photo bien à plat, la page entière dans le cadre, sans ombre.");
+    afficherResultat();
+  }catch(e){
+    erreur('#err-analyse', e.message||String(e));
+    $('#b-retour-analyse').classList.remove('masque');
+  }
+};
+$('#b-retour-analyse').onclick=()=>ecran('ecran-accueil');
+$('#b-refaire-photo').onclick=()=>ecran('ecran-accueil');
+
+function titreDePage(lignes){
+  // la première ligne de la page, si elle est courte et sans point final
+  for(const l of lignes){
+    const t=(l.words||[]).map(w=>w.text).join(' ').trim();
+    if(t.length>3 && t.length<60 && !/[.:]$/.test(t) && !/^\d/.test(t)) return t;
+    if(t) return null;
+  }
+  return null;
+}
+function preparer(ex){ ex.reponses={}; ex.tri={}; ex.marques={}; return ex; }
+
+function afficherResultat(){
+  $('#r-titre').textContent = S.titre;
+  const t = ex => ex.type==='classement' ? 'à classer' : ex.type==='marquage' ? 'à souligner' : 'à compléter';
+  $('#r-liste').innerHTML =
+    S.exercices.map(e=>`<div class="fiche"><b>${echapper(e.numero)}. ${echapper(e.consigne)}</b>
+      ${e.type==='classement'
+        ? `<p>${e.categories.map(c=>echapper(c.nom)).join(' | ')}</p>`
+        : e.items.slice(0,3).map(it=>`<p>${it.segments.map(s=>s.type==='trou'?'<span class="t"></span>':echapper(s.t)).join(' ')}</p>`).join('')}
+      <small>${t(e)} · ${e.etiquettes.length?e.etiquettes.length+' étiquette(s)':'l\'élève touche les mots'}</small></div>`).join('')
+    + S.ignores.map(i=>`<div class="fiche hs"><b>${echapper(i.numero)}. ${echapper(i.consigne).slice(0,90)}</b>
+        <small>écarté : ${echapper(i.raison)}</small></div>`).join('');
+  $('#r-source').textContent = S.origine==='ia'
+    ? "Lu par l'IA : relis les phrases, un modèle peut se tromper d'un mot."
+    : "Lu sur l'appareil, sans réseau.";
+  $('#b-commencer').disabled = !S.exercices.length;
+  ecran('ecran-resultat');
+}
+$('#b-commencer').onclick = ()=>{ S.index=0; ouvrirExercice(); };
+$('#b-vers-atelier').onclick = ()=>{ $('#titre').value=S.titre==='Exercices'?'':S.titre; rafraichir(); ecran('ecran-atelier'); };
+$('#b-corriger').onclick = ()=>{
+  $('#titre').value = S.titre;
+  $('#source').value = Analyse.versSource({exercices:S.exercices});
+  rafraichir(); ecran('ecran-atelier');
+};
+
+/* ================= ATELIER (secours) ================= */
+const EXEMPLE = `1. Complète chaque phrase avec le déterminant qui convient.
+* Choisis le petit mot qui va devant.
+[Le] chat dort sur le canapé.
+[Les] enfants jouent dans la cour.
++ des, ton
+
+2. Souligne les verbes conjugués.
+= les verbes conjugués
+Le vent souffle très fort ce matin.
+Les élèves écoutent la maîtresse.
+
+3. Classe ces mots dans le tableau.
+> Noms : chat, table
+> Verbes : courir, manger`;
+$('#b-exemple').onclick=()=>{ $('#source').value=EXEMPLE; rafraichir(); };
+$('#source').addEventListener('input', rafraichir);
+
+function lireSource(texte){
+  return texte.split(/\n\s*\n/).map(b=>b.trim()).filter(Boolean).map((bloc,i)=>{
+    const lignes=bloc.split('\n').map(l=>l.trim()).filter(Boolean);
+    let consigne=lignes.shift(), numero=String(i+1);
+    const m=consigne.match(/^(\d+)\s*[.)°-]\s*(.+)$/); if(m){numero=m[1];consigne=m[2];}
+    const ex={numero,consigne,consigne_dite:'',type:'trous',items:[],categories:[],etiquettes:[],
+              reutilisable:false,cible:'',reponses:{},tri:{},marques:{}};
+    const intrus=[];
+    for(const l of lignes){
+      if(l.startsWith('+'))      intrus.push(...l.slice(1).split(/[,;]/).map(s=>s.trim()).filter(Boolean));
+      else if(l.startsWith('*')) ex.consigne_dite=l.slice(1).trim();
+      else if(l.startsWith('=')){ ex.type='marquage'; ex.cible=l.slice(1).trim(); }
+      else if(l.startsWith('>')){ ex.type='classement';
+        const p=l.slice(1).split(':');
+        ex.categories.push({nom:(p[0]||'').trim(), reponses:(p.slice(1).join(':')||'').split(/[,;]/).map(s=>s.trim()).filter(Boolean)});
+      }
+      else ex.items.push({segments:decouper(l)});
+    }
+    let rep;
+    if(ex.type==='classement'){ ex.items=[]; ex.categories.forEach((c,k)=>c.id='c'+k); rep=ex.categories.flatMap(c=>c.reponses); }
+    else if(ex.type==='marquage'){ ex.items.forEach(it=>it.segments=it.segments.filter(s=>s.type!=='trou')); rep=[]; }
+    else rep=ex.items.flatMap(it=>it.segments.filter(s=>s.type==='trou').map(s=>s.reponse));
+    ex.avecCle = ex.type!=='marquage' && rep.some(r=>r);
+    ex.etiquettes = melanger([...rep,...intrus]).filter(Boolean).map((t,k)=>({id:'e'+k,texte:t}));
+    let n=0; ex.items.forEach(it=>it.segments.forEach(s=>{ if(s.type==='trou') s.id='t'+(n++); }));
+    ex.nbReponses = ex.type==='marquage'?0:(ex.type==='classement'?ex.etiquettes.length:n);
+    ex.valide = ex.type==='marquage' ? ex.items.length>0
+              : ex.type==='classement' ? (ex.categories.length>0 && ex.etiquettes.length>0) : n>0;
+    return ex;
+  });
+}
+function decouper(l){
+  const segs=[]; const re=/\[([^\]]*)\]/g; let d=0,m;
+  while((m=re.exec(l))!==null){
+    if(m.index>d) segs.push({type:'texte',t:l.slice(d,m.index).trim()});
+    segs.push({type:'trou',reponse:m[1].trim()}); d=re.lastIndex;
+  }
+  if(d<l.length){ const r=l.slice(d).trim(); if(r) segs.push({type:'texte',t:r}); }
+  return segs;
+}
+function melanger(a){const t=[...a];for(let i=t.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[t[i],t[j]]=[t[j],t[i]];}return t;}
+function rafraichir(){
+  const exos=lireSource($('#source').value), bons=exos.filter(e=>e.valide);
+  $('#apercu-atelier').innerHTML = exos.length ? exos.map(e=>`<div class="fiche${e.valide?'':' hs'}">
+      <b>${echapper(e.numero)}. ${echapper(e.consigne)}</b>
+      ${e.type==='classement' ? e.categories.map(c=>`<p>${echapper(c.nom)} : ${echapper(c.reponses.join(', '))}</p>`).join('')
+        : e.items.map(it=>`<p>${it.segments.map(s=>s.type==='trou'?`<span class="t">${echapper(s.reponse)}</span>`:echapper(s.t)).join(' ')}</p>`).join('')}
+      <small>${e.valide?`${e.nbReponses||'—'} réponse(s)`:'incomplet : cet exercice sera ignoré'}</small></div>`).join('')
+    : '<p style="color:#8CA0AC">Vide.</p>';
+  $('#b-commencer2').disabled = !bons.length;
+  S.atelier = bons;
+}
+$('#b-commencer2').onclick=()=>{
+  S.exercices=S.atelier.map(preparer); S.ignores=[];
+  S.titre=$('#titre').value.trim()||'Exercices'; S.index=0; ouvrirExercice();
+};
+function telecharger(nom, blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+}
+$('#b-enregistrer').onclick=()=>{
+  const d={app:'adaptedl',version:1,titre:$('#titre').value.trim(),texte:$('#source').value};
+  telecharger(((d.titre||'fiche').replace(/[^\w À-ÿ-]/g,'').trim().replace(/\s+/g,'-').toLowerCase()||'fiche')+'.json',
+    new Blob([JSON.stringify(d,null,1)],{type:'application/json'}));
+};
+$('#b-ouvrir').onclick=()=>$('#f-fiche').click();
+$('#f-fiche').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{ const d=JSON.parse(await f.text()); $('#titre').value=d.titre||''; $('#source').value=d.texte||''; rafraichir(); }
+  catch(err){ alert("Ce fichier n'est pas une fiche Adaptedl."); }
+  e.target.value='';
+};
+
+
+/* ================= ANALYSE PAR IA (Puter, sans clé) ================= */
+const DEMANDE_IA = `Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
+
+RÈGLE ABSOLUE : ne modifie jamais le contenu. Consignes et phrases sont recopiées MOT POUR MOT depuis l'image, même orthographe, même ponctuation, même ordre. N'invente rien, ne simplifie rien, n'ajoute aucune phrase absente de la page.
+
+Ton seul travail : changer la façon de répondre. Là où l'élève devrait écrire, tu mets un trou, et la réponse attendue devient une étiquette à glisser.
+
+Trois formats :
+- "trous" : la phrase est découpée en segments {"type":"texte","t":"..."} et {"type":"trou","reponse":"le mot attendu"}.
+- "classement" : quand la consigne demande de ranger, trier ou classer.
+- "marquage" : quand la consigne dit de souligner, entourer, relever ou repérer. L'élève touchera les mots ; mets alors "cible" (ce qu'il faut repérer) et des items sans trou.
+
+Écarte, en les listant dans "ignores" avec un motif court, les exercices de production d'écrit (recopier, transformer, rédiger, décrire) : ils ne se manipulent pas avec des étiquettes.
+
+Réponds UNIQUEMENT par ce JSON, sans texte autour, sans balises de code :
+{"titre":"titre de la page",
+ "exercices":[{"numero":"1","consigne":"consigne mot pour mot","consigne_dite":"la même consigne en une phrase très simple à lire à voix haute","type":"trous","cible":"","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}],"categories":[],"etiquettes":["dort","mange"]}],
+ "ignores":[{"numero":"4","consigne":"...","raison":"production d'écrit"}]}
+
+"etiquettes" contient toutes les réponses attendues, mélangées. Si la page fournit déjà une liste de mots, reprends-la telle quelle ; sinon ajoute au plus deux intrus plausibles pris dans le vocabulaire de la page. Pour un classement, "categories" vaut [{"nom":"Noms","reponses":["chat"]}].`;
+
+function texteReponse(r){
+  if(typeof r==='string') return r;
+  if(r && r.message){
+    const c=r.message.content;
+    if(typeof c==='string') return c;
+    if(Array.isArray(c)) return c.filter(b=>b.type==='text'||b.text).map(b=>b.text||'').join('\n');
+  }
+  if(r && r.text) return r.text;
+  return JSON.stringify(r);
+}
+function extraireJson(t){
+  const propre=String(t).replace(/```json|```/g,'').trim();
+  const d=propre.indexOf('{'), f=propre.lastIndexOf('}');
+  if(d<0||f<0) throw new Error("réponse illisible");
+  return JSON.parse(propre.slice(d,f+1));
+}
+async function demanderIA(dataUrl){
+  const essais=[
+    ()=>puter.ai.chat(DEMANDE_IA, dataUrl, false, {model:'claude-sonnet-5'}),
+    ()=>puter.ai.chat(DEMANDE_IA, dataUrl),
+    ()=>puter.ai.chat([{role:'user',content:[{type:'file',puter_path:null,data:dataUrl},{type:'text',text:DEMANDE_IA}]}])
+  ];
+  let derniere=null;
+  for(const essai of essais){
+    try{ return extraireJson(texteReponse(await essai())); }
+    catch(e){ derniere=e; }
+  }
+  throw derniere||new Error("le service n'a pas répondu");
+}
+function normaliserIA(brut,i){
+  const o={numero:String(brut.numero||i+1), consigne:String(brut.consigne||'').trim(),
+    consigne_dite:String(brut.consigne_dite||''),
+    type:['trous','classement','marquage'].includes(brut.type)?brut.type:'trous',
+    items:[], categories:[], etiquettes:[], reutilisable:false, cible:String(brut.cible||''),
+    avecCle:false, reponses:{}, tri:{}, marques:{}, nbReponses:0};
+  (brut.items||[]).forEach(it=>{
+    const segs=(it.segments||[]).map(s=> s.type==='trou'
+      ? {type:'trou', reponse:String(s.reponse||'')}
+      : {type:'texte', t:String(s.t||'')}).filter(s=>s.type==='trou'||s.t.trim());
+    if(segs.length) o.items.push({segments:segs});
+  });
+  (brut.categories||[]).forEach((c,k)=>o.categories.push(
+    {id:'c'+k, nom:String(c.nom||''), reponses:(c.reponses||[]).map(String)}));
+  let n=0;
+  o.items.forEach(it=>it.segments.forEach(s=>{ if(s.type==='trou') s.id='t'+(n++); }));
+  if(o.type==='marquage'){
+    o.items.forEach(it=>it.segments=it.segments.filter(s=>s.type!=='trou'));
+    o.valide=o.items.length>0;
+  } else if(o.type==='classement'){
+    const mots=(brut.etiquettes&&brut.etiquettes.length)?brut.etiquettes:o.categories.flatMap(c=>c.reponses);
+    o.etiquettes=melanger(mots.map(String).filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.nbReponses=o.etiquettes.length;
+    o.avecCle=o.categories.some(c=>c.reponses.length>0);
+    o.valide=o.categories.length>0 && o.etiquettes.length>0;
+  } else {
+    const rep=o.items.flatMap(it=>it.segments.filter(s=>s.type==='trou').map(s=>s.reponse));
+    const etq=(brut.etiquettes&&brut.etiquettes.length)?brut.etiquettes.map(String):rep;
+    o.etiquettes=melanger(etq.filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.nbReponses=n;
+    o.avecCle=rep.some(r=>r);
+    o.valide=n>0;
+  }
+  return o;
+}
+function etatIA(){
+  const dispo = !window.__sansIA && typeof puter!=='undefined' && puter.ai && navigator.onLine;
+  $('#b-analyser-ia').disabled = !dispo || !S.canvas;
+  $('#etat-ia').textContent = dispo
+    ? "L'IA lit les colonnes et les numéros dessinés, mais demande du réseau. Vérifie toujours l'aperçu avant de passer l'iPad."
+    : "Analyse par IA indisponible : pas de réseau.";
+}
+window.addEventListener('online', etatIA);
+window.addEventListener('offline', etatIA);
+
+$('#b-analyser-ia').onclick = async ()=>{
+  ecran('ecran-analyse'); erreur('#err-analyse',''); $('#b-retour-analyse').classList.add('masque');
+  $('#a-titre').textContent="L'IA lit la page…";
+  $('#a-detail').textContent="Cela prend une dizaine de secondes.";
+  $('#jauge').style.width='35%';
+  try{
+    const brut=await demanderIA(S.canvas.toDataURL('image/jpeg',0.85));
+    $('#jauge').style.width='95%';
+    const exos=(brut.exercices||[]).map(normaliserIA).filter(e=>e.valide && e.consigne);
+    if(!exos.length) throw new Error("Aucun exercice exploitable n'a été trouvé sur cette page.");
+    S.exercices=exos;
+    S.ignores=(brut.ignores||[]).map(i=>({numero:String(i.numero||''),consigne:String(i.consigne||''),raison:String(i.raison||'')})).filter(i=>i.consigne);
+    S.titre=String(brut.titre||'Exercices');
+    S.origine='ia';
+    afficherResultat();
+  }catch(e){
+    erreur('#err-analyse', "L'analyse par IA a échoué : "+(e.message||e)+". Tu peux analyser sur l'appareil, sans réseau.");
+    $('#b-retour-analyse').classList.remove('masque');
+  }
+};
+
+/* ================= LECTEUR ================= */
+const ex = ()=>S.exercices[S.index];
+function mots(texte, marquable, idItem){
+  let k=-1;
+  return String(texte).split(/(\s+)/).map(p=>{
+    if(/^\s*$/.test(p)) return p;
+    k++;
+    const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
+    const cle = idItem!=null ? `${idItem}-${k}` : '';
+    const marque = marquable && ex().marques[cle] ? ' marque':'';
+    return `<span class="mot${marquable?' marquable':''}${marque}" data-mot="${echapper(nu)}"
+             ${marquable?`data-marque="${cle}"`:''}>${echapper(p)}</span>`;
+  }).join('');
+}
+function ouvrirExercice(){
+  const e=ex();
+  $('#points').innerHTML=S.exercices.map((_,i)=>
+    `<span class="point ${i<S.index?'fait':''} ${i===S.index?'actuel':''}"></span>`).join('');
+  $('#consigne-texte').innerHTML=mots(e.consigne);
+  if(e.type==='classement'){
+    $('#travail').innerHTML=`<div class="colonnes">`+e.categories.map(c=>
+      `<div class="colonne"><h3>${mots(c.nom)}</h3><div class="zone" data-cat="${c.id}"></div></div>`).join('')+`</div>`;
+  } else if(e.type==='marquage'){
+    $('#travail').innerHTML=`<p class="cible">Touche ${echapper(e.cible||'les mots')}.</p>`+
+      e.items.map((it,i)=>`<div class="item">${mots(it.segments.map(s=>s.t).join(' '),true,i)}</div>`).join('');
+  } else {
+    $('#travail').innerHTML=e.items.map(it=>`<div class="item">`+it.segments.map(s=>
+      s.type==='trou'?`<span class="trou" data-trou="${s.id}"></span>`:mots(s.t)).join(' ')+`</div>`).join('');
+  }
+  dessiner(); ecran('ecran-exo');
+  Voix.dire(e.consigne_dite||e.consigne, 0.85, $('#b-consigne'));
+}
+function etiquetteDe(e,id){ const x=e.etiquettes.find(t=>t.id===id); return x?x.texte:''; }
+function dessiner(){
+  const e=ex();
+  if(e.type==='marquage'){
+    $('#plateau').innerHTML=`<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`;
+    $('#b-suivant').disabled=false;
+  } else {
+    const placees=new Set([...Object.values(e.reponses),...Object.keys(e.tri)]);
+    const libres=e.reutilisable ? e.etiquettes : e.etiquettes.filter(t=>!placees.has(t.id));
+    $('#plateau').innerHTML = libres.length
+      ? libres.map(t=>`<span class="etq" data-etq="${t.id}">${echapper(t.texte)}</span>`).join('')
+      : `<span class="vide">Toutes les étiquettes sont posées. Touche une étiquette posée pour la reprendre.</span>`;
+    $$('.trou').forEach(t=>{
+      const id=e.reponses[t.dataset.trou];
+      t.classList.toggle('rempli',!!id);
+      t.innerHTML=id?`<span class="etq posee" data-etq="${id}" data-trou="${t.dataset.trou}">${echapper(etiquetteDe(e,id))}</span>`:'';
+    });
+    $$('.zone').forEach(z=>{
+      z.innerHTML=e.etiquettes.filter(t=>e.tri[t.id]===z.dataset.cat)
+        .map(t=>`<span class="etq posee" data-etq="${t.id}">${echapper(t.texte)}</span>`).join('');
+    });
+    const faits=e.type==='classement'?Object.keys(e.tri).length:Object.keys(e.reponses).length;
+    $('#b-suivant').disabled = faits===0;
+  }
+  $('#b-suivant').textContent = (S.index===S.exercices.length-1)?'Terminer':"J'ai fini";
+}
+
+let choisie=null, fantome=null, depart=null, glisse=false;
+function poser(id, cible){
+  const e=ex();
+  if(cible.classList.contains('trou')){
+    const t=cible.dataset.trou;
+    if(!e.reutilisable) retirer(id);
+    e.reponses[t]=id;
+  } else if(cible.classList.contains('zone')){ retirer(id); e.tri[id]=cible.dataset.cat; }
+  choisie=null; dessiner();
+}
+function retirer(id){ const e=ex();
+  for(const t in e.reponses) if(e.reponses[t]===id) delete e.reponses[t];
+  delete e.tri[id];
+}
+function cibleSous(x,y){ const n=document.elementFromPoint(x,y); return n?n.closest('.trou,.zone'):null; }
+
+document.addEventListener('pointerdown', ev=>{
+  const etq=ev.target.closest('.etq');
+  if(!etq||!$('#ecran-exo').classList.contains('actif')) return;
+  depart={x:ev.clientX,y:ev.clientY,id:etq.dataset.etq,trou:etq.dataset.trou,node:etq}; glisse=false;
+});
+document.addEventListener('pointermove', ev=>{
+  if(!depart) return;
+  if(!glisse && Math.hypot(ev.clientX-depart.x,ev.clientY-depart.y)>10){
+    glisse=true; fantome=depart.node.cloneNode(true); fantome.className='etq fantome';
+    document.body.appendChild(fantome); if(!ex().reutilisable) depart.node.classList.add('utilisee');
+  }
+  if(glisse){
+    ev.preventDefault();
+    fantome.style.left=ev.clientX+'px'; fantome.style.top=ev.clientY+'px';
+    const c=cibleSous(ev.clientX,ev.clientY);
+    $$('.survol').forEach(n=>n.classList.remove('survol')); if(c) c.classList.add('survol');
+  }
+},{passive:false});
+document.addEventListener('pointerup', ev=>{
+  if(!depart) return;
+  const {id,node,trou}=depart;
+  if(glisse){
+    fantome.remove(); fantome=null; $$('.survol').forEach(n=>n.classList.remove('survol'));
+    const c=cibleSous(ev.clientX,ev.clientY);
+    if(c) poser(id,c);
+    else { if(trou) delete ex().reponses[trou]; else retirer(id); dessiner(); }
+  } else {
+    Voix.dire(etiquetteDe(ex(),id),0.8);
+    if(node.classList.contains('posee')){
+      if(trou) delete ex().reponses[trou]; else retirer(id);
+      choisie=id; dessiner();
+      $$('.etq').forEach(n=>n.classList.toggle('choisie',n.dataset.etq===id));
+    } else {
+      choisie=(choisie===id)?null:id;
+      $$('.etq').forEach(n=>n.classList.toggle('choisie',n.dataset.etq===choisie));
+    }
+  }
+  depart=null; glisse=false;
+});
+document.addEventListener('click', ev=>{
+  if(!$('#ecran-exo').classList.contains('actif')) return;
+  const cible=ev.target.closest('.trou,.zone');
+  if(cible&&choisie){ poser(choisie,cible); return; }
+  const mot=ev.target.closest('.mot');
+  if(!mot) return;
+  Voix.dire(mot.dataset.mot,0.8);
+  if(mot.dataset.marque!==undefined && mot.dataset.marque!==''){
+    const e=ex(), c=mot.dataset.marque;
+    if(e.marques[c]) delete e.marques[c]; else e.marques[c]=true;
+    mot.classList.toggle('marque');
+  }
+});
+$('#b-consigne').onclick=()=>{const e=ex(); Voix.dire(e.consigne_dite||e.consigne,0.85,$('#b-consigne'));};
+$('#b-effacer').onclick =()=>{const e=ex(); e.reponses={};e.tri={};e.marques={};choisie=null; ouvrirExercice();};
+$('#b-quitter').onclick =()=>{Voix.stop(); terminer();};
+$('#b-suivant').onclick =()=>{Voix.stop(); if(S.index<S.exercices.length-1){S.index++;ouvrirExercice();} else terminer();};
+$('#b-refaire').onclick =()=>{S.exercices.forEach(e=>{e.reponses={};e.tri={};e.marques={};}); S.index=0; ouvrirExercice();};
+$('#b-accueil').onclick =()=>ecran('ecran-accueil');
+
+const normal=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9']/g,'');
+const egal=(a,b)=>normal(a)===normal(b);
+function terminer(){
+  let faits=0,total=0;
+  S.exercices.forEach(e=>{
+    total+=e.nbReponses||0;
+    faits+= e.type==='classement'?Object.keys(e.tri).length
+          : e.type==='marquage'?0:Object.keys(e.reponses).length;
+  });
+  $('#fin-detail').textContent=`${S.exercices.length} exercice(s), ${faits} réponse(s) sur ${total}.`;
+  $('#bloc-correction').classList.toggle('masque', !S.exercices.some(e=>e.avecCle));
+  ecran('ecran-fin');
+}
+
+/* ================= PDF écrit à la main ================= */
+const MM=2.834645, LARG=210, HAUT=297;
+const mesure=(()=>{const c=document.createElement('canvas').getContext('2d');
+  return (t,taille,gras)=>{c.font=`${gras?'bold ':''}${taille}px Helvetica, Arial, sans-serif`;
+    return c.measureText(t).width/MM*1.02;};})();
+function encoder(s){
+  const T={'œ':'\x9C','Œ':'\x8C','…':'\x85','–':'\x96','—':'\x97','’':'\x92','‘':'\x91','“':'\x93','”':'\x94','€':'\x80','✓':'V','✗':'X'};
+  let o='';
+  for(const ch of String(s)){ const c=T[ch]??ch; o += c.charCodeAt(0)<256?c:'?'; }
+  return o.replace(/[\\()]/g,m=>'\\'+m);
+}
+function Pdf(){
+  const pages=[[]]; let p=0;
+  return {
+    nouvellePage(){ pages.push([]); p=pages.length-1; },
+    texte(t,x,y,taille,gras){ pages[p].push(
+      `BT /F${gras?2:1} ${taille} Tf 1 0 0 1 ${(x*MM).toFixed(2)} ${((HAUT-y)*MM).toFixed(2)} Tm (${encoder(t)}) Tj ET`); },
+    trait(x1,y1,x2,y2,ep){ pages[p].push(
+      `${ep||0.5} w 0.35 G ${(x1*MM).toFixed(2)} ${((HAUT-y1)*MM).toFixed(2)} m ${(x2*MM).toFixed(2)} ${((HAUT-y2)*MM).toFixed(2)} l S`); },
+    octets(){
+      const objs=[], n=pages.length;
+      objs.push(`<</Type/Catalog/Pages 2 0 R>>`);
+      objs.push(`<</Type/Pages/Kids[${pages.map((_,i)=>`${3+i*2} 0 R`).join(' ')}]/Count ${n}>>`);
+      const fp=3+n*2, fg=fp+1;
+      pages.forEach((ops,i)=>{
+        objs.push(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${(LARG*MM).toFixed(2)} ${(HAUT*MM).toFixed(2)}]`
+          +`/Resources<</Font<</F1 ${fp} 0 R/F2 ${fg} 0 R>>>>/Contents ${4+i*2} 0 R>>`);
+        const flux=ops.join('\n');
+        objs.push(`<</Length ${flux.length}>>\nstream\n${flux}\nendstream`);
+      });
+      objs.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>`);
+      objs.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>`);
+      let out='%PDF-1.4\n', off=[];
+      objs.forEach((o,i)=>{ off.push(out.length); out+=`${i+1} 0 obj\n${o}\nendobj\n`; });
+      const xref=out.length;
+      out+=`xref\n0 ${objs.length+1}\n0000000000 65535 f \n`
+        + off.map(o=>String(o).padStart(10,'0')+' 00000 n \n').join('')
+        + `trailer\n<</Size ${objs.length+1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`;
+      return Uint8Array.from(out,c=>c.charCodeAt(0)&0xFF);
+    }
+  };
+}
+$('#b-pdf-export').onclick=()=>{
+  erreur('#err-fin','');
+  try{
+    const marquer=$('#opt-correction').checked && !$('#bloc-correction').classList.contains('masque');
+    for(const taille of [11,10.5,10,9.5,9,8.5,8,7.5,7]){
+      const doc=Pdf();
+      if(composer(doc,taille,marquer)){
+        telecharger((($('#prenom').value.trim()||'fiche').replace(/\s+/g,'-').toLowerCase())+'.pdf',
+          new Blob([doc.octets()],{type:'application/pdf'}));
+        return;
+      }
+    }
+    throw new Error("il y a trop d'exercices pour tenir en deux pages.");
+  }catch(e){ erreur('#err-fin',"La fiche n'a pas pu être créée : "+(e.message||e)); }
+};
+function couper(texte,largeur,taille,gras){
+  const out=[]; let ligne='';
+  for(const m of String(texte).split(/\s+/)){
+    const essai=ligne?ligne+' '+m:m;
+    if(mesure(essai,taille,gras)>largeur&&ligne){ out.push(ligne); ligne=m; } else ligne=essai;
+  }
+  if(ligne) out.push(ligne);
+  return out;
+}
+function composer(doc,taille,marquer){
+  const G=16,D=194,DEBUT=18,FIN=282;
+  const pas=taille*0.352*1.55+1.2;
+  let y=DEBUT, page=1;
+  const place=h=>{ if(y+h<=FIN) return true; if(page===2) return false; doc.nouvellePage(); page=2; y=DEBUT; return true; };
+
+  doc.texte(S.titre,G,y,taille+3,true);
+  const ent=`${$('#prenom').value.trim()}   ${new Date().toLocaleDateString('fr-FR')}`.trim();
+  doc.texte(ent,D-mesure(ent,taille-2,false),y,taille-2,false);
+  y+=2.5; doc.trait(G,y,D,y); y+=pas+1;
+
+  for(const e of S.exercices){
+    if(!place(pas*2)) return false;
+    for(const l of couper(`${e.numero}. ${e.consigne}`,D-G,taille,true)){
+      if(!place(pas)) return false; doc.texte(l,G,y,taille,true); y+=pas;
+    }
+    if(e.type==='classement'){
+      for(const c of e.categories){
+        const dedans=e.etiquettes.filter(t=>e.tri[t.id]===c.id)
+          .map(t=>t.texte+(marquer&&c.reponses&&c.reponses.length?(c.reponses.some(r=>egal(r,t.texte))?' V':' X'):''));
+        for(const l of couper(`${c.nom} : ${dedans.join(', ')||'—'}`,D-G-5,taille,false)){
+          if(!place(pas)) return false; doc.texte(l,G+5,y,taille,false); y+=pas;
+        }
+      }
+      y+=1.5;
+    } else {
+      for(let i=0;i<e.items.length;i++){
+        const it=e.items[i], jetons=[];
+        if(e.type==='marquage'){
+          let k=-1;
+          for(const m of it.segments.map(s=>s.t).join(' ').split(/\s+/)){
+            k++; jetons.push({t:m, gras:!!e.marques[`${i}-${k}`], souligne:!!e.marques[`${i}-${k}`]});
+            jetons.push({t:' ',gras:false});
+          }
+        } else {
+          for(const sg of it.segments){
+            if(sg.type==='trou'){
+              const rep=etiquetteDe(e,e.reponses[sg.id]);
+              const ok=marquer&&rep&&sg.reponse&&egal(rep,sg.reponse);
+              const faux=marquer&&rep&&sg.reponse&&!ok;
+              jetons.push({t:(rep||'..........')+(ok?' V':faux?' X':''),gras:true});
+            } else String(sg.t).split(/(\s+)/).forEach(m=>{ if(m) jetons.push({t:m,gras:false}); });
+            jetons.push({t:' ',gras:false});
+          }
+        }
+        let x=G+5;
+        if(!place(pas)) return false;
+        for(const j of jetons){
+          const l=mesure(j.t,taille,j.gras);
+          if(x+l>D&&j.t.trim()){ if(!place(pas)) return false; y+=pas; x=G+9; }
+          if(x===G+9&&!j.t.trim()) continue;
+          doc.texte(j.t,x,y,taille,j.gras);
+          if(j.souligne) doc.trait(x,y+1.1,x+l,y+1.1,0.7);
+          x+=l;
+        }
+        y+=pas;
+      }
+      y+=2;
+    }
+  }
+  return true;
+}
+</script>
+</body>
+</html>
