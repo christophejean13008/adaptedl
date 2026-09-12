@@ -47,7 +47,10 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 .jauge i{display:block;height:100%;background:var(--action);width:0;transition:width .3s}
 /* --- encadrement manuel --- */
 #zone-cadres{position:relative;display:inline-block;width:100%;touch-action:none;user-select:none;-webkit-user-select:none}
-#zone-cadres img{width:100%;display:block;border-radius:10px;border:1px solid var(--trait)}
+#zone-cadres img{width:100%;display:block;border-radius:10px;border:1px solid var(--trait);
+  pointer-events:none;-webkit-user-drag:none;user-select:none}
+#calque{position:absolute;inset:0;pointer-events:none}
+.cadre .sup{pointer-events:auto}
 .cadre{position:absolute;border:3px solid var(--action);background:rgba(31,122,140,.14);border-radius:6px}
 .cadre .num{position:absolute;top:-2px;left:-2px;background:var(--action);color:#fff;font-size:14px;
   font-weight:bold;padding:1px 8px;border-radius:6px 0 6px 0}
@@ -123,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 9</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 10</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -161,7 +164,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
     <button class="btn secondaire" id="b-retour-cadres" style="margin-bottom:14px">← Revenir</button>
     <h2>Encadre les exercices</h2>
     <p class="sous-titre">Fais glisser ton doigt autour de chaque exercice, dans l'ordre où l'élève les fera. Un cadre serré sur une seule colonne donne la meilleure lecture.</p>
-    <div id="zone-cadres"><img id="img-cadres" alt="Page à encadrer"><div id="calque"></div></div>
+    <div id="zone-cadres"><img id="img-cadres" draggable="false" alt="Page à encadrer"><div id="calque"></div></div>
     <div class="outils">
       <button class="btn secondaire" id="b-annuler-cadre">Annuler le dernier</button>
       <button class="btn secondaire" id="b-vider-cadres">Tout effacer</button>
@@ -874,18 +877,22 @@ function dessinerCadres(){
   zone.addEventListener('pointerdown', ev=>{
     const sup=ev.target.closest('.sup');
     if(sup){ S.cadres.splice(+sup.dataset.sup,1); dessinerCadres(); return; }
-    depart=rel(ev); zone.setPointerCapture(ev.pointerId);
+    ev.preventDefault();   // sans cela, la souris lance le glisser natif de l'image
+    depart=rel(ev);
+    try{ zone.setPointerCapture(ev.pointerId); }catch(e){}
     apercu=document.createElement('div'); apercu.className='cadre trace';
     $('#calque').appendChild(apercu);
   });
-  zone.addEventListener('pointermove', ev=>{
+  const bouger=ev=>{
     if(!depart||!apercu) return;
     ev.preventDefault();
     const p=rel(ev);
     Object.assign(apercu.style,{left:Math.min(depart.x,p.x)*100+'%', top:Math.min(depart.y,p.y)*100+'%',
       width:Math.abs(p.x-depart.x)*100+'%', height:Math.abs(p.y-depart.y)*100+'%'});
-  });
-  zone.addEventListener('pointerup', ev=>{
+  };
+  zone.addEventListener('pointermove', bouger);
+  window.addEventListener('pointermove', bouger);
+  const finir=ev=>{
     if(!depart) return;
     const p=rel(ev);
     const c={x0:Math.min(depart.x,p.x), y0:Math.min(depart.y,p.y),
@@ -893,7 +900,18 @@ function dessinerCadres(){
     depart=null; if(apercu){ apercu.remove(); apercu=null; }
     if(c.x1-c.x0>0.04 && c.y1-c.y0>0.02) S.cadres.push(c);
     dessinerCadres();
+  };
+  // le relâchement est écouté sur la fenêtre : si la capture du pointeur est
+  // perdue (souris sortie de l'image, glisser natif annulé), le cadre se
+  // valide quand même.
+  zone.addEventListener('pointerup', finir);
+  window.addEventListener('pointerup', finir);
+  window.addEventListener('pointercancel', ev=>{
+    if(!depart) return;
+    depart=null; if(apercu){ apercu.remove(); apercu=null; }
+    dessinerCadres();
   });
+  zone.addEventListener('dragstart', ev=>ev.preventDefault());
 })();
 $('#b-lancer-cadres').onclick = ()=>{
   S.origine='cadres';
