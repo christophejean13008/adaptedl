@@ -1,7 +1,7 @@
 /* Adaptedl — mise en cache pour l'usage hors ligne */
-const CACHE = 'adaptedl-v1';
+const CACHE = 'adaptedl-v2';
 const ESSENTIELS = [
-  './', './index.html', './analyse.js', './manifest.webmanifest',
+  './', './index.html', './manifest.webmanifest',
   './vendor/tesseract.min.js', './vendor/worker.min.js',
   './vendor/tesseract-core-simd-lstm.wasm.js', './vendor/tesseract-core-lstm.wasm.js',
   './vendor/fra.traineddata',
