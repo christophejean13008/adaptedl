@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 19</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 20</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -157,7 +157,11 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
       <label class="champ"><span id="lbl-cle">Clé Albert, gardée sur cet appareil</span>
         <textarea id="cle" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
           autocorrect="off" style="min-height:64px;font-size:14px" placeholder="colle ta clé ici"></textarea></label>
-      <button class="btn secondaire" id="b-valider-cle" style="width:100%">Enregistrer la clé</button>
+      <div class="outils">
+        <button class="btn secondaire" id="b-valider-cle" style="flex:1">Enregistrer</button>
+        <button class="btn secondaire" id="b-tester" style="flex:1">Tester le relais</button>
+      </div>
+      <p id="test-relais" style="font-size:14px;color:#5B707D;margin:8px 0 0"></p>
       <p id="etat-cle" style="font-size:14px;color:#5B707D;margin:0"></p>
     </div>
 
@@ -190,7 +194,11 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
       <label class="champ"><span>Colle ta clé ici, elle sera gardée sur l'appareil</span>
         <textarea id="cle2" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
           autocorrect="off" style="min-height:64px;font-size:14px" placeholder="colle ta clé ici"></textarea></label>
-      <button class="btn secondaire" id="b-valider-cle2" style="width:100%">Enregistrer la clé</button>
+      <div class="outils">
+        <button class="btn secondaire" id="b-valider-cle2" style="flex:1">Enregistrer</button>
+        <button class="btn secondaire" id="b-tester2" style="flex:1">Tester le relais</button>
+      </div>
+      <p id="test-relais2" style="font-size:14px;color:#5B707D;margin:8px 0 0"></p>
     </div>
     <button class="btn grand secondaire" id="b-lancer-cadres" style="margin-top:10px" disabled>Lire sur l'appareil, sans réseau</button>
     <p id="aide-cadres" class="cible" style="margin-top:10px"></p>
@@ -958,6 +966,25 @@ function normaliserRelais(v){
   }catch(e){ return ''; }
   return u;
 }
+/* Diagnostic : un simple GET ne déclenche pas de contrôle préalable, donc il
+   distingue « relais absent » de « origine refusée ». */
+async function testerRelais(ou){
+  const cible=$(ou), url=laCle();
+  if(fournisseur()!=='relais'){ cible.textContent="Ce test ne concerne que le relais."; return; }
+  if(!url){ cible.textContent="Enregistre d'abord l'adresse du relais."; return; }
+  cible.textContent="Test en cours…";
+  let rep;
+  try{ rep=await fetch(url,{method:'GET'}); }
+  catch(e){
+    cible.textContent="Aucune réponse : l'adresse est fausse, ou le worker n'est pas déployé. Vérifie-la dans Cloudflare.";
+    return;
+  }
+  let corps={}; try{ corps=await rep.json(); }catch(e){}
+  if(rep.status===405 && corps.ok){ cible.textContent="Relais en ligne et origine acceptée. Tu peux adapter."; return; }
+  if(rep.status===403){ cible.textContent="Relais en ligne, mais il refuse cette origine. "+(corps.error||'')+" — recolle relais.js à jour dans Cloudflare."; return; }
+  if(rep.status===500){ cible.textContent=(corps.error||"Le relais tourne mais son secret CLE_ALBERT est absent."); return; }
+  cible.textContent=`Le relais a répondu ${rep.status}. ${corps.error||corps.message||''}`;
+}
 function confirmerCle(champ){
   let v=($(champ).value||'').trim().replace(/\s+/g,'');
   if(fournisseur()==='relais'){
@@ -1602,6 +1629,8 @@ function composer(doc,taille,marquer){
   const k=laCle();
   if(k){ $('#cle').value=k; $('#cle2').value=k; }
 
+  $('#b-tester').onclick  = ()=>testerRelais('#test-relais');
+  $('#b-tester2').onclick = ()=>testerRelais('#test-relais2');
   $('#b-valider-cle').onclick  = ()=>confirmerCle('#cle');
   $('#b-valider-cle2').onclick = ()=>confirmerCle('#cle2');
   for(const s of ['#cle','#cle2']){

@@ -11,33 +11,43 @@
    3. Settings → Variables and Secrets → Add → Secret
         Nom   : CLE_ALBERT
         Valeur: ta clé Albert
-   4. ORIGINES est déjà réglé sur https://christophejean13008.github.io :
-      rien à changer, sauf si tu changes de compte GitHub
+   4. ORIGINES est déjà réglé sur https://christophejean13008.github.io.
+      Pour le changer sans toucher au code : Settings → Variables →
+      variable « Text » nommée ORIGINES
    5. Copier l'adresse du worker (https://xxx.workers.dev) et la coller
       dans Adaptedl : fournisseur « Relais », champ adresse.
    ===================================================================== */
 
+const VERSION = 2;
 const ALBERT = 'https://albert.api.etalab.gouv.fr/v1/chat/completions';
 
 // Seules ces origines peuvent utiliser le relais : sans cela, n'importe qui
 // pourrait consommer ton quota d'agent de l'État.
-const ORIGINES = ['https://christophejean13008.github.io'];
+// Modifiable sans toucher au code : Settings → Variables → ajouter une
+// variable de type « Text » nommée ORIGINES (plusieurs adresses séparées
+// par des virgules). Sans elle, la valeur ci-dessous s'applique.
+const ORIGINES_DEFAUT = 'https://christophejean13008.github.io';
 
 export default {
   async fetch(requete, env) {
     const origine = requete.headers.get('Origin') || '';
+    const ORIGINES = (env.ORIGINES || ORIGINES_DEFAUT).split(',').map(s => s.trim());
     const autorisee = ORIGINES.includes(origine);
+    // On renvoie les en-têtes CORS même à une origine non autorisée : sinon le
+    // navigateur bloque la réponse et l'enseignant ne voit qu'« injoignable ».
+    // Le filtrage reste effectif : la requête est refusée juste en dessous.
     const entetes = {
-      'Access-Control-Allow-Origin': autorisee ? origine : 'null',
+      'Access-Control-Allow-Origin': origine || '*',
       'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Vary': 'Origin'
     };
 
     if (requete.method === 'OPTIONS') return new Response(null, { status: 204, headers: entetes });
-    if (!autorisee) return new Response(JSON.stringify({ error: 'origine non autorisée : ' + origine }),
+    if (!autorisee) return new Response(JSON.stringify({ error: 'origine non autorisée : « ' + origine + ' » — attendu : ' + ORIGINES.join(', ') }),
       { status: 403, headers: { ...entetes, 'Content-Type': 'application/json' } });
-    if (requete.method !== 'POST') return new Response('POST attendu', { status: 405, headers: entetes });
+    if (requete.method !== 'POST') return new Response(JSON.stringify({ ok: true, message: 'relais en ligne, en attente de POST' }),
+      { status: 405, headers: { ...entetes, 'Content-Type': 'application/json' } });
     if (!env.CLE_ALBERT) return new Response(JSON.stringify({ error: 'secret CLE_ALBERT absent du worker' }),
       { status: 500, headers: { ...entetes, 'Content-Type': 'application/json' } });
 
