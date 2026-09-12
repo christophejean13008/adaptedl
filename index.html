@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 13</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 14</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -182,6 +182,10 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
       <button class="btn secondaire" id="b-auto">Repérer tout seul</button>
     </div>
     <button class="btn grand" id="b-lancer-ia" style="margin-top:14px">Adapter avec l'IA</button>
+    <p id="pourquoi-ia" class="cible" style="margin-top:8px"></p>
+    <label class="champ masque" id="bloc-cle-cadres" style="margin-top:8px">
+      <span>Colle ta clé ici, elle sera gardée sur l'appareil</span>
+      <input type="password" id="cle2" placeholder="clé" autocomplete="off"></label>
     <button class="btn grand secondaire" id="b-lancer-cadres" style="margin-top:10px" disabled>Lire sur l'appareil, sans réseau</button>
     <p id="aide-cadres" class="cible" style="margin-top:10px"></p>
   </div>
@@ -921,6 +925,16 @@ function majEtatCle(){
     : navigator.onLine ? "Clé enregistrée. L'adaptation par IA est disponible."
                        : "Clé enregistrée, mais pas de réseau pour l'instant.";
   $('#b-lancer-ia').disabled = !iaDispo();
+  const manque = !laCle() ? "clé" : !navigator.onLine ? "réseau" : null;
+  $('#pourquoi-ia').textContent = !manque ? ''
+    : manque==='clé'
+      ? (fournisseur()==='albert'
+          ? "Grisé : aucune clé Albert enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil."
+          : "Grisé : aucune clé Anthropic enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil.")
+      : "Grisé : pas de réseau. La lecture sur l'appareil fonctionne quand même.";
+  $('#bloc-cle-cadres').classList.toggle('masque', manque!=='clé');
+  const c2=$('#cle2'); if(c2 && c2.value!==laCle()) c2.value=laCle();
+  const c1=$('#cle'); if(c1 && c1.value!==laCle()) c1.value=laCle();
 }
 
 const REGLE_IA = `Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
