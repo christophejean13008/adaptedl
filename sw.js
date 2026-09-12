@@ -1,18 +1,18 @@
 /* Adaptedl — cache hors ligne.
    Le moteur (vendor/) : cache d'abord, il ne change jamais et pèse 10 Mo.
    L'application : réseau d'abord, pour qu'une mise à jour arrive tout de suite. */
-const CACHE = 'adaptedl-v16';
+const CACHE = 'adaptedl-v18';
 const MOTEUR = [
   './vendor/tesseract.min.js', './vendor/worker.min.js',
   './vendor/tesseract-core-simd-lstm.wasm.js', './vendor/tesseract-core-lstm.wasm.js',
   './vendor/fra.traineddata',
   './vendor/pdf.min.js', './vendor/pdf.worker.min.js'
 ];
-const APPLI = ['./', './index.html', './manifest.webmanifest'];
+const APPLI = ['./', './index.html', './adaptedl.html', './manifest.webmanifest'];
 
 self.addEventListener('install', e=>{
   e.waitUntil(caches.open(CACHE)
-    .then(c=>c.addAll(MOTEUR).then(()=>c.addAll(APPLI).catch(()=>{})))
+    .then(c=>c.addAll(MOTEUR).then(()=>Promise.allSettled(APPLI.map(u=>c.add(u)))))
     .then(()=>self.skipWaiting()));
 });
 self.addEventListener('activate', e=>{
@@ -36,6 +36,8 @@ self.addEventListener('fetch', e=>{
     fetch(e.request).then(rep=>{
       if(rep.ok) caches.open(CACHE).then(c=>c.put(e.request, rep.clone()));
       return rep;
-    }).catch(()=> caches.match(e.request).then(r=> r || caches.match('./index.html')))
+    }).catch(()=> caches.match(e.request)
+      .then(r=> r || caches.match('./index.html'))
+      .then(r=> r || caches.match('./adaptedl.html')))
   );
 });

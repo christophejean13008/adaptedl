@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 16</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 18</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -151,6 +151,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
       <label class="champ"><span>Quelle IA pour adapter les exercices</span>
         <select id="fournisseur" style="width:100%;padding:12px;border:2px solid var(--trait);border-radius:10px;font:inherit;background:#fff">
           <option value="albert">Albert — l'IA de l'État, gratuite pour les enseignants</option>
+          <option value="relais">Relais — aucune clé sur l'iPad (recommandé)</option>
           <option value="anthropic">Anthropic — clé personnelle payante</option>
         </select></label>
       <label class="champ"><span id="lbl-cle">Clé Albert, gardée sur cet appareil</span>
@@ -583,7 +584,7 @@ if(typeof module!=='undefined'&&module.exports) module.exports=API; else racine.
 <script>
 const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
 const S = {exercices:[], ignores:[], index:0, titre:'Exercices', canvas:null, rotation:0,
-           pdfDoc:null, pdfPage:1, source:null, cle:'', fournisseur:'albert', ia:false, cadres:[], regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
+           pdfDoc:null, pdfPage:1, source:null, cles:{}, fournisseur:'relais', ia:false, cadres:[], regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
 function ecran(id){ $$('.ecran').forEach(e=>e.classList.toggle('actif', e.id===id)); window.scrollTo(0,0); }
 function echapper(t){ return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function erreur(sel,msg){ const e=$(sel); if(!msg){e.classList.add('masque');return;} e.textContent=msg; e.classList.remove('masque'); }
@@ -912,30 +913,34 @@ const CLE='adaptedl_cle', FOURN='adaptedl_fournisseur';
    Clé à récupérer ensuite sur albert.playground.etalab.gouv.fr */
 const ALBERT='https://albert.api.etalab.gouv.fr/v1/chat/completions';
 const MODELES_ALBERT=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
-function fournisseur(){ try{ return localStorage.getItem(FOURN)||'albert'; }catch(e){ return S.fournisseur||'albert'; } }
+function fournisseur(){ try{ return localStorage.getItem(FOURN)||'relais'; }catch(e){ return S.fournisseur||'relais'; } }
 function poserFournisseur(v){ S.fournisseur=v; try{ localStorage.setItem(FOURN,v); }catch(e){} }
-function laCle(){ try{ return localStorage.getItem(CLE)||S.cle||''; }catch(e){ return S.cle||''; } }
-function poserCle(v){ S.cle=v; try{ v?localStorage.setItem(CLE,v):localStorage.removeItem(CLE); }catch(e){} }
+function cleDe(f){ return CLE+'_'+(f||fournisseur()); }
+function laCle(){ try{ return localStorage.getItem(cleDe())||S.cles[fournisseur()]||''; }
+                  catch(e){ return S.cles[fournisseur()]||''; } }
+function poserCle(v){ S.cles[fournisseur()]=v;
+  try{ v?localStorage.setItem(cleDe(),v):localStorage.removeItem(cleDe()); }catch(e){} }
 function iaDispo(){ return !!laCle() && navigator.onLine; }
 function majEtatCle(){
   const k=laCle(), f=fournisseur();
-  $('#lbl-cle').textContent = f==='albert'
-    ? "Clé Albert, gardée sur cet appareil"
+  $('#lbl-cle').textContent = f==='relais' ? "Adresse de ton relais"
+    : f==='albert' ? "Clé Albert, gardée sur cet appareil"
     : "Clé Anthropic, gardée sur cet appareil";
-  $('#cle').placeholder = f==='albert' ? "ta clé Albert" : "sk-ant-…";
+  $('#cle').placeholder = f==='relais' ? "https://….workers.dev" : f==='albert' ? "ta clé Albert" : "sk-ant-…";
   $('#etat-cle').innerHTML = !k
-    ? (f==='albert'
-        ? "Demande ton accès sur <b>ia.numerique.gouv.fr</b> (rubrique accès Albert API), puis récupère la clé sur <b>albert.playground.etalab.gouv.fr</b>. C'est gratuit pour les agents de l'État."
+    ? (f==='relais'
+        ? "Albert refuse les appels directs depuis un navigateur. Installe le relais fourni (fichier <b>relais.js</b>, une dizaine de minutes), puis colle ici son adresse. La clé reste sur le relais, jamais sur l'iPad."
+      : f==='albert'
+        ? "Appel direct : bloqué par Albert depuis un navigateur. Préfère le relais."
         : "Clé à créer sur console.anthropic.com, avec du crédit dessus.")
     : navigator.onLine ? "Clé enregistrée. L'adaptation par IA est disponible."
                        : "Clé enregistrée, mais pas de réseau pour l'instant.";
   $('#b-lancer-ia').disabled = !iaDispo();
   const manque = !laCle() ? "clé" : !navigator.onLine ? "réseau" : null;
+  const quoi = fournisseur()==='relais' ? "adresse de relais" : "clé";
   $('#pourquoi-ia').textContent = !manque ? ''
     : manque==='clé'
-      ? (fournisseur()==='albert'
-          ? "Grisé : aucune clé Albert enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil."
-          : "Grisé : aucune clé Anthropic enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil.")
+      ? `Grisé : aucune ${quoi} enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil.`
       : "Grisé : pas de réseau. La lecture sur l'appareil fonctionne quand même.";
   $('#bloc-cle-cadres').classList.toggle('masque', manque!=='clé');
 }
@@ -945,7 +950,7 @@ function confirmerCle(champ){
   majEtatCle();
   const k=laCle();
   $('#etat-cle').textContent = k
-    ? `Clé enregistrée sur cet appareil (…${k.slice(-6)}).`
+    ? (fournisseur()==='relais' ? `Relais enregistré : ${k}` : `Clé enregistrée sur cet appareil (…${k.slice(-6)}).`)
     : "Champ vide : rien n'a été enregistré.";
   $('#pourquoi-ia').textContent = k && navigator.onLine ? '' : $('#pourquoi-ia').textContent;
 }
@@ -977,12 +982,30 @@ async function envoyer(url, entetes, corps){
     if(rep.status===401||rep.status===403) throw new Error("clé refusée");
     if(rep.status===429) throw new Error("trop de demandes, réessaie dans un instant");
     if(rep.status===404) throw new Error("modèle indisponible sur ce compte");
+    if(rep.status===403) throw new Error("origine refusée par le relais : corrige ORIGINES dans relais.js");
+    if(rep.status===502) throw new Error("le relais n'atteint pas Albert");
     throw new Error("le service a répondu "+rep.status);
   }
   return rep.json();
 }
 async function appelIA(dataUrl, demande, max){
-  if(fournisseur()==='albert'){
+  const f=fournisseur();
+  if(f==='relais'){
+    let derniere=null;
+    for(const modele of MODELES_ALBERT){
+      try{
+        const d=await envoyer(laCle(), {'Content-Type':'application/json'},
+          {model:modele, max_tokens:max||4000, temperature:0.1,
+           messages:[{role:'system',content:REGLE_IA},
+                     {role:'user',content:[
+                       {type:'image_url',image_url:{url:dataUrl}},
+                       {type:'text',text:demande}]}]});
+        return extraireJson((((d.choices||[])[0]||{}).message||{}).content||'');
+      }catch(e){ derniere=e; if(/injoignable|trop de demandes|origine/.test(e.message)) throw e; }
+    }
+    throw derniere||new Error("le relais n'a pas répondu");
+  }
+  if(f==='albert'){
     let derniere=null;
     for(const modele of MODELES_ALBERT){
       try{
@@ -1552,7 +1575,8 @@ function composer(doc,taille,marquer){
 (function(){
   const sel=$('#fournisseur');
   sel.value = fournisseur();
-  sel.addEventListener('change', ()=>{ poserFournisseur(sel.value); majEtatCle(); });
+  sel.addEventListener('change', ()=>{ poserFournisseur(sel.value);
+    const v=laCle(); $('#cle').value=v; $('#cle2').value=v; majEtatCle(); });
 
   const k=laCle();
   if(k){ $('#cle').value=k; $('#cle2').value=k; }
