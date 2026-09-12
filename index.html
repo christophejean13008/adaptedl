@@ -107,7 +107,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 3</b> · Photographie une page de manuel. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 4</b> · Photographie une page de manuel. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -157,6 +157,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
     <p id="r-source" class="cible" style="text-align:left"></p>
     <div id="r-liste"></div>
     <button class="btn grand" id="b-commencer">Donner l'iPad à l'élève</button>
+    <p id="aide-commencer" class="cible" style="margin-top:10px"></p>
     <div class="outils" style="justify-content:center">
       <button class="btn discret" id="b-corriger">Corriger ce qui a été lu</button>
       <button class="btn discret" id="b-refaire-photo">Reprendre la photo</button>
@@ -167,8 +168,9 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <!-- ===================== ATELIER ===================== -->
 <section id="ecran-atelier" class="ecran">
   <div class="colonne-page">
+    <button class="btn secondaire" id="b-retour-atelier" style="margin-bottom:14px">← Revenir à l'accueil</button>
     <h2>Atelier</h2>
-    <p class="sous-titre">À n'ouvrir que si la lecture automatique s'est trompée.</p>
+    <p class="sous-titre">Recopie l'exercice du manuel et mets entre crochets ce que l'élève doit trouver.</p>
     <div class="carte">
       <label class="champ"><span>Titre de la fiche</span><input type="text" id="titre" autocomplete="off"></label>
       <textarea id="source" spellcheck="false"></textarea>
@@ -188,6 +190,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
     </div></div>
     <div class="carte"><h2>Aperçu</h2><div id="apercu-atelier"></div></div>
     <button class="btn grand" id="b-commencer2" disabled>Donner l'iPad à l'élève</button>
+    <p id="aide-commencer2" class="cible" style="margin-top:10px"></p>
   </div>
 </section>
 
@@ -625,6 +628,8 @@ function afficherResultat(){
         <small>écarté : ${echapper(i.raison)}</small></div>`).join('');
   $('#r-source').textContent = "Lu sur l'appareil, sans réseau. Relis avant de passer l'iPad.";
   $('#b-commencer').disabled = !S.exercices.length;
+  $('#aide-commencer').textContent = S.exercices.length ? ''
+    : "Aucun exercice n'a pu être converti sur cette page. Reprends la photo, ou écris-les toi-même dans l'atelier.";
   ecran('ecran-resultat');
 }
 $('#b-commencer').onclick = ()=>{ S.index=0; ouvrirExercice(); };
@@ -651,6 +656,7 @@ Les élèves écoutent la maîtresse.
 > Noms : chat, table
 > Verbes : courir, manger`;
 $('#b-exemple').onclick=()=>{ $('#source').value=EXEMPLE; rafraichir(); };
+$('#b-retour-atelier').onclick=()=>ecran(S.exercices.length?'ecran-resultat':'ecran-accueil');
 $('#source').addEventListener('input', rafraichir);
 
 function lireSource(texte){
@@ -703,6 +709,8 @@ function rafraichir(){
       <small>${e.valide?`${e.nbReponses||'—'} réponse(s)`:'incomplet : cet exercice sera ignoré'}</small></div>`).join('')
     : '<p style="color:#8CA0AC">Vide.</p>';
   $('#b-commencer2').disabled = !bons.length;
+  $('#aide-commencer2').textContent = bons.length ? ''
+    : "Il faut au moins un exercice utilisable : une consigne, puis des phrases avec des [crochets]. Touche « Exemple » pour voir.";
   S.atelier = bons;
 }
 $('#b-commencer2').onclick=()=>{
