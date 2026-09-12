@@ -45,6 +45,22 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 .outils{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .jauge{height:10px;background:var(--craie);border-radius:6px;overflow:hidden;margin:20px 0;border:1px solid var(--trait)}
 .jauge i{display:block;height:100%;background:var(--action);width:0;transition:width .3s}
+/* --- encadrement manuel --- */
+#zone-cadres{position:relative;display:inline-block;width:100%;touch-action:none;user-select:none;-webkit-user-select:none}
+#zone-cadres img{width:100%;display:block;border-radius:10px;border:1px solid var(--trait)}
+.cadre{position:absolute;border:3px solid var(--action);background:rgba(31,122,140,.14);border-radius:6px}
+.cadre .num{position:absolute;top:-2px;left:-2px;background:var(--action);color:#fff;font-size:14px;
+  font-weight:bold;padding:1px 8px;border-radius:6px 0 6px 0}
+.cadre .sup{position:absolute;top:-14px;right:-14px;width:32px;height:32px;border-radius:50%;
+  background:#fff;border:2px solid var(--action);color:var(--action);font-weight:bold;line-height:28px;text-align:center}
+.cadre.trace{border-style:dashed}
+/* --- vignette de vérification --- */
+#voile{position:fixed;inset:0;background:rgba(34,48,60,.82);z-index:200;display:none;
+  align-items:center;justify-content:center;padding:20px}
+#voile.ouvert{display:flex}
+#voile .boite{background:#fff;border-radius:16px;padding:12px;max-width:900px;width:100%;max-height:92vh;overflow:auto}
+#voile img{width:100%;display:block;border-radius:8px}
+.hp.petit{width:44px;height:44px;font-size:19px}
 .centre{margin:auto;text-align:center;padding:30px;max-width:520px}
 .erreur{background:#FBE6E2;border:1px solid #C25A4A;border-radius:12px;padding:14px;margin-top:14px;font-size:15px}
 .fiche{border-left:4px solid var(--action);padding:2px 0 2px 14px;margin:14px 0}
@@ -107,7 +123,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 8</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 9</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -133,9 +149,26 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
         <input type="text" id="prenom" placeholder="Prénom" autocomplete="off"></label>
     </div>
 
-    <button class="btn grand" id="b-analyser" disabled>Analyser la page</button>
+    <button class="btn grand" id="b-analyser" disabled>Encadrer les exercices</button>
     <button class="btn grand secondaire" id="b-vers-atelier" style="margin-top:10px">Écrire les exercices moi-même</button>
     <div id="err-accueil" class="erreur masque"></div>
+  </div>
+</section>
+
+<!-- ===================== CADRES ===================== -->
+<section id="ecran-cadres" class="ecran">
+  <div class="colonne-page">
+    <button class="btn secondaire" id="b-retour-cadres" style="margin-bottom:14px">← Revenir</button>
+    <h2>Encadre les exercices</h2>
+    <p class="sous-titre">Fais glisser ton doigt autour de chaque exercice, dans l'ordre où l'élève les fera. Un cadre serré sur une seule colonne donne la meilleure lecture.</p>
+    <div id="zone-cadres"><img id="img-cadres" alt="Page à encadrer"><div id="calque"></div></div>
+    <div class="outils">
+      <button class="btn secondaire" id="b-annuler-cadre">Annuler le dernier</button>
+      <button class="btn secondaire" id="b-vider-cadres">Tout effacer</button>
+      <button class="btn secondaire" id="b-auto">Repérer tout seul</button>
+    </div>
+    <button class="btn grand" id="b-lancer-cadres" style="margin-top:14px" disabled>Lire les exercices encadrés</button>
+    <p id="aide-cadres" class="cible" style="margin-top:10px"></p>
   </div>
 </section>
 
@@ -198,6 +231,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-exo" class="ecran">
   <div class="entete">
     <div class="points" id="points"></div>
+    <button class="hp petit masque" id="b-vignette" aria-label="Voir l'exercice du manuel">🔍</button>
     <button class="btn discret" id="b-quitter">Arrêter</button>
   </div>
   <div class="consigne">
@@ -211,6 +245,11 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
     <button class="btn" id="b-suivant">J'ai fini</button>
   </div>
 </section>
+
+<div id="voile"><div class="boite">
+  <img id="voile-img" alt="Exercice tel qu'il est dans le manuel">
+  <button class="btn grand secondaire" id="b-fermer-voile" style="margin-top:10px">Fermer</button>
+</div></div>
 
 <!-- ===================== FIN ===================== -->
 <section id="ecran-fin" class="ecran">
@@ -504,7 +543,7 @@ if(typeof module!=='undefined'&&module.exports) module.exports=API; else racine.
 <script>
 const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
 const S = {exercices:[], ignores:[], index:0, titre:'Exercices', canvas:null, rotation:0,
-           pdfDoc:null, pdfPage:1, source:null, regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
+           pdfDoc:null, pdfPage:1, source:null, cadres:[], regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
 function ecran(id){ $$('.ecran').forEach(e=>e.classList.toggle('actif', e.id===id)); window.scrollTo(0,0); }
 function echapper(t){ return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function erreur(sel,msg){ const e=$(sel); if(!msg){e.classList.add('masque');return;} e.textContent=msg; e.classList.remove('masque'); }
@@ -729,7 +768,11 @@ async function analyserRegion(r, i){
   c.getContext('2d').drawImage(r.canvas, r.rect.x0, r.rect.y0, c.width, c.height, 0, 0, c.width, c.height);
   const lignes=await ocr(preparerPourOcr(c, 1500, true), null, '6');
   const res=Analyse.analyser(lignes);
-  if(res.exercices.length) return {ex:preparer(res.exercices[0])};
+  if(res.exercices.length){
+    const ex=preparer(res.exercices[0]);
+    ex.vignette=c.toDataURL('image/jpeg',0.75);   // pour vérifier face au manuel
+    return {ex};
+  }
   return {ignore: res.ignores[0] || {numero:String(i+1), consigne:r.consigne, raison:"non convertible en étiquettes"}};
 }
 function lancer(i){
@@ -766,7 +809,7 @@ async function avancerFlux(){
   S.exercices.push(ex); S.index=S.exercices.length-1; ouvrirExercice();
 }
 
-$('#b-analyser').onclick = async ()=>{
+async function repererAuto(){
   ecran('ecran-analyse'); erreur('#err-analyse',''); $('#b-retour-analyse').classList.add('masque');
   $('#a-detail').textContent="Le premier passage est le plus long : l'iPad charge son moteur de lecture.";
   const avance=(p,t)=>{ $('#jauge').style.width=Math.round(p*100)+'%'; if(t) $('#a-titre').textContent=t; };
@@ -797,8 +840,70 @@ $('#b-analyser').onclick = async ()=>{
     erreur('#err-analyse', e.message||String(e));
     $('#b-retour-analyse').classList.remove('masque');
   }
-};
+}
+$('#b-auto').onclick = repererAuto;
 $('#b-retour-analyse').onclick=()=>ecran('ecran-accueil');
+
+/* =============== ENCADREMENT MANUEL ===============
+   La détection automatique des colonnes se trompe sur les pages riches.
+   Encadrer soi-même supprime le problème : le recadrage est exact, et
+   chaque exercice est relu seul, agrandi. */
+$('#b-analyser').onclick = ()=>{
+  $('#img-cadres').src = S.canvas.toDataURL('image/jpeg',0.85);
+  S.cadres=[]; dessinerCadres(); ecran('ecran-cadres');
+};
+$('#b-retour-cadres').onclick = ()=>ecran('ecran-accueil');
+$('#b-annuler-cadre').onclick = ()=>{ S.cadres.pop(); dessinerCadres(); };
+$('#b-vider-cadres').onclick  = ()=>{ S.cadres=[]; dessinerCadres(); };
+
+function dessinerCadres(){
+  $('#calque').innerHTML = S.cadres.map((c,i)=>
+    `<div class="cadre" style="left:${c.x0*100}%;top:${c.y0*100}%;width:${(c.x1-c.x0)*100}%;height:${(c.y1-c.y0)*100}%">
+       <span class="num">${i+1}</span><span class="sup" data-sup="${i}">×</span></div>`).join('');
+  $('#b-lancer-cadres').disabled = !S.cadres.length;
+  $('#aide-cadres').textContent = S.cadres.length
+    ? `${S.cadres.length} exercice(s) encadré(s).`
+    : "Fais glisser ton doigt autour du premier exercice : la consigne et toutes ses phrases.";
+}
+(function(){
+  const zone=$('#zone-cadres');
+  let depart=null, apercu=null;
+  const rel=ev=>{ const r=zone.getBoundingClientRect();
+    return {x:Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width)),
+            y:Math.min(1,Math.max(0,(ev.clientY-r.top)/r.height))}; };
+  zone.addEventListener('pointerdown', ev=>{
+    const sup=ev.target.closest('.sup');
+    if(sup){ S.cadres.splice(+sup.dataset.sup,1); dessinerCadres(); return; }
+    depart=rel(ev); zone.setPointerCapture(ev.pointerId);
+    apercu=document.createElement('div'); apercu.className='cadre trace';
+    $('#calque').appendChild(apercu);
+  });
+  zone.addEventListener('pointermove', ev=>{
+    if(!depart||!apercu) return;
+    ev.preventDefault();
+    const p=rel(ev);
+    Object.assign(apercu.style,{left:Math.min(depart.x,p.x)*100+'%', top:Math.min(depart.y,p.y)*100+'%',
+      width:Math.abs(p.x-depart.x)*100+'%', height:Math.abs(p.y-depart.y)*100+'%'});
+  });
+  zone.addEventListener('pointerup', ev=>{
+    if(!depart) return;
+    const p=rel(ev);
+    const c={x0:Math.min(depart.x,p.x), y0:Math.min(depart.y,p.y),
+             x1:Math.max(depart.x,p.x), y1:Math.max(depart.y,p.y)};
+    depart=null; if(apercu){ apercu.remove(); apercu=null; }
+    if(c.x1-c.x0>0.04 && c.y1-c.y0>0.02) S.cadres.push(c);
+    dessinerCadres();
+  });
+})();
+$('#b-lancer-cadres').onclick = ()=>{
+  S.origine='cadres';
+  S.regions = S.cadres.map((c,i)=>({canvas:S.canvas, consigne:`Exercice ${i+1}`,
+    rect:{x0:c.x0*S.canvas.width, y0:c.y0*S.canvas.height,
+          x1:c.x1*S.canvas.width, y1:c.y1*S.canvas.height}}));
+  S.titre=S.titre||'Exercices'; S.exercices=[]; S.ignores=[];
+  S.curseur=0; S.cache=new Map(); S.flux=true;
+  afficherReperage(); lancer(0);
+};
 $('#b-refaire-photo').onclick=()=>ecran('ecran-accueil');
 
 function titreDePage(lignes){
@@ -813,10 +918,12 @@ function preparer(ex){ ex.reponses={}; ex.tri={}; ex.marques={}; return ex; }
 
 function afficherReperage(){
   $('#r-titre').textContent=S.titre;
+  $('#r-source').textContent = S.origine==='cadres'
+    ? "Chaque cadre est lu de près, juste avant d'être proposé. Le suivant se prépare pendant que l'élève travaille."
+    : "Consignes repérées toutes seules — vérifie, cette lecture est la moins sûre.";
   $('#r-liste').innerHTML=S.regions.map((r,i)=>
     `<div class="fiche"><b>${i+1}. ${echapper(r.consigne).slice(0,110)}</b>
      <small>lu en détail au moment de le proposer à l'élève</small></div>`).join('');
-  $('#r-source').textContent="Consignes repérées sur l'appareil. Chaque exercice est relu de près, recadré, juste avant d'être proposé — et le suivant se prépare pendant que l'élève travaille.";
   $('#b-commencer').disabled=!S.regions.length;
   $('#aide-commencer').textContent='';
   ecran('ecran-resultat');
@@ -954,6 +1061,7 @@ function ouvrirExercice(){
     $('#travail').innerHTML=e.items.map(it=>`<div class="item">`+it.segments.map(s=>
       s.type==='trou'?`<span class="trou" data-trou="${s.id}"></span>`:mots(s.t)).join(' ')+`</div>`).join('');
   }
+  $('#b-vignette').classList.toggle('masque', !e.vignette);
   dessiner(); ecran('ecran-exo');
   Voix.dire(e.consigne_dite||e.consigne, 0.85, $('#b-consigne'));
 }
@@ -1053,6 +1161,10 @@ document.addEventListener('click', ev=>{
   }
 });
 $('#b-consigne').onclick=()=>{const e=ex(); Voix.dire(e.consigne_dite||e.consigne,0.85,$('#b-consigne'));};
+$('#b-vignette').onclick=()=>{ const e=ex(); if(!e.vignette) return;
+  $('#voile-img').src=e.vignette; $('#voile').classList.add('ouvert'); };
+$('#b-fermer-voile').onclick=()=>$('#voile').classList.remove('ouvert');
+$('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('ouvert'); };
 $('#b-effacer').onclick =()=>{const e=ex(); e.reponses={};e.tri={};e.marques={};choisie=null; ouvrirExercice();};
 $('#b-quitter').onclick =()=>{Voix.stop(); terminer();};
 $('#b-suivant').onclick =()=>{Voix.stop();
