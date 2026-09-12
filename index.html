@@ -107,7 +107,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 7</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 8</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -264,6 +264,9 @@ const LEXIQUES = [
   {cles:['adjectif possessif'], mots:['mon','ma','mes','ton','ta','tes','son','sa','ses','notre','nos','votre','vos','leur','leurs']}
 ];
 
+/* Petits mots français réellement courts : tout le reste, à une ou deux
+   lettres, trahit un mot coupé par l'OCR. */
+const PETITS = new Set(['a','à','y','en','le','la','de','du','un','il','on','ne','se','ce','et','ou','si','me','te','sa','ta','ma','tu','je','ni','or','ou','es','as','ai','va','vu','su','eu','au','l','d','j','n','c','s','m','t','qu']);
 const sansAccent = s => String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const mediane = t => { if(!t.length) return 0; const a=[...t].sort((x,y)=>x-y); return a[Math.floor(a.length/2)]; };
 const MARQUEUR = /^[a-o]\s*[.)°]$|^[•▪●■·*–—]$|^[(\[]?\d{1,2}\s*[.)\]°]$/;
@@ -388,6 +391,18 @@ function convertir(bloc, M, rang){
   if(!type) return ecarter("cette consigne demande d'écrire, pas de manipuler des étiquettes");
   if(!bloc.items.length) return ecarter("aucune phrase n'a été lue sous la consigne");
 
+  // Contrôle de lecture : si les phrases sont faites de fragments, on n'a pas
+  // le droit de proposer l'exercice à l'élève.
+  const jetons=bloc.items.flatMap(it=>[it.ligne,...it.suites])
+    .flatMap(l=>l.utiles.map(w=>String(w.text).replace(/[^A-Za-zÀ-ÿ']/g,'')))
+    .filter(t=>t.length);
+  if(jetons.length>=6){
+    const courts=jetons.filter(t=>t.length<=2 && !PETITS.has(sansAccent(t))).length/jetons.length;
+    const moyenne=jetons.reduce((s,t)=>s+t.length,0)/jetons.length;
+    if(courts>0.20 || moyenne<3.4)
+      return ecarter("lecture incertaine : des mots ont été coupés, mieux vaut ne pas le proposer");
+  }
+
   const ex={numero, consigne, consigne_dite:'', type, items:[], categories:[], etiquettes:[],
             reutilisable:false, cible:'', avecCle:false, reponses:{}, tri:{}, marques:{}, nbReponses:0};
 
@@ -421,6 +436,11 @@ function convertir(bloc, M, rang){
   if(!ex.items.length) return ecarter("aucune phrase n'a été lue sous la consigne");
 
   if(type==='marquage'){
+    // un exercice à souligner est du texte suivi : le moindre écart au milieu
+    // d'une phrase signale des mots perdus à la lecture
+    const trous=ex.items.reduce((n,it)=>n+it.segments.filter(s=>s.type==='trou').length,0);
+    if(trous>ex.items.length)
+      return ecarter("lecture incertaine : des mots manquent dans les phrases");
     const verbe=VERBES.marquage.find(v=>MOTIF(v).test(c));
     const i=c.search(MOTIF(verbe));
     let cible=consigne.slice(i).split(/\s+/).slice(1).join(' ');

@@ -1,7 +1,7 @@
 /* Adaptedl — cache hors ligne.
    Le moteur (vendor/) : cache d'abord, il ne change jamais et pèse 10 Mo.
    L'application : réseau d'abord, pour qu'une mise à jour arrive tout de suite. */
-const CACHE = 'adaptedl-v7';
+const CACHE = 'adaptedl-v8';
 const MOTEUR = [
   './vendor/tesseract.min.js', './vendor/worker.min.js',
   './vendor/tesseract-core-simd-lstm.wasm.js', './vendor/tesseract-core-lstm.wasm.js',
