@@ -1,7 +1,7 @@
 /* Adaptedl — cache hors ligne.
    Le moteur (vendor/) : cache d'abord, il ne change jamais et pèse 10 Mo.
    L'application : réseau d'abord, pour qu'une mise à jour arrive tout de suite. */
-const CACHE = 'adaptedl-v10';
+const CACHE = 'adaptedl-v13';
 const MOTEUR = [
   './vendor/tesseract.min.js', './vendor/worker.min.js',
   './vendor/tesseract-core-simd-lstm.wasm.js', './vendor/tesseract-core-lstm.wasm.js',
@@ -23,7 +23,7 @@ self.addEventListener('activate', e=>{
 self.addEventListener('fetch', e=>{
   if(e.request.method!=='GET') return;
   const url=new URL(e.request.url);
-  if(url.origin!==location.origin) return;
+  if(url.origin!==location.origin) return;   // API et scripts distants : jamais mis en cache
 
   if(url.pathname.includes('/vendor/')){          // moteur : cache d'abord
     e.respondWith(caches.match(e.request).then(r=> r || fetch(e.request).then(rep=>{

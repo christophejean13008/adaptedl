@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 10</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 13</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -145,6 +145,17 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
         <span id="p-num" style="align-self:center;color:#5B707D"></span>
         <button class="btn secondaire" id="p-suiv">page ▶</button>
       </div>
+    </div>
+
+    <div class="carte">
+      <label class="champ"><span>Quelle IA pour adapter les exercices</span>
+        <select id="fournisseur" style="width:100%;padding:12px;border:2px solid var(--trait);border-radius:10px;font:inherit;background:#fff">
+          <option value="albert">Albert — l'IA de l'État, gratuite pour les enseignants</option>
+          <option value="anthropic">Anthropic — clé personnelle payante</option>
+        </select></label>
+      <label class="champ"><span id="lbl-cle">Clé Albert, gardée sur cet appareil</span>
+        <input type="password" id="cle" placeholder="…" autocomplete="off"></label>
+      <p id="etat-cle" style="font-size:14px;color:#5B707D;margin:0"></p>
     </div>
 
     <div class="carte">
@@ -170,7 +181,8 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
       <button class="btn secondaire" id="b-vider-cadres">Tout effacer</button>
       <button class="btn secondaire" id="b-auto">Repérer tout seul</button>
     </div>
-    <button class="btn grand" id="b-lancer-cadres" style="margin-top:14px" disabled>Lire les exercices encadrés</button>
+    <button class="btn grand" id="b-lancer-ia" style="margin-top:14px">Adapter avec l'IA</button>
+    <button class="btn grand secondaire" id="b-lancer-cadres" style="margin-top:10px" disabled>Lire sur l'appareil, sans réseau</button>
     <p id="aide-cadres" class="cible" style="margin-top:10px"></p>
   </div>
 </section>
@@ -420,8 +432,18 @@ function segmenterMots(mots, M, ctx){
 function melanger(a){const t=[...a];for(let i=t.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[t[i],t[j]]=[t[j],t[i]];}return t;}
 
 /* ---- transformation d'un bloc en exercice ---- */
+/* Une carte par phrase : un pavé de texte suivi est illisible pour l'élève. */
+function phrases(texte){
+  return String(texte).split(/(?<=[.!?…])\s+(?=[A-ZÀ-ÝÉÈÊ])/)
+    .map(s=>s.trim()).filter(s=>s.length>1);
+}
+function nettoyerConsigne(t){
+  return String(t).replace(/^[^A-Za-zÀ-ÿ]+/,'')      // pastilles et puces lues de travers
+                  .replace(/\s+/g,' ')
+                  .replace(/\s+([.,;:!?])/g,'$1').trim();
+}
 function convertir(bloc, M, rang){
-  const consigne=bloc.consigne.map(l=>l.texte).join(' ').replace(/\s+/g,' ').trim();
+  const consigne=nettoyerConsigne(bloc.consigne.map(l=>l.texte).join(' '));
   const c=sansAccent(consigne);
   const numero=bloc.numero||String(rang);
   const contient=liste=>liste.some(v=>MOTIF(v).test(c));
@@ -488,7 +510,13 @@ function convertir(bloc, M, rang){
     let cible=consigne.slice(i).split(/\s+/).slice(1).join(' ');
     cible=cible.split(/\bdans\b|\bde ces\b|[.:]/)[0].trim();
     ex.cible=cible||'les mots demandés';
-    ex.items.forEach(it=>{ it.segments=it.segments.filter(s=>s.type!=='trou'); });
+    const decoupees=[];
+    for(const it of ex.items){
+      const t=it.segments.filter(s=>s.type!=='trou').map(s=>s.t).join(' ').replace(/\s+/g,' ').trim();
+      for(const p of phrases(t)) decoupees.push({segments:[{type:'texte', t:p}]});
+    }
+    ex.items=decoupees;
+    if(!ex.items.length) return ecarter("aucune phrase n'a été lue sous la consigne");
     return {ex};
   }
 
@@ -546,7 +574,7 @@ if(typeof module!=='undefined'&&module.exports) module.exports=API; else racine.
 <script>
 const $ = s=>document.querySelector(s), $$ = s=>[...document.querySelectorAll(s)];
 const S = {exercices:[], ignores:[], index:0, titre:'Exercices', canvas:null, rotation:0,
-           pdfDoc:null, pdfPage:1, source:null, cadres:[], regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
+           pdfDoc:null, pdfPage:1, source:null, cle:'', fournisseur:'albert', ia:false, cadres:[], regions:[], curseur:0, cache:new Map(), flux:false, avance:null};
 function ecran(id){ $$('.ecran').forEach(e=>e.classList.toggle('actif', e.id===id)); window.scrollTo(0,0); }
 function echapper(t){ return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function erreur(sel,msg){ const e=$(sel); if(!msg){e.classList.add('masque');return;} e.textContent=msg; e.classList.remove('masque'); }
@@ -780,8 +808,8 @@ async function analyserRegion(r, i){
 }
 function lancer(i){
   if(i<0 || i>=S.regions.length) return null;
-  if(!S.cache.has(i)) S.cache.set(i, analyserRegion(S.regions[i], i)
-    .catch(()=>({ignore:{numero:String(i+1), consigne:S.regions[i].consigne, raison:"lecture impossible"}})));
+  if(!S.cache.has(i)) S.cache.set(i, (S.ia?analyserRegionIA:analyserRegion)(S.regions[i], i)
+    .catch(e=>({ignore:{numero:String(i+1), consigne:S.regions[i].consigne, raison:(e&&e.message)||"lecture impossible"}})));
   return S.cache.get(i);
 }
 async function prochain(){
@@ -808,11 +836,26 @@ async function avancerFlux(){
   }
   const ex=await prochain();
   if(attente) clearTimeout(attente);
-  if(!ex){ S.flux=false; terminer(); return; }
+  if(!ex){
+    S.flux=false;
+    if(!S.exercices.length){
+      ecran('ecran-analyse');
+      $('#a-titre').textContent="Rien n'a pu être adapté";
+      $('#a-detail').textContent='';
+      $('#jauge').style.width='100%';
+      erreur('#err-analyse', S.ignores.length
+        ? "Motifs : "+S.ignores.map(i=>i.raison).filter((v,k,t)=>t.indexOf(v)===k).join(' · ')
+        : "Aucun exercice n'a été reconnu dans les cadres.");
+      $('#b-retour-analyse').classList.remove('masque');
+      return;
+    }
+    terminer(); return;
+  }
   S.exercices.push(ex); S.index=S.exercices.length-1; ouvrirExercice();
 }
 
 async function repererAuto(){
+  S.ia=false;
   ecran('ecran-analyse'); erreur('#err-analyse',''); $('#b-retour-analyse').classList.add('masque');
   $('#a-detail').textContent="Le premier passage est le plus long : l'iPad charge son moteur de lecture.";
   const avance=(p,t)=>{ $('#jauge').style.width=Math.round(p*100)+'%'; if(t) $('#a-titre').textContent=t; };
@@ -836,8 +879,8 @@ async function repererAuto(){
     if(!regions.length) throw new Error(petit
       ? "Les lettres sont trop petites pour être lues : cette image manque de définition. Photographie une seule page, bien remplie dans le cadre, ou repars d'un PDF plutôt que d'une capture d'écran."
       : "Aucune consigne n'a été repérée. Reprends la photo bien à plat, une seule page dans le cadre, sans ombre.");
-    afficherReperage();
-    lancer(0);                      // le premier exercice se prépare déjà
+    lancer(0);
+    avancerFlux();                  // droit au premier exercice
   }catch(e){
     S.avance=null;
     erreur('#err-analyse', e.message||String(e));
@@ -847,13 +890,169 @@ async function repererAuto(){
 $('#b-auto').onclick = repererAuto;
 $('#b-retour-analyse').onclick=()=>ecran('ecran-accueil');
 
+
+/* ================= ADAPTATION PAR MODÈLE DE VISION =================
+   Un modèle qui voit la page comprend ce que l'OCR ne peut pas déduire :
+   les cases dessinées, les colonnes, les réponses attendues. Il faut du
+   réseau et une clé personnelle ; tout le reste continue de fonctionner
+   sans, et la lecture sur l'appareil demeure. */
+const CLE='adaptedl_cle', FOURN='adaptedl_fournisseur';
+/* Albert API : plateforme d'inférence de la DINUM, réservée aux agents publics
+   (enseignants inclus), gratuite, modèles open source hébergés par l'État.
+   Demande d'accès : ia.numerique.gouv.fr/contactez-nous/acces-albert-api/
+   Clé à récupérer ensuite sur albert.playground.etalab.gouv.fr */
+const ALBERT='https://albert.api.etalab.gouv.fr/v1/chat/completions';
+const MODELES_ALBERT=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
+function fournisseur(){ try{ return localStorage.getItem(FOURN)||'albert'; }catch(e){ return S.fournisseur||'albert'; } }
+function poserFournisseur(v){ S.fournisseur=v; try{ localStorage.setItem(FOURN,v); }catch(e){} }
+function laCle(){ try{ return localStorage.getItem(CLE)||S.cle||''; }catch(e){ return S.cle||''; } }
+function poserCle(v){ S.cle=v; try{ v?localStorage.setItem(CLE,v):localStorage.removeItem(CLE); }catch(e){} }
+function iaDispo(){ return !!laCle() && navigator.onLine; }
+function majEtatCle(){
+  const k=laCle(), f=fournisseur();
+  $('#lbl-cle').textContent = f==='albert'
+    ? "Clé Albert, gardée sur cet appareil"
+    : "Clé Anthropic, gardée sur cet appareil";
+  $('#cle').placeholder = f==='albert' ? "ta clé Albert" : "sk-ant-…";
+  $('#etat-cle').innerHTML = !k
+    ? (f==='albert'
+        ? "Demande ton accès sur <b>ia.numerique.gouv.fr</b> (rubrique accès Albert API), puis récupère la clé sur <b>albert.playground.etalab.gouv.fr</b>. C'est gratuit pour les agents de l'État."
+        : "Clé à créer sur console.anthropic.com, avec du crédit dessus.")
+    : navigator.onLine ? "Clé enregistrée. L'adaptation par IA est disponible."
+                       : "Clé enregistrée, mais pas de réseau pour l'instant.";
+  $('#b-lancer-ia').disabled = !iaDispo();
+}
+
+const REGLE_IA = `Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
+RÈGLE ABSOLUE : ne modifie jamais le contenu. Consignes et phrases sont recopiées MOT POUR MOT depuis l'image : même orthographe, même ponctuation, même ordre. N'invente aucune phrase, n'en simplifie aucune.
+Ton seul travail : changer la façon de répondre. Là où l'élève devrait écrire, tu places un trou, et la réponse attendue devient une étiquette à glisser. Les pointillés, les cases vides et les lignes à remplir du manuel sont des trous.
+Trois formats : "trous" (segments de texte et trous), "classement" (colonnes), "marquage" (l'élève touche les mots : souligner, entourer, relever).
+Une phrase par item : ne regroupe jamais plusieurs phrases dans un même item.
+Réponds uniquement par du JSON, sans texte autour ni balises de code.`;
+
+const FORME = `{"consigne":"la consigne mot pour mot","consigne_dite":"la même consigne en une phrase très simple à lire à voix haute","type":"trous","cible":"","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}],"categories":[],"etiquettes":["dort","mange"]}
+Pour un classement : "categories":[{"nom":"Noms","reponses":["chat"]}] et "items":[].
+Pour un marquage : "cible" indique ce qu'il faut repérer, et les items n'ont aucun trou.
+"etiquettes" contient toutes les réponses attendues, mélangées, plus au plus deux intrus plausibles pris dans la page. Si le manuel fournit une liste de mots, reprends-la telle quelle.
+Si l'exercice demande d'écrire, de rédiger ou de recopier sans rien à manipuler, réponds {"ignore":"motif court"}.`;
+
+function extraireJson(t){
+  const p=String(t).replace(/```json|```/g,'').trim();
+  const a=p.indexOf('{'), b=p.lastIndexOf('}');
+  if(a<0||b<0) throw new Error("réponse illisible");
+  return JSON.parse(p.slice(a,b+1));
+}
+async function envoyer(url, entetes, corps){
+  let rep;
+  try{ rep=await fetch(url,{method:'POST',headers:entetes,body:JSON.stringify(corps)}); }
+  catch(e){ throw new Error("service injoignable depuis le navigateur (réseau ou restriction du serveur)"); }
+  if(!rep.ok){
+    if(rep.status===401||rep.status===403) throw new Error("clé refusée");
+    if(rep.status===429) throw new Error("trop de demandes, réessaie dans un instant");
+    if(rep.status===404) throw new Error("modèle indisponible sur ce compte");
+    throw new Error("le service a répondu "+rep.status);
+  }
+  return rep.json();
+}
+async function appelIA(dataUrl, demande, max){
+  if(fournisseur()==='albert'){
+    let derniere=null;
+    for(const modele of MODELES_ALBERT){
+      try{
+        const d=await envoyer(ALBERT,
+          {'Content-Type':'application/json','Authorization':'Bearer '+laCle()},
+          {model:modele, max_tokens:max||4000, temperature:0.1,
+           messages:[{role:'system',content:REGLE_IA},
+                     {role:'user',content:[
+                       {type:'image_url',image_url:{url:dataUrl}},
+                       {type:'text',text:demande}]}]});
+        return extraireJson((((d.choices||[])[0]||{}).message||{}).content||'');
+      }catch(e){ derniere=e; if(/clé refusée|injoignable|trop de demandes/.test(e.message)) throw e; }
+    }
+    throw derniere||new Error("Albert n'a pas répondu");
+  }
+  const d=await envoyer('https://api.anthropic.com/v1/messages',
+    {'Content-Type':'application/json','x-api-key':laCle(),
+     'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    {model:'claude-sonnet-5', max_tokens:max||4000, system:REGLE_IA,
+     messages:[{role:'user',content:[
+       {type:'image',source:{type:'base64',media_type:'image/jpeg',data:dataUrl.split(',')[1]}},
+       {type:'text',text:demande}]}]});
+  return extraireJson((d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('\n'));
+}
+
+function normaliserIA(brut,i){
+  const o={numero:String(i+1), consigne:String(brut.consigne||'').trim(),
+    consigne_dite:String(brut.consigne_dite||''),
+    type:['trous','classement','marquage'].includes(brut.type)?brut.type:'trous',
+    items:[], categories:[], etiquettes:[], reutilisable:false, cible:String(brut.cible||''),
+    avecCle:false, reponses:{}, tri:{}, marques:{}, nbReponses:0};
+  (brut.items||[]).forEach(it=>{
+    const segs=(it.segments||[]).map(s=> s.type==='trou'
+      ? {type:'trou', reponse:String(s.reponse||'')}
+      : {type:'texte', t:String(s.t||'')}).filter(s=>s.type==='trou'||s.t.trim());
+    if(segs.length) o.items.push({segments:segs});
+  });
+  (brut.categories||[]).forEach((c,k)=>o.categories.push(
+    {id:'c'+k, nom:String(c.nom||''), reponses:(c.reponses||[]).map(String)}));
+  let n=0;
+  o.items.forEach(it=>it.segments.forEach(s=>{ if(s.type==='trou') s.id='t'+(n++); }));
+  if(o.type==='marquage'){
+    o.items.forEach(it=>it.segments=it.segments.filter(s=>s.type!=='trou'));
+    o.valide=o.items.length>0;
+  } else if(o.type==='classement'){
+    const mots=(brut.etiquettes&&brut.etiquettes.length)?brut.etiquettes:o.categories.flatMap(c=>c.reponses);
+    o.etiquettes=melanger(mots.map(String).filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.nbReponses=o.etiquettes.length;
+    o.avecCle=o.categories.some(c=>c.reponses.length>0);
+    o.valide=o.categories.length>0 && o.etiquettes.length>0;
+  } else {
+    const rep=o.items.flatMap(it=>it.segments.filter(s=>s.type==='trou').map(s=>s.reponse));
+    const etq=(brut.etiquettes&&brut.etiquettes.length)?brut.etiquettes.map(String):rep;
+    o.etiquettes=melanger(etq.filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.nbReponses=n; o.avecCle=rep.some(r=>r); o.valide=n>0;
+  }
+  return o;
+}
+
+function decouperCadre(r){
+  const c=document.createElement('canvas');
+  c.width=Math.round(r.rect.x1-r.rect.x0); c.height=Math.round(r.rect.y1-r.rect.y0);
+  c.getContext('2d').drawImage(r.canvas, r.rect.x0, r.rect.y0, c.width, c.height, 0,0,c.width,c.height);
+  return c;
+}
+async function analyserRegionIA(r, i){
+  const c=decouperCadre(r);
+  const vignette=c.toDataURL('image/jpeg',0.8);
+  const brut=await appelIA(vignette,
+    `Cette image montre UN exercice d'un manuel de français du primaire. Transforme-le en activité à étiquettes.\nRéponds par ce JSON :\n${FORME}`);
+  if(brut.ignore) return {ignore:{numero:String(i+1), consigne:r.consigne, raison:String(brut.ignore)}};
+  const ex=normaliserIA(brut,i);
+  if(!ex.valide) return {ignore:{numero:String(i+1), consigne:ex.consigne||r.consigne, raison:"exercice non manipulable"}};
+  ex.vignette=vignette;
+  return {ex:preparer(ex)};
+}
+
+$('#b-lancer-ia').onclick = async ()=>{
+  S.origine='ia'; S.exercices=[]; S.ignores=[]; S.curseur=0; S.cache=new Map(); S.flux=true; S.ia=true;
+  if(S.cadres.length){
+    S.regions=S.cadres.map((c,i)=>({canvas:S.canvas, consigne:`Exercice ${i+1}`,
+      rect:{x0:c.x0*S.canvas.width, y0:c.y0*S.canvas.height,
+            x1:c.x1*S.canvas.width, y1:c.y1*S.canvas.height}}));
+  } else {
+    S.regions=[{canvas:S.canvas, consigne:'Page entière',
+      rect:{x0:0,y0:0,x1:S.canvas.width,y1:S.canvas.height}}];
+  }
+  lancer(0); avancerFlux();
+};
+
 /* =============== ENCADREMENT MANUEL ===============
    La détection automatique des colonnes se trompe sur les pages riches.
    Encadrer soi-même supprime le problème : le recadrage est exact, et
    chaque exercice est relu seul, agrandi. */
 $('#b-analyser').onclick = ()=>{
   $('#img-cadres').src = S.canvas.toDataURL('image/jpeg',0.85);
-  S.cadres=[]; dessinerCadres(); ecran('ecran-cadres');
+  S.cadres=[]; dessinerCadres(); majEtatCle(); ecran('ecran-cadres');
 };
 $('#b-retour-cadres').onclick = ()=>ecran('ecran-accueil');
 $('#b-annuler-cadre').onclick = ()=>{ S.cadres.pop(); dessinerCadres(); };
@@ -914,13 +1113,13 @@ function dessinerCadres(){
   zone.addEventListener('dragstart', ev=>ev.preventDefault());
 })();
 $('#b-lancer-cadres').onclick = ()=>{
-  S.origine='cadres';
+  S.origine='cadres'; S.ia=false;
   S.regions = S.cadres.map((c,i)=>({canvas:S.canvas, consigne:`Exercice ${i+1}`,
     rect:{x0:c.x0*S.canvas.width, y0:c.y0*S.canvas.height,
           x1:c.x1*S.canvas.width, y1:c.y1*S.canvas.height}}));
   S.titre=S.titre||'Exercices'; S.exercices=[]; S.ignores=[];
   S.curseur=0; S.cache=new Map(); S.flux=true;
-  afficherReperage(); lancer(0);
+  lancer(0); avancerFlux();
 };
 $('#b-refaire-photo').onclick=()=>ecran('ecran-accueil');
 
@@ -934,19 +1133,6 @@ function titreDePage(lignes){
 }
 function preparer(ex){ ex.reponses={}; ex.tri={}; ex.marques={}; return ex; }
 
-function afficherReperage(){
-  $('#r-titre').textContent=S.titre;
-  $('#r-source').textContent = S.origine==='cadres'
-    ? "Chaque cadre est lu de près, juste avant d'être proposé. Le suivant se prépare pendant que l'élève travaille."
-    : "Consignes repérées toutes seules — vérifie, cette lecture est la moins sûre.";
-  $('#r-liste').innerHTML=S.regions.map((r,i)=>
-    `<div class="fiche"><b>${i+1}. ${echapper(r.consigne).slice(0,110)}</b>
-     <small>lu en détail au moment de le proposer à l'élève</small></div>`).join('');
-  $('#b-commencer').disabled=!S.regions.length;
-  $('#aide-commencer').textContent='';
-  ecran('ecran-resultat');
-}
-$('#b-commencer').onclick = ()=>{ S.exercices=[]; S.index=0; avancerFlux(); };
 $('#b-vers-atelier').onclick = ()=>{ $('#titre').value=S.titre==='Exercices'?'':S.titre; rafraichir(); ecran('ecran-atelier'); };
 $('#b-corriger').onclick = ()=>{
   $('#titre').value = S.titre;
@@ -1028,7 +1214,7 @@ function rafraichir(){
   S.atelier = bons;
 }
 $('#b-commencer2').onclick=()=>{
-  S.exercices=S.atelier.map(preparer); S.ignores=[]; S.flux=false; S.regions=[];
+  S.exercices=S.atelier.map(preparer); S.ignores=[]; S.flux=false; S.ia=false; S.regions=[];
   S.titre=$('#titre').value.trim()||'Exercices'; S.index=0; ouvrirExercice();
 };
 function telecharger(nom, blob){
