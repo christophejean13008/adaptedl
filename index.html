@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 18</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 19</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -944,14 +944,34 @@ function majEtatCle(){
       : "Grisé : pas de réseau. La lecture sur l'appareil fonctionne quand même.";
   $('#bloc-cle-cadres').classList.toggle('masque', manque!=='clé');
 }
+/* Une adresse de relais collée sans « https:// » serait prise pour un chemin
+   relatif sur github.io, qui répond 405 à un envoi. On la complète. */
+function normaliserRelais(v){
+  let u=String(v).trim().replace(/\s+/g,'');
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,'');
+  u=u.replace(/^http:/i,'https:');      // une page en https ne peut pas appeler du http
+  u=u.replace(/\/+$/,'');
+  try{
+    const a=new URL(u);
+    if(!a.hostname.includes('.')) return '';   // « n importe quoi » n'est pas une adresse
+  }catch(e){ return ''; }
+  return u;
+}
 function confirmerCle(champ){
-  const v=($(champ).value||'').trim().replace(/\s+/g,'');
+  let v=($(champ).value||'').trim().replace(/\s+/g,'');
+  if(fournisseur()==='relais'){
+    v=normaliserRelais(v);
+    if(v){ $('#cle').value=v; $('#cle2').value=v; }
+  }
   poserCle(v);
   majEtatCle();
   const k=laCle();
   $('#etat-cle').textContent = k
     ? (fournisseur()==='relais' ? `Relais enregistré : ${k}` : `Clé enregistrée sur cet appareil (…${k.slice(-6)}).`)
-    : "Champ vide : rien n'a été enregistré.";
+    : (fournisseur()==='relais'
+        ? "Adresse inutilisable. Elle doit ressembler à https://adaptedl-relais.xxx.workers.dev"
+        : "Champ vide : rien n'a été enregistré.");
   $('#pourquoi-ia').textContent = k && navigator.onLine ? '' : $('#pourquoi-ia').textContent;
 }
 
@@ -983,6 +1003,7 @@ async function envoyer(url, entetes, corps){
     if(rep.status===429) throw new Error("trop de demandes, réessaie dans un instant");
     if(rep.status===404) throw new Error("modèle indisponible sur ce compte");
     if(rep.status===403) throw new Error("origine refusée par le relais : corrige ORIGINES dans relais.js");
+    if(rep.status===405) throw new Error("l'adresse du relais est fausse : la requête est partie ailleurs. Elle doit commencer par https:// et finir par .workers.dev");
     if(rep.status===502) throw new Error("le relais n'atteint pas Albert");
     throw new Error("le service a répondu "+rep.status);
   }
