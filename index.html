@@ -107,7 +107,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre">Photographie une page de manuel. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 3</b> · Photographie une page de manuel. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -462,7 +462,17 @@ function ecran(id){ $$('.ecran').forEach(e=>e.classList.toggle('actif', e.id===i
 function echapper(t){ return String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function erreur(sel,msg){ const e=$(sel); if(!msg){e.classList.add('masque');return;} e.textContent=msg; e.classList.remove('masque'); }
 if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdf.worker.min.js';
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').then(r=>{
+    r.update();
+    r.addEventListener('updatefound',()=>{
+      const n=r.installing;
+      if(n) n.addEventListener('statechange',()=>{
+        if(n.state==='activated' && navigator.serviceWorker.controller) location.reload();
+      });
+    });
+  }).catch(()=>{});
+}
 
 /* ---------------- voix (moteur du système, hors ligne) ---------------- */
 const Voix = {
