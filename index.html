@@ -126,7 +126,7 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
 <section id="ecran-accueil" class="ecran actif">
   <div class="colonne-page">
     <h1 class="titre-appli">Adaptedl</h1>
-    <p class="sous-titre"><b style="color:#1F7A8C">version 14</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
+    <p class="sous-titre"><b style="color:#1F7A8C">version 16</b> · Photographie <b>une seule page</b> de manuel, bien remplie dans le cadre. L'iPad la lit, en tire les exercices et les donne à l'élève sous forme d'étiquettes. Aucune connexion.</p>
 
     <div class="carte">
       <h2>La page</h2>
@@ -154,7 +154,9 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
           <option value="anthropic">Anthropic — clé personnelle payante</option>
         </select></label>
       <label class="champ"><span id="lbl-cle">Clé Albert, gardée sur cet appareil</span>
-        <input type="password" id="cle" placeholder="…" autocomplete="off"></label>
+        <textarea id="cle" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
+          autocorrect="off" style="min-height:64px;font-size:14px" placeholder="colle ta clé ici"></textarea></label>
+      <button class="btn secondaire" id="b-valider-cle" style="width:100%">Enregistrer la clé</button>
       <p id="etat-cle" style="font-size:14px;color:#5B707D;margin:0"></p>
     </div>
 
@@ -183,9 +185,12 @@ textarea{width:100%;min-height:260px;padding:14px;border:2px solid var(--trait);
     </div>
     <button class="btn grand" id="b-lancer-ia" style="margin-top:14px">Adapter avec l'IA</button>
     <p id="pourquoi-ia" class="cible" style="margin-top:8px"></p>
-    <label class="champ masque" id="bloc-cle-cadres" style="margin-top:8px">
-      <span>Colle ta clé ici, elle sera gardée sur l'appareil</span>
-      <input type="password" id="cle2" placeholder="clé" autocomplete="off"></label>
+    <div class="masque" id="bloc-cle-cadres" style="margin-top:8px">
+      <label class="champ"><span>Colle ta clé ici, elle sera gardée sur l'appareil</span>
+        <textarea id="cle2" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
+          autocorrect="off" style="min-height:64px;font-size:14px" placeholder="colle ta clé ici"></textarea></label>
+      <button class="btn secondaire" id="b-valider-cle2" style="width:100%">Enregistrer la clé</button>
+    </div>
     <button class="btn grand secondaire" id="b-lancer-cadres" style="margin-top:10px" disabled>Lire sur l'appareil, sans réseau</button>
     <p id="aide-cadres" class="cible" style="margin-top:10px"></p>
   </div>
@@ -933,8 +938,16 @@ function majEtatCle(){
           : "Grisé : aucune clé Anthropic enregistrée. Colle-la ci-dessous, ou sur l'écran d'accueil.")
       : "Grisé : pas de réseau. La lecture sur l'appareil fonctionne quand même.";
   $('#bloc-cle-cadres').classList.toggle('masque', manque!=='clé');
-  const c2=$('#cle2'); if(c2 && c2.value!==laCle()) c2.value=laCle();
-  const c1=$('#cle'); if(c1 && c1.value!==laCle()) c1.value=laCle();
+}
+function confirmerCle(champ){
+  const v=($(champ).value||'').trim().replace(/\s+/g,'');
+  poserCle(v);
+  majEtatCle();
+  const k=laCle();
+  $('#etat-cle').textContent = k
+    ? `Clé enregistrée sur cet appareil (…${k.slice(-6)}).`
+    : "Champ vide : rien n'a été enregistré.";
+  $('#pourquoi-ia').textContent = k && navigator.onLine ? '' : $('#pourquoi-ia').textContent;
 }
 
 const REGLE_IA = `Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
@@ -1534,6 +1547,28 @@ function composer(doc,taille,marquer){
   }
   return true;
 }
+
+/* ================= INITIALISATION ================= */
+(function(){
+  const sel=$('#fournisseur');
+  sel.value = fournisseur();
+  sel.addEventListener('change', ()=>{ poserFournisseur(sel.value); majEtatCle(); });
+
+  const k=laCle();
+  if(k){ $('#cle').value=k; $('#cle2').value=k; }
+
+  $('#b-valider-cle').onclick  = ()=>confirmerCle('#cle');
+  $('#b-valider-cle2').onclick = ()=>confirmerCle('#cle2');
+  for(const s of ['#cle','#cle2']){
+    $(s).addEventListener('change', ()=>confirmerCle(s));
+    $(s).addEventListener('paste',  ()=>setTimeout(()=>confirmerCle(s), 60));
+  }
+  window.addEventListener('online',  majEtatCle);
+  window.addEventListener('offline', majEtatCle);
+  majEtatCle();
+  rafraichir();
+})();
+
 </script>
 </body>
 </html>
