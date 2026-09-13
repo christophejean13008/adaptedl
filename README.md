@@ -40,19 +40,6 @@ déterminant qui convient »), les étiquettes viennent d'un lexique embarqué d
 classes grammaticales fermées (déterminants, pronoms, prépositions,
 conjonctions, auxiliaires, négation, ponctuation) et restent réutilisables.
 
-## Deux moteurs d'analyse
-
-- **Analyser sur l'appareil** : Tesseract, hors ligne, sans compte. Convertit
-  les exercices de français denses en texte, écarte le reste avec un motif.
-- **Analyser avec l'IA** : via Puter.js, sans clé API — le script est chargé
-  depuis `js.puter.com`, la page part chez Puter puis chez un fournisseur de
-  modèle. Lit les colonnes et les pastilles dessinées que l'OCR ne voit pas.
-  Demande du réseau ; le bouton se désactive tout seul hors ligne. Gratuit au
-  départ, puis lié à un compte Puter (modèle « User-Pays »).
-
-Un modèle peut se tromper d'un mot : l'écran d'aperçu avant de passer l'iPad
-à l'élève n'est pas décoratif.
-
 ## Si la lecture se trompe
 
 « Corriger ce qui a été lu » ouvre l'atelier, prérempli, avec une syntaxe à
@@ -60,7 +47,22 @@ crochets : `Le [chat] dort.` Rien n'oblige à y passer.
 
 ## Fichiers
 
-- `index.html` — application
-- `analyse.js` — OCR → exercices (testable sous node)
+- `index.html` — application entière, analyseur compris
+- `relais.js` — relais Cloudflare à installer une fois : il porte la clé
+  Albert, l'iPad n'en a aucune. Albert refuse les appels directs depuis un
+  navigateur, ce relais est donc la seule voie pour l'IA de l'État.
 - `sw.js` — cache hors ligne
-- `vendor/` — Tesseract, modèle français, pdf.js
+- `manifest.webmanifest`
+- `vendor/` — Tesseract, modèle français, pdf.js (7 fichiers)
+
+Deux moteurs :
+
+- **Lire sur l'appareil** : Tesseract, hors ligne, sans clé. Convertit les
+  exercices de français denses en texte, écarte le reste avec un motif.
+- **Adapter avec l'IA** : un appel par cadre à l'API Anthropic, avec ta propre
+  clé, gardée dans le navigateur de l'appareil. Comprend les cases dessinées,
+  les colonnes et les réponses attendues. Demande du réseau.
+
+Encadrer les exercices soi-même avant l'analyse donne les meilleurs résultats
+dans les deux cas, et fournit la vignette de vérification (loupe en haut à
+droite de l'écran de l'élève).
