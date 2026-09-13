@@ -130,7 +130,7 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <!-- ============ ACCUEIL ============ -->
 <section id="e-accueil" class="ecran actif"><div class="page">
   <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 24</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+  <p class="intro"><b style="color:var(--accent-clair)">version 25</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
 
   <div class="carte">
     <h2>La page</h2>
@@ -163,7 +163,8 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 
   <div class="carte">
     <h2>Le relais</h2>
-    <label class="champ"><span>Adresse de ton relais Cloudflare</span>
+    <p class="note" style="margin:0 0 10px">Déjà configuré. À ne toucher que si tu redéploies le worker ailleurs.</p>
+    <label class="champ"><span>Adresse du relais Cloudflare</span>
       <textarea id="relais" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
         autocorrect="off" placeholder="https://….workers.dev"></textarea></label>
     <div class="rangee">
@@ -273,7 +274,13 @@ Voix.init();
 
 /* ---------------- relais ---------------- */
 const STOCK='adaptedl_relais';
-function lireRelais(){ try{ return localStorage.getItem(STOCK)||E.relais||''; }catch(e){ return E.relais||''; } }
+/* Relais intégré : plus rien à configurer sur l'iPad. L'adresse n'est pas un
+   secret — la clé Albert vit dans le worker — mais elle reste réservée à cette
+   origine par le worker lui-même. */
+const RELAIS_INTEGRE='https://adaptedl-relais.chris333j.workers.dev';
+function lireRelais(){
+  try{ return localStorage.getItem(STOCK)||E.relais||RELAIS_INTEGRE; }
+  catch(e){ return E.relais||RELAIS_INTEGRE; } }
 function ecrireRelais(v){ E.relais=v; try{ v?localStorage.setItem(STOCK,v):localStorage.removeItem(STOCK); }catch(e){} }
 function normaliser(v){
   let u=String(v).trim().replace(/\s+/g,'');
@@ -285,14 +292,21 @@ function normaliser(v){
 }
 function majRelais(msg){
   const u=lireRelais();
+  const perso=(()=>{ try{ return !!localStorage.getItem(STOCK); }catch(e){ return !!E.relais; } })();
   $('#etat-relais').textContent = msg!==undefined ? msg
-    : u ? `Relais : ${u}` : "Sans relais, seules les fiches déjà préparées fonctionnent.";
+    : perso ? `Relais personnalisé : ${u}`
+            : "Relais intégré : rien à configurer. Le champ ne sert qu'à en changer.";
   $('#b-encadrer').disabled = !E.canvas;
 }
 $('#b-garder').onclick=()=>{
-  const u=normaliser($('#relais').value);
+  const brut=$('#relais').value.trim();
+  if(!brut || normaliser(brut)===RELAIS_INTEGRE){   // retour au relais d'origine
+    ecrireRelais(''); $('#relais').value=RELAIS_INTEGRE; majRelais("Relais intégré rétabli.");
+    return;
+  }
+  const u=normaliser(brut);
   if(!u){ majRelais("Adresse inutilisable. Elle ressemble à https://adaptedl-relais.xxx.workers.dev"); return; }
-  $('#relais').value=u; ecrireRelais(u); majRelais(`Enregistré : ${u}`);
+  $('#relais').value=u; ecrireRelais(u); majRelais(`Relais personnalisé enregistré : ${u}`);
 };
 $('#relais').addEventListener('change',()=>$('#b-garder').click());
 $('#b-tester').onclick=async()=>{

@@ -1,7 +1,7 @@
 /* Adaptedl — cache hors ligne.
    vendor/ : cache d'abord (ne change jamais).
    application : réseau d'abord, pour qu'une mise à jour arrive tout de suite. */
-const CACHE='adaptedl-v24';
+const CACHE='adaptedl-v25';
 const MOTEUR=['./vendor/pdf.min.js','./vendor/pdf.worker.min.js'];
 const APPLI=['./','./index.html','./manifest.webmanifest'];
 self.addEventListener('install',e=>{
