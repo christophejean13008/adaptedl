@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F4C5C">
+<title>Adaptedl</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<style>
+:root{
+  --encre:#1B2A33; --doux:#5C7482; --fond:#EDF1F3; --papier:#FFFFFF; --bord:#CBD8DE;
+  --accent:#0F4C5C; --accent-clair:#178098; --accent-pale:#DCEEF2;
+  --etq:#FFE7A3; --etq-bord:#D9A82E; --marque:#FFF0BD; --vert:#2F7D57; --r:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--fond);color:var(--encre);font-size:17px;line-height:1.5;
+  font-family:"Trebuchet MS",Verdana,-apple-system,system-ui,sans-serif;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.ecran{display:none;min-height:100%;flex-direction:column}
+.ecran.actif{display:flex}
+.masque{display:none!important}
+:focus-visible{outline:3px solid var(--accent-clair);outline-offset:2px}
+
+.page{max-width:760px;margin:0 auto;padding:22px 18px 40px;width:100%}
+h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.4px}
+h2{font-size:20px;margin:0 0 10px}
+.intro{color:var(--doux);margin:0 0 20px}
+.carte{background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:18px;margin-bottom:14px}
+.b{border:none;border-radius:var(--r);background:var(--accent);color:#fff;padding:14px 20px;
+  font-weight:bold;box-shadow:0 2px 0 #0A3944}
+.b:active{transform:translateY(2px);box-shadow:none}
+.b.pale{background:var(--papier);color:var(--encre);border:2px solid var(--bord);box-shadow:none}
+.b.nu{background:none;border:none;box-shadow:none;color:var(--accent-clair);text-decoration:underline;padding:8px}
+.b[disabled]{opacity:.4;pointer-events:none}
+.b.large{width:100%;padding:17px;font-size:19px}
+.rangee{display:flex;gap:10px;flex-wrap:wrap}
+.rangee>.b{flex:1 1 140px}
+.champ{display:block;margin-bottom:10px}
+.champ span{display:block;font-size:14px;color:var(--doux);margin-bottom:5px}
+textarea,input[type=text]{width:100%;padding:12px;border:2px solid var(--bord);border-radius:10px;background:#fff}
+textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace;resize:vertical}
+.note{font-size:14px;color:var(--doux);margin:8px 0 0}
+.alerte{background:#FBE7E3;border:1px solid #C25A4A;border-radius:12px;padding:13px;margin-top:12px;font-size:15px}
+.ok{color:var(--vert)}
+
+/* cadres */
+#zone{position:relative;display:block;width:100%;touch-action:none;user-select:none;-webkit-user-select:none;margin-top:10px}
+#zone img{width:100%;display:block;border-radius:12px;border:1px solid var(--bord);
+  pointer-events:none;-webkit-user-drag:none}
+#calque{position:absolute;inset:0;pointer-events:none}
+.cadre{position:absolute;border:3px solid var(--accent-clair);background:rgba(23,128,152,.14);border-radius:8px}
+.cadre.trace{border-style:dashed}
+.cadre .n{position:absolute;top:-3px;left:-3px;background:var(--accent-clair);color:#fff;
+  font-size:15px;font-weight:bold;padding:2px 9px;border-radius:8px 0 8px 0}
+.cadre .x{position:absolute;top:-15px;right:-15px;width:34px;height:34px;border-radius:50%;
+  background:#fff;border:2px solid var(--accent-clair);color:var(--accent-clair);font-weight:bold;
+  line-height:30px;text-align:center;pointer-events:auto}
+
+/* attente */
+.milieu{margin:auto;text-align:center;padding:28px;max-width:520px}
+.barre{height:8px;background:var(--papier);border:1px solid var(--bord);border-radius:6px;overflow:hidden;margin:18px 0}
+.barre i{display:block;height:100%;background:var(--accent-clair);width:0;transition:width .4s}
+
+/* élève */
+.haut{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--papier);border-bottom:1px solid var(--bord)}
+.pastilles{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.pt{width:10px;height:10px;border-radius:50%;background:var(--bord)}
+.pt.fait{background:var(--vert)}
+.pt.ici{background:var(--accent-clair);transform:scale(1.4)}
+.rond{width:46px;height:46px;border-radius:50%;border:none;background:var(--accent);color:#fff;
+  font-size:21px;display:grid;place-items:center;box-shadow:0 2px 0 #0A3944;flex:0 0 auto}
+.rond:active{transform:translateY(2px);box-shadow:none}
+.rond.parle{animation:bat 1s infinite}
+@keyframes bat{50%{background:var(--accent-clair)}}
+.consigne{display:flex;gap:13px;align-items:flex-start;padding:15px 18px;background:var(--papier);border-bottom:1px solid var(--bord)}
+.consigne .txt{flex:1;font-size:19px}
+.corps{flex:1;overflow:auto;padding:18px;-webkit-overflow-scrolling:touch}
+.dedans{max-width:740px;margin:0 auto}
+.but{text-align:center;color:var(--doux);font-size:15px;margin:0 0 14px}
+.ligne{background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);
+  padding:13px 17px;margin-bottom:11px;font-size:21px;line-height:2}
+.mot{padding:2px 3px;border-radius:5px}
+.mot:active{background:var(--accent-pale)}
+.mot.pris{background:var(--marque);border-bottom:3px solid var(--etq-bord);font-weight:bold}
+.trou{display:inline-block;min-width:108px;height:42px;vertical-align:middle;margin:0 4px;
+  border-bottom:3px dashed var(--accent-clair);border-radius:6px 6px 0 0;background:#F4FAFB;
+  text-align:center;line-height:42px}
+.trou.vise{background:var(--accent-pale);border-bottom-style:solid}
+.trou.plein{background:transparent;border-bottom-style:solid}
+.cols{display:flex;gap:11px;flex-wrap:wrap}
+.col{flex:1 1 165px;background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:11px}
+.col h3{margin:0 0 9px;font-size:17px;text-align:center;padding-bottom:7px;border-bottom:2px solid var(--bord)}
+.bac{min-height:105px;display:flex;flex-direction:column;gap:7px;align-items:center;border-radius:10px;padding:4px}
+.bac.vise{background:var(--accent-pale)}
+.etq{display:inline-block;background:var(--etq);border:2px solid var(--etq-bord);border-radius:9px;
+  padding:8px 14px;font-size:20px;font-weight:bold;line-height:1.2;box-shadow:0 2px 3px rgba(27,42,51,.18);
+  touch-action:none;user-select:none;-webkit-user-select:none}
+.etq.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
+.etq.cachee{visibility:hidden}
+.etq.posee{box-shadow:none;margin:0;vertical-align:middle}
+.etq.vol{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-50%) rotate(-3deg) scale(1.07);
+  box-shadow:0 8px 18px rgba(27,42,51,.3)}
+.tiroir{background:var(--papier);border-top:1px solid var(--bord);display:flex;flex-wrap:wrap;gap:9px;
+  justify-content:center;align-items:center;padding:13px 14px calc(13px + env(safe-area-inset-bottom))}
+.tiroir .vide{color:#8FA3AE;font-size:15px}
+.bas{display:flex;gap:10px;justify-content:center;padding:11px 14px;background:var(--papier);border-top:1px solid var(--bord)}
+#voile{position:fixed;inset:0;background:rgba(27,42,51,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:18px}
+#voile.on{display:flex}
+#voile .boite{background:#fff;border-radius:16px;padding:12px;max-width:920px;width:100%;max-height:92vh;overflow:auto}
+#voile img{width:100%;display:block;border-radius:8px}
+</style>
+</head>
+<body>
+
+<!-- ============ ACCUEIL ============ -->
+<section id="e-accueil" class="ecran actif"><div class="page">
+  <h1>Adaptedl</h1>
+  <p class="intro"><b style="color:var(--accent-clair)">version 22</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+
+  <div class="carte">
+    <h2>La page</h2>
+    <div class="rangee">
+      <button class="b" id="b-photo">Photo</button>
+      <button class="b pale" id="b-image">Image</button>
+      <button class="b pale" id="b-pdf">PDF</button>
+    </div>
+    <input type="file" id="f-photo" accept="image/*" capture="environment" class="masque">
+    <input type="file" id="f-image" accept="image/*" class="masque">
+    <input type="file" id="f-pdf" accept="application/pdf" class="masque">
+    <img id="apercu" class="masque" style="width:100%;border-radius:12px;border:1px solid var(--bord);margin-top:12px">
+    <div class="rangee masque" id="outils-page" style="margin-top:10px">
+      <button class="b pale" id="b-pivot">Pivoter</button>
+      <button class="b pale" id="b-prec">◀</button>
+      <span id="p-num" style="align-self:center;color:var(--doux)"></span>
+      <button class="b pale" id="b-suiv">▶</button>
+    </div>
+    <button class="b large" id="b-encadrer" style="margin-top:12px" disabled>Encadrer les exercices</button>
+  </div>
+
+  <div class="carte">
+    <h2>L'élève</h2>
+    <label class="champ"><span>Prénom, imprimé sur la fiche</span>
+      <input type="text" id="prenom" autocomplete="off" placeholder="Prénom"></label>
+    <button class="b pale" id="b-ouvrir-fiche" style="width:100%">Ouvrir une fiche déjà préparée</button>
+    <input type="file" id="f-fiche" accept=".json,application/json" class="masque">
+    <p class="note">Une fiche préparée fonctionne sans réseau : utile dans les écoles où ça ne capte pas.</p>
+  </div>
+
+  <div class="carte">
+    <h2>Le relais</h2>
+    <label class="champ"><span>Adresse de ton relais Cloudflare</span>
+      <textarea id="relais" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
+        autocorrect="off" placeholder="https://….workers.dev"></textarea></label>
+    <div class="rangee">
+      <button class="b pale" id="b-garder">Enregistrer</button>
+      <button class="b pale" id="b-tester">Tester</button>
+    </div>
+    <p class="note" id="etat-relais"></p>
+  </div>
+</div></section>
+
+<!-- ============ CADRES ============ -->
+<section id="e-cadres" class="ecran"><div class="page">
+  <button class="b pale" id="b-retour-cadres">← Revenir</button>
+  <h2 style="margin-top:14px">Encadre les exercices</h2>
+  <p class="intro">Fais glisser ton doigt autour de chaque exercice, consigne comprise, dans l'ordre où l'élève les fera. Un cadre par exercice, sur une seule colonne.</p>
+  <div id="zone"><img id="img-cadres" draggable="false" alt="Page"><div id="calque"></div></div>
+  <div class="rangee" style="margin-top:12px">
+    <button class="b pale" id="b-annuler">Annuler le dernier</button>
+    <button class="b pale" id="b-vider">Tout effacer</button>
+  </div>
+  <button class="b large" id="b-adapter" style="margin-top:12px" disabled>Adapter les exercices</button>
+  <p class="note" id="aide-cadres"></p>
+  <div id="err-cadres" class="alerte masque"></div>
+</div></section>
+
+<!-- ============ ATTENTE ============ -->
+<section id="e-attente" class="ecran"><div class="milieu">
+  <h2 id="a-titre">Préparation…</h2>
+  <div class="barre"><i id="a-barre"></i></div>
+  <p class="note" id="a-detail"></p>
+  <div id="err-attente" class="alerte masque"></div>
+  <button class="b pale masque" id="b-retour-attente" style="margin-top:14px">Revenir</button>
+</div></section>
+
+<!-- ============ ÉLÈVE ============ -->
+<section id="e-exo" class="ecran">
+  <div class="haut">
+    <div class="pastilles" id="pastilles"></div>
+    <button class="rond masque" id="b-loupe" aria-label="Voir l'exercice du manuel">🔍</button>
+    <button class="b nu" id="b-stop">Arrêter</button>
+  </div>
+  <div class="consigne">
+    <button class="rond" id="b-dire" aria-label="Écouter la consigne">🔊</button>
+    <div class="txt" id="consigne"></div>
+  </div>
+  <div class="corps"><div class="dedans" id="travail"></div></div>
+  <div class="tiroir" id="tiroir"></div>
+  <div class="bas">
+    <button class="b pale" id="b-effacer">Tout enlever</button>
+    <button class="b" id="b-fini">J'ai fini</button>
+  </div>
+</section>
+
+<div id="voile"><div class="boite">
+  <img id="voile-img" alt="L'exercice dans le manuel">
+  <button class="b pale large" id="b-fermer" style="margin-top:10px">Fermer</button>
+</div></div>
+
+<!-- ============ FIN ============ -->
+<section id="e-fin" class="ecran"><div class="milieu">
+  <h2>C'est terminé.</h2>
+  <p class="note" id="bilan"></p>
+  <label style="display:flex;gap:9px;align-items:center;justify-content:center;margin:16px 0">
+    <input type="checkbox" id="opt-juste" checked style="width:22px;height:22px;accent-color:var(--accent-clair)">
+    <span style="font-size:16px">Corriger : juste en vert, erreur barrée et réponse en rouge</span>
+  </label>
+  <div style="display:grid;gap:9px">
+    <button class="b large" id="b-fiche">Fiche imprimable</button>
+    <button class="b pale" id="b-enregistrer">Enregistrer ces exercices</button>
+    <button class="b pale" id="b-recommencer">Refaire</button>
+    <button class="b pale" id="b-accueil">Nouvelle page</button>
+  </div>
+  <div id="err-fin" class="alerte masque"></div>
+</div></section>
+
+<script src="./vendor/pdf.min.js"></script>
+<script>
+/* =====================================================================
+   Adaptedl — adaptation de pages de manuel pour élèves en difficulté.
+   Chaîne : import → cadres tracés à la main → un appel IA par cadre
+   (via le relais Albert) → activité à étiquettes → fiche imprimable.
+   ===================================================================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const E={ source:null, canvas:null, rotation:0, pdf:null, page:1,
+          cadres:[], regions:[], curseur:0, cache:new Map(), flux:false,
+          exos:[], index:0, ecartes:[], titre:'Exercices' };
+const ecran=id=>{ $$('.ecran').forEach(s=>s.classList.toggle('actif', s.id===id)); scrollTo(0,0); };
+const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const alerte=(sel,msg)=>{ const n=$(sel); if(!msg){n.classList.add('masque');return;} n.textContent=msg; n.classList.remove('masque'); };
+const melanger=a=>{const t=[...a];for(let i=t.length-1;i>0;i--){const j=0|Math.random()*(i+1);[t[i],t[j]]=[t[j],t[i]];}return t;};
+if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdf.worker.min.js';
+if('serviceWorker' in navigator && navigator.serviceWorker)
+  navigator.serviceWorker.register('./sw.js').then(r=>r.update()).catch(()=>{});
+
+/* ---------------- voix du système, sans réseau ---------------- */
+const Voix={ v:null,
+  init(){ const c=()=>{ const l=speechSynthesis.getVoices().filter(x=>x.lang&&/^fr/i.test(x.lang));
+    this.v=l.find(x=>/Audrey|Thomas|Amelie|Amélie|Marie/i.test(x.name))||l[0]||null; };
+    c(); speechSynthesis.onvoiceschanged=c; },
+  dire(t,vit=0.9,bouton=null){ if(!t) return; speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; u.rate=vit;
+    if(this.v) u.voice=this.v;
+    if(bouton){ bouton.classList.add('parle'); u.onend=u.onerror=()=>bouton.classList.remove('parle'); }
+    speechSynthesis.speak(u); },
+  stop(){ speechSynthesis.cancel(); $$('.parle').forEach(b=>b.classList.remove('parle')); } };
+Voix.init();
+
+/* ---------------- relais ---------------- */
+const STOCK='adaptedl_relais';
+function lireRelais(){ try{ return localStorage.getItem(STOCK)||E.relais||''; }catch(e){ return E.relais||''; } }
+function ecrireRelais(v){ E.relais=v; try{ v?localStorage.setItem(STOCK,v):localStorage.removeItem(STOCK); }catch(e){} }
+function normaliser(v){
+  let u=String(v).trim().replace(/\s+/g,'');
+  if(!u) return '';
+  if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,'');
+  u=u.replace(/^http:/i,'https:').replace(/\/+$/,'');
+  try{ const a=new URL(u); if(!a.hostname.includes('.')) return ''; }catch(e){ return ''; }
+  return u;
+}
+function majRelais(msg){
+  const u=lireRelais();
+  $('#etat-relais').textContent = msg!==undefined ? msg
+    : u ? `Relais : ${u}` : "Sans relais, seules les fiches déjà préparées fonctionnent.";
+  $('#b-encadrer').disabled = !E.canvas;
+}
+$('#b-garder').onclick=()=>{
+  const u=normaliser($('#relais').value);
+  if(!u){ majRelais("Adresse inutilisable. Elle ressemble à https://adaptedl-relais.xxx.workers.dev"); return; }
+  $('#relais').value=u; ecrireRelais(u); majRelais(`Enregistré : ${u}`);
+};
+$('#relais').addEventListener('change',()=>$('#b-garder').click());
+$('#b-tester').onclick=async()=>{
+  const u=lireRelais();
+  if(!u){ majRelais("Enregistre d'abord une adresse."); return; }
+  majRelais("Test en cours…");
+  let r; try{ r=await fetch(u,{method:'GET'}); }
+  catch(e){ majRelais("Aucune réponse : adresse fausse, ou worker non déployé."); return; }
+  let c={}; try{ c=await r.json(); }catch(e){}
+  if(r.status===405&&c.ok) majRelais("Relais en ligne, origine acceptée. Tout est prêt.");
+  else if(r.status===403) majRelais("Le relais refuse cette origine. "+(c.error||''));
+  else if(r.status===500) majRelais(c.error||"Le secret CLE_ALBERT manque dans le worker.");
+  else majRelais(`Le relais a répondu ${r.status}. ${c.error||c.message||''}`);
+};
+
+/* ---------------- import ---------------- */
+$('#b-photo').onclick=()=>$('#f-photo').click();
+$('#b-image').onclick=()=>$('#f-image').click();
+$('#b-pdf').onclick=()=>$('#f-pdf').click();
+$('#f-photo').onchange=e=>chargerImage(e.target.files[0]);
+$('#f-image').onchange=e=>chargerImage(e.target.files[0]);
+$('#f-pdf').onchange=e=>chargerPdf(e.target.files[0]);
+$('#b-pivot').onclick=()=>{ E.rotation=(E.rotation+90)%360; appliquer(); };
+$('#b-prec').onclick=()=>{ if(E.pdf&&E.page>1){E.page--;rendrePdf();} };
+$('#b-suiv').onclick=()=>{ if(E.pdf&&E.page<E.pdf.numPages){E.page++;rendrePdf();} };
+
+function reduire(img,maxi){
+  const f=Math.min(1,maxi/Math.max(img.width,img.height));
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.width*f); c.height=Math.round(img.height*f);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c;
+}
+function appliquer(){
+  const s=E.source, r=E.rotation, pivote=(r===90||r===270);
+  const c=document.createElement('canvas');
+  c.width=pivote?s.height:s.width; c.height=pivote?s.width:s.height;
+  const x=c.getContext('2d');
+  x.translate(c.width/2,c.height/2); x.rotate(r*Math.PI/180);
+  x.drawImage(s,-s.width/2,-s.height/2);
+  E.canvas=c;
+  $('#apercu').src=c.toDataURL('image/jpeg',0.7);
+  $('#apercu').classList.remove('masque');
+  $('#outils-page').classList.remove('masque');
+  $$('#b-prec,#b-suiv,#p-num').forEach(n=>n.classList.toggle('masque',!E.pdf||E.pdf.numPages<2));
+  majRelais();
+}
+async function chargerImage(f){
+  if(!f) return; E.pdf=null; E.rotation=0;
+  try{
+    const url=await new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ko;r.readAsDataURL(f);});
+    const img=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=url;});
+    E.source=reduire(img,2600); appliquer();
+  }catch(e){ majRelais("Cette image n'a pas pu être ouverte."); }
+}
+async function chargerPdf(f){
+  if(!f) return; E.rotation=0;
+  try{ E.pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; E.page=1; await rendrePdf(); }
+  catch(e){ majRelais("Ce PDF n'a pas pu être ouvert. Essaie une photo."); }
+}
+async function rendrePdf(){
+  const p=await E.pdf.getPage(E.page);
+  const base=p.getViewport({scale:1});
+  const vp=p.getViewport({scale:Math.min(3,2600/Math.max(base.width,base.height))});
+  const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+  const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+  await p.render({canvasContext:x,viewport:vp}).promise;
+  E.source=c; $('#p-num').textContent=`${E.page} / ${E.pdf.numPages}`;
+  appliquer();
+}
+
+/* ---------------- cadres ---------------- */
+$('#b-encadrer').onclick=()=>{
+  $('#img-cadres').src=E.canvas.toDataURL('image/jpeg',0.85);
+  E.cadres=[]; dessinerCadres(); alerte('#err-cadres',''); ecran('e-cadres');
+};
+$('#b-retour-cadres').onclick=()=>ecran('e-accueil');
+$('#b-annuler').onclick=()=>{E.cadres.pop();dessinerCadres();};
+$('#b-vider').onclick=()=>{E.cadres=[];dessinerCadres();};
+function dessinerCadres(){
+  $('#calque').innerHTML=E.cadres.map((c,i)=>
+    `<div class="cadre" style="left:${c.x0*100}%;top:${c.y0*100}%;width:${(c.x1-c.x0)*100}%;height:${(c.y1-c.y0)*100}%">
+      <span class="n">${i+1}</span><span class="x" data-x="${i}">×</span></div>`).join('');
+  $('#b-adapter').disabled=!E.cadres.length;
+  $('#aide-cadres').textContent=E.cadres.length
+    ? `${E.cadres.length} exercice(s) encadré(s).`
+    : "Trace le premier cadre autour de la consigne et de ses phrases.";
+}
+(function(){
+  const z=$('#zone'); let d=null, vu=null;
+  const pos=ev=>{ const r=z.getBoundingClientRect();
+    return {x:Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width)),
+            y:Math.min(1,Math.max(0,(ev.clientY-r.top)/r.height))}; };
+  z.addEventListener('pointerdown',ev=>{
+    const x=ev.target.closest('.x');
+    if(x){ E.cadres.splice(+x.dataset.x,1); dessinerCadres(); return; }
+    ev.preventDefault(); d=pos(ev);
+    try{ z.setPointerCapture(ev.pointerId); }catch(e){}
+    vu=document.createElement('div'); vu.className='cadre trace'; $('#calque').appendChild(vu);
+  });
+  const bouge=ev=>{ if(!d||!vu) return; ev.preventDefault(); const p=pos(ev);
+    Object.assign(vu.style,{left:Math.min(d.x,p.x)*100+'%',top:Math.min(d.y,p.y)*100+'%',
+      width:Math.abs(p.x-d.x)*100+'%',height:Math.abs(p.y-d.y)*100+'%'}); };
+  const fin=ev=>{ if(!d) return; const p=pos(ev);
+    const c={x0:Math.min(d.x,p.x),y0:Math.min(d.y,p.y),x1:Math.max(d.x,p.x),y1:Math.max(d.y,p.y)};
+    d=null; if(vu){vu.remove();vu=null;}
+    if(c.x1-c.x0>0.04&&c.y1-c.y0>0.02) E.cadres.push(c);
+    dessinerCadres(); };
+  z.addEventListener('pointermove',bouge); addEventListener('pointermove',bouge);
+  z.addEventListener('pointerup',fin);     addEventListener('pointerup',fin);
+  addEventListener('pointercancel',()=>{ d=null; if(vu){vu.remove();vu=null;} });
+  z.addEventListener('dragstart',ev=>ev.preventDefault());
+})();
+
+/* ---------------- appel au modèle, via le relais ---------------- */
+const MODELES=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
+const REGLE=`Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
+RÈGLE ABSOLUE : ne modifie jamais le contenu. Consignes et phrases sont recopiées MOT POUR MOT depuis l'image : même orthographe, même ponctuation, même ordre. N'invente aucune phrase, n'en simplifie aucune, n'en ajoute aucune.
+Ton seul travail : changer la façon de répondre. Là où l'élève devrait écrire, tu places un trou, et la réponse attendue devient une étiquette à glisser. Les pointillés, les cases vides et les lignes à remplir du manuel sont des trous.
+Une phrase par item : ne regroupe jamais deux phrases dans un même item.
+Réponds uniquement par du JSON, sans texte autour ni balises de code.`;
+const FORME=`{"consigne":"la consigne mot pour mot","consigne_dite":"la même consigne en une phrase très simple, à lire à voix haute","type":"trous","cible":"","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}],"categories":[],"etiquettes":["dort","mange"]}
+• type "trous" : segments de texte et trous, chaque trou porte sa réponse.
+• type "classement" : "categories":[{"nom":"Noms","reponses":["chat"]}] et "items":[].
+• type "marquage" (souligner, entourer, relever) : "cible" dit ce qu'il faut repérer, les items n'ont aucun trou.
+"etiquettes" : toutes les réponses attendues, mélangées, plus deux intrus au maximum pris dans la page. Si le manuel fournit une liste de mots, reprends-la telle quelle.
+Si l'exercice demande de rédiger, de recopier ou de dessiner sans rien à manipuler, réponds {"ignore":"motif court"}.`;
+
+async function demander(dataUrl){
+  const url=lireRelais();
+  if(!url) throw new Error("aucun relais enregistré");
+  let derniere=null;
+  for(const modele of MODELES){
+    let r;
+    try{
+      r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:modele,max_tokens:4000,temperature:0.1,
+          messages:[{role:'system',content:REGLE},
+                    {role:'user',content:[{type:'image_url',image_url:{url:dataUrl}},
+                      {type:'text',text:`Cette image montre UN exercice d'un manuel de français du primaire. Transforme-le en activité à étiquettes.\nRéponds par ce JSON :\n${FORME}`}]}]})});
+    }catch(e){ throw new Error("relais injoignable : vérifie son adresse et son déploiement"); }
+    if(r.status===403) throw new Error("le relais refuse cette origine");
+    if(r.status===405) throw new Error("adresse du relais fausse : la requête est partie ailleurs");
+    if(r.status===500){ const c=await r.json().catch(()=>({})); throw new Error(c.error||"secret CLE_ALBERT absent du relais"); }
+    if(r.status===429) throw new Error("trop de demandes, patiente un instant");
+    if(!r.ok){ derniere=new Error("le service a répondu "+r.status); continue; }
+    const d=await r.json();
+    const t=String((((d.choices||[])[0]||{}).message||{}).content||'').replace(/```json|```/g,'').trim();
+    const a=t.indexOf('{'), b=t.lastIndexOf('}');
+    if(a<0||b<0){ derniere=new Error("réponse illisible"); continue; }
+    return JSON.parse(t.slice(a,b+1));
+  }
+  throw derniere||new Error("aucun modèle n'a répondu");
+}
+
+function normaliserExo(brut,i){
+  const o={numero:String(i+1), consigne:String(brut.consigne||'').trim(),
+    dite:String(brut.consigne_dite||''), cible:String(brut.cible||''),
+    type:['trous','classement','marquage'].includes(brut.type)?brut.type:'trous',
+    items:[], cats:[], etq:[], cle:false, rep:{}, tri:{}, marq:{}, total:0};
+  (brut.items||[]).forEach(it=>{
+    const s=(it.segments||[]).map(g=> g.type==='trou'
+      ? {type:'trou',reponse:String(g.reponse||'')}
+      : {type:'texte',t:String(g.t||'')}).filter(g=>g.type==='trou'||g.t.trim());
+    if(s.length) o.items.push({seg:s});
+  });
+  (brut.categories||[]).forEach((c,k)=>o.cats.push({id:'c'+k,nom:String(c.nom||''),rep:(c.reponses||[]).map(String)}));
+  let n=0; o.items.forEach(it=>it.seg.forEach(g=>{ if(g.type==='trou') g.id='t'+(n++); }));
+  if(o.type==='marquage'){
+    o.items.forEach(it=>it.seg=it.seg.filter(g=>g.type!=='trou'));
+    o.bon=o.items.length>0;
+  }else if(o.type==='classement'){
+    const m=(brut.etiquettes||[]).length?brut.etiquettes:o.cats.flatMap(c=>c.rep);
+    o.etq=melanger(m.map(String).filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.total=o.etq.length; o.cle=o.cats.some(c=>c.rep.length>0);
+    o.bon=o.cats.length>0&&o.etq.length>0;
+  }else{
+    const r=o.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse));
+    const e=(brut.etiquettes||[]).length?brut.etiquettes.map(String):r;
+    o.etq=melanger(e.filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
+    o.total=n; o.cle=r.some(x=>x); o.bon=n>0;
+  }
+  return o;
+}
+function decouper(r){
+  const c=document.createElement('canvas');
+  c.width=Math.round(r.x1-r.x0); c.height=Math.round(r.y1-r.y0);
+  c.getContext('2d').drawImage(E.canvas,r.x0,r.y0,c.width,c.height,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.8);
+}
+async function preparerRegion(i){
+  const vignette=decouper(E.regions[i]);
+  const brut=await demander(vignette);
+  if(brut.ignore) return {hs:{n:i+1,raison:String(brut.ignore)}};
+  const ex=normaliserExo(brut,i);
+  if(!ex.bon) return {hs:{n:i+1,raison:"exercice non manipulable"}};
+  ex.vignette=vignette;
+  return {ex};
+}
+function lancer(i){
+  if(i<0||i>=E.regions.length) return null;
+  if(!E.cache.has(i)) E.cache.set(i, preparerRegion(i).catch(e=>({hs:{n:i+1,raison:e.message||'échec'}})));
+  return E.cache.get(i);
+}
+async function suivant(){
+  while(E.curseur<E.regions.length){
+    const p=lancer(E.curseur); E.curseur++;
+    const r=await p;
+    lancer(E.curseur);                    // le suivant se prépare en fond
+    if(r&&r.ex) return r.ex;
+    if(r&&r.hs) E.ecartes.push(r.hs);
+  }
+  return null;
+}
+async function avancer(){
+  let minuterie=null;
+  if(E.curseur<E.regions.length){
+    minuterie=setTimeout(()=>{
+      alerte('#err-attente',''); $('#b-retour-attente').classList.add('masque');
+      $('#a-titre').textContent = E.exos.length ? "L'exercice suivant arrive…" : "Lecture de l'exercice…";
+      $('#a-detail').textContent="Une dizaine de secondes.";
+      $('#a-barre').style.width='70%'; ecran('e-attente');
+    },300);
+  }
+  const ex=await suivant();
+  if(minuterie) clearTimeout(minuterie);
+  if(ex){ E.exos.push(ex); E.index=E.exos.length-1; ouvrir(); return; }
+  E.flux=false;
+  if(E.exos.length){ terminer(); return; }
+  ecran('e-attente');
+  $('#a-titre').textContent="Rien n'a pu être adapté"; $('#a-detail').textContent='';
+  $('#a-barre').style.width='100%';
+  alerte('#err-attente', E.ecartes.length
+    ? E.ecartes.map(x=>`Cadre ${x.n} : ${x.raison}`).join(' · ')
+    : "Aucun exercice reconnu dans les cadres.");
+  $('#b-retour-attente').classList.remove('masque');
+}
+$('#b-retour-attente').onclick=()=>ecran('e-cadres');
+$('#b-adapter').onclick=()=>{
+  if(!lireRelais()){ alerte('#err-cadres',"Aucun relais enregistré : renseigne son adresse sur l'écran d'accueil."); return; }
+  E.regions=E.cadres.map(c=>({x0:c.x0*E.canvas.width, y0:c.y0*E.canvas.height,
+                              x1:c.x1*E.canvas.width, y1:c.y1*E.canvas.height}));
+  E.exos=[]; E.ecartes=[]; E.curseur=0; E.cache=new Map(); E.flux=true; E.index=0;
+  $('#a-barre').style.width='10%';
+  lancer(0); avancer();
+};
+
+/* ---------------- l'élève ---------------- */
+const ex=()=>E.exos[E.index];
+function mots(texte,marquable,idItem){
+  let k=-1;
+  return String(texte).split(/(\s+)/).map(p=>{
+    if(/^\s*$/.test(p)) return p;
+    k++;
+    const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
+    const id=idItem!=null?`${idItem}-${k}`:'';
+    const on=marquable&&ex().marq[id]?' pris':'';
+    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}>${esc(p)}</span>`;
+  }).join('');
+}
+function ouvrir(){
+  const e=ex();
+  const total=E.flux?Math.max(E.regions.length,E.exos.length):E.exos.length;
+  $('#pastilles').innerHTML=Array.from({length:total},(_,i)=>
+    `<span class="pt ${i<E.index?'fait':''} ${i===E.index?'ici':''}"></span>`).join('');
+  $('#consigne').innerHTML=mots(e.consigne);
+  if(e.type==='classement')
+    $('#travail').innerHTML=`<div class="cols">`+e.cats.map(c=>
+      `<div class="col"><h3>${mots(c.nom)}</h3><div class="bac" data-cat="${c.id}"></div></div>`).join('')+`</div>`;
+  else if(e.type==='marquage')
+    $('#travail').innerHTML=`<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`+
+      e.items.map((it,i)=>`<div class="ligne">${mots(it.seg.map(s=>s.t).join(' '),true,i)}</div>`).join('');
+  else
+    $('#travail').innerHTML=e.items.map(it=>`<div class="ligne">`+it.seg.map(s=>
+      s.type==='trou'?`<span class="trou" data-trou="${s.id}"></span>`:mots(s.t)).join(' ')+`</div>`).join('');
+  $('#b-loupe').classList.toggle('masque',!e.vignette);
+  peindre(); ecran('e-exo');
+  Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));
+}
+const texteEtq=(e,id)=>{ const x=e.etq.find(t=>t.id===id); return x?x.texte:''; };
+function peindre(){
+  const e=ex();
+  if(e.type==='marquage'){
+    $('#tiroir').innerHTML=`<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`;
+    $('#b-fini').disabled=false;
+  }else{
+    const pris=new Set([...Object.values(e.rep),...Object.keys(e.tri)]);
+    const libres=e.etq.filter(t=>!pris.has(t.id));
+    $('#tiroir').innerHTML=libres.length
+      ? libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('')
+      : `<span class="vide">Toutes les étiquettes sont posées. Touche-en une pour la reprendre.</span>`;
+    $$('.trou').forEach(t=>{
+      const id=e.rep[t.dataset.trou];
+      t.classList.toggle('plein',!!id);
+      t.innerHTML=id?`<span class="etq posee" data-e="${id}" data-t="${t.dataset.trou}">${esc(texteEtq(e,id))}</span>`:'';
+    });
+    $$('.bac').forEach(b=>{
+      b.innerHTML=e.etq.filter(t=>e.tri[t.id]===b.dataset.cat)
+        .map(t=>`<span class="etq posee" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
+    });
+    const faits=e.type==='classement'?Object.keys(e.tri).length:Object.keys(e.rep).length;
+    $('#b-fini').disabled=faits===0;
+  }
+  $('#b-fini').textContent=(!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini";
+}
+let prise=null, vol=null, debut=null, glisse=false;
+function poser(id,cible){
+  const e=ex();
+  if(cible.classList.contains('trou')){ retirer(id); e.rep[cible.dataset.trou]=id; }
+  else if(cible.classList.contains('bac')){ retirer(id); e.tri[id]=cible.dataset.cat; }
+  prise=null; peindre();
+}
+function retirer(id){ const e=ex();
+  for(const t in e.rep) if(e.rep[t]===id) delete e.rep[t];
+  delete e.tri[id]; }
+const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.trou,.bac'):null; };
+addEventListener('pointerdown',ev=>{
+  const n=ev.target.closest('.etq');
+  if(!n||!$('#e-exo').classList.contains('actif')) return;
+  debut={x:ev.clientX,y:ev.clientY,id:n.dataset.e,trou:n.dataset.t,node:n}; glisse=false;
+});
+addEventListener('pointermove',ev=>{
+  if(!debut) return;
+  if(!glisse&&Math.hypot(ev.clientX-debut.x,ev.clientY-debut.y)>10){
+    glisse=true; vol=debut.node.cloneNode(true); vol.className='etq vol';
+    document.body.appendChild(vol); debut.node.classList.add('cachee');
+  }
+  if(glisse){ ev.preventDefault();
+    vol.style.left=ev.clientX+'px'; vol.style.top=ev.clientY+'px';
+    const c=sous(ev.clientX,ev.clientY);
+    $$('.vise').forEach(n=>n.classList.remove('vise')); if(c) c.classList.add('vise'); }
+},{passive:false});
+addEventListener('pointerup',ev=>{
+  if(!debut) return;
+  const {id,node,trou}=debut;
+  if(glisse){
+    vol.remove(); vol=null; $$('.vise').forEach(n=>n.classList.remove('vise'));
+    const c=sous(ev.clientX,ev.clientY);
+    if(c) poser(id,c); else { if(trou) delete ex().rep[trou]; else retirer(id); peindre(); }
+  }else{
+    Voix.dire(texteEtq(ex(),id),0.8);
+    if(node.classList.contains('posee')){
+      if(trou) delete ex().rep[trou]; else retirer(id);
+      prise=id; peindre(); $$('.etq').forEach(n=>n.classList.toggle('prise',n.dataset.e===id));
+    }else{ prise=(prise===id)?null:id;
+      $$('.etq').forEach(n=>n.classList.toggle('prise',n.dataset.e===prise)); }
+  }
+  debut=null; glisse=false;
+});
+addEventListener('click',ev=>{
+  if(!$('#e-exo').classList.contains('actif')) return;
+  const c=ev.target.closest('.trou,.bac');
+  if(c&&prise){ poser(prise,c); return; }
+  const m=ev.target.closest('.mot');
+  if(!m) return;
+  Voix.dire(m.dataset.mot,0.8);
+  if(m.dataset.m){ const e=ex(), k=m.dataset.m;
+    if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true;
+    m.classList.toggle('pris'); }
+});
+$('#b-dire').onclick=()=>{const e=ex();Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));};
+$('#b-loupe').onclick=()=>{const e=ex(); if(!e.vignette) return;
+  $('#voile-img').src=e.vignette; $('#voile').classList.add('on');};
+$('#b-fermer').onclick=()=>$('#voile').classList.remove('on');
+$('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
+$('#b-effacer').onclick=()=>{const e=ex(); e.rep={};e.tri={};e.marq={};prise=null; ouvrir();};
+$('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
+$('#b-fini').onclick=()=>{Voix.stop();
+  if(E.index<E.exos.length-1){ E.index++; ouvrir(); }
+  else if(E.flux) avancer();
+  else terminer(); };
+$('#b-recommencer').onclick=()=>{E.exos.forEach(e=>{e.rep={};e.tri={};e.marq={};}); E.index=0; ouvrir();};
+$('#b-accueil').onclick=()=>ecran('e-accueil');
+
+const plat=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9']/g,'');
+const memeMot=(a,b)=>plat(a)===plat(b);
+function terminer(){
+  let faits=0,total=0;
+  E.exos.forEach(e=>{ total+=e.total;
+    faits+= e.type==='classement'?Object.keys(e.tri).length : e.type==='marquage'?0:Object.keys(e.rep).length; });
+  $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} réponse(s) sur ${total}.`
+    +(E.ecartes.length?` ${E.ecartes.length} cadre(s) écarté(s).`:'');
+  const avecCle=E.exos.some(e=>e.cle);
+  $('#opt-juste').parentElement.classList.toggle('masque',!avecCle);
+  alerte('#err-fin','');
+  ecran('e-fin');
+}
+
+/* ---------------- fiches enregistrées ---------------- */
+function telecharger(nom,blob){
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
+}
+$('#b-enregistrer').onclick=()=>{
+  const propre=E.exos.map(e=>({...e, rep:{}, tri:{}, marq:{}}));
+  telecharger((($('#prenom').value.trim()||'fiche').toLowerCase().replace(/\s+/g,'-'))+'.json',
+    new Blob([JSON.stringify({app:'adaptedl',version:2,titre:E.titre,exercices:propre})],{type:'application/json'}));
+};
+$('#b-ouvrir-fiche').onclick=()=>$('#f-fiche').click();
+$('#f-fiche').onchange=async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(!Array.isArray(d.exercices)||!d.exercices.length) throw 0;
+    E.exos=d.exercices.map(x=>({...x, rep:{}, tri:{}, marq:{}}));
+    E.titre=d.titre||'Exercices'; E.flux=false; E.index=0; E.ecartes=[];
+    ouvrir();
+  }catch(err){ majRelais("Ce fichier n'est pas une fiche Adaptedl."); }
+  e.target.value='';
+};
+
+/* ---------------- fiche imprimable, compacte ---------------- */
+const MM=2.834645, L=210, H=297;
+const large=(()=>{const c=document.createElement('canvas').getContext('2d');
+  return (t,taille,gras)=>{c.font=`${gras?'bold ':''}${taille}px Helvetica, Arial, sans-serif`;
+    return c.measureText(t).width/MM*1.02;};})();
+function encoder(s){
+  const T={'œ':'\x9C','Œ':'\x8C','…':'\x85','–':'\x96','—':'\x97','’':'\x92','‘':'\x91','“':'\x93','”':'\x94','€':'\x80','✓':'V','✗':'X'};
+  let o=''; for(const ch of String(s)){ const c=T[ch]??ch; o+=c.charCodeAt(0)<256?c:'?'; }
+  return o.replace(/[\\()]/g,m=>'\\'+m);
+}
+function Pdf(){
+  const pages=[[]]; let p=0;
+  return {
+    page(){ pages.push([]); p=pages.length-1; },
+    txt(t,x,y,taille,gras,couleur){
+      const c=couleur||[0,0,0];
+      pages[p].push(`BT ${c.join(' ')} rg /F${gras?2:1} ${taille} Tf 1 0 0 1 ${(x*MM).toFixed(2)} ${((H-y)*MM).toFixed(2)} Tm (${encoder(t)}) Tj ET`); },
+    trait(x1,y1,x2,y2,ep,couleur){
+      const c=couleur||[0.4,0.4,0.4];
+      pages[p].push(`${ep||0.4} w ${c.join(' ')} RG ${(x1*MM).toFixed(2)} ${((H-y1)*MM).toFixed(2)} m ${(x2*MM).toFixed(2)} ${((H-y2)*MM).toFixed(2)} l S`); },
+    octets(){
+      const o=[], n=pages.length;
+      o.push(`<</Type/Catalog/Pages 2 0 R>>`);
+      o.push(`<</Type/Pages/Kids[${pages.map((_,i)=>`${3+i*2} 0 R`).join(' ')}]/Count ${n}>>`);
+      const f1=3+n*2, f2=f1+1;
+      pages.forEach((ops,i)=>{
+        o.push(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${(L*MM).toFixed(2)} ${(H*MM).toFixed(2)}]/Resources<</Font<</F1 ${f1} 0 R/F2 ${f2} 0 R>>>>/Contents ${4+i*2} 0 R>>`);
+        const flux=ops.join('\n');
+        o.push(`<</Length ${flux.length}>>\nstream\n${flux}\nendstream`);
+      });
+      o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>`);
+      o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>`);
+      let out='%PDF-1.4\n', dec=[];
+      o.forEach((x,i)=>{ dec.push(out.length); out+=`${i+1} 0 obj\n${x}\nendobj\n`; });
+      const xref=out.length;
+      out+=`xref\n0 ${o.length+1}\n0000000000 65535 f \n`
+        + dec.map(d=>String(d).padStart(10,'0')+' 00000 n \n').join('')
+        + `trailer\n<</Size ${o.length+1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`;
+      return Uint8Array.from(out,c=>c.charCodeAt(0)&0xFF);
+    }};
+}
+$('#b-fiche').onclick=()=>{
+  alerte('#err-fin','');
+  const juste=$('#opt-juste').checked;
+  // on cherche la plus grande taille qui tienne sur une seule page
+  for(const t of [9.5,9,8.5,8,7.5,7,6.5,6]){
+    const doc=Pdf();
+    if(composer(doc,t,juste,1)){ sortir(doc); return; }
+  }
+  for(const t of [9,8.5,8,7.5,7]){
+    const doc=Pdf();
+    if(composer(doc,t,juste,2)){ sortir(doc); return; }
+  }
+  alerte('#err-fin',"Trop de contenu pour deux pages.");
+};
+function sortir(doc){
+  telecharger((($('#prenom').value.trim()||'fiche').toLowerCase().replace(/\s+/g,'-'))+'.pdf',
+    new Blob([doc.octets()],{type:'application/pdf'}));
+}
+function couper(texte,largeur,taille,gras){
+  const out=[]; let l='';
+  for(const m of String(texte).split(/\s+/)){
+    const essai=l?l+' '+m:m;
+    if(large(essai,taille,gras)>largeur&&l){ out.push(l); l=m; } else l=essai;
+  }
+  if(l) out.push(l);
+  return out;
+}
+const VERT=[0.11,0.45,0.30], ROUGE=[0.75,0.15,0.10];
+/* Pose une suite de jetons avec retour à la ligne. Un jeton peut être
+   coloré, souligné, ou barré : c'est ainsi que la correction s'écrit. */
+function poserJetons(doc,jetons,gauche,droite,taille,pas,place,lireY,ecrireY){
+  let x=gauche;
+  if(!place(pas)) return false;
+  for(const j of jetons){
+    const w=large(j.t,taille,j.gras);
+    if(x+w>droite&&j.t.trim()){ if(!place(pas)) return false; ecrireY(lireY()+pas); x=gauche+3; }
+    if(x===gauche+3&&!j.t.trim()) continue;
+    const y=lireY();
+    doc.txt(j.t,x,y,taille,j.gras,j.couleur);
+    if(j.souligne) doc.trait(x,y+0.9,x+w,y+0.9,0.5,j.couleur);
+    if(j.barre)    doc.trait(x,y-taille*0.352*0.32,x+w,y-taille*0.352*0.32,0.5,ROUGE);
+    x+=w;
+  }
+  ecrireY(lireY()+pas);
+  return true;
+}
+function composer(doc,taille,juste,maxPages){
+  const G=12, D=198, HAUT=12, BAS=288;
+  const pas=taille*0.352*1.42+0.9;          // interligne serré : la fiche doit tenir
+  let y=HAUT, page=1;
+  const place=h=>{ if(y+h<=BAS) return true;
+    if(page>=maxPages) return false;
+    doc.page(); page++; y=HAUT; return true; };
+
+  const entete=`${$('#prenom').value.trim()||''}${$('#prenom').value.trim()?'   ':''}${new Date().toLocaleDateString('fr-FR')}`;
+  doc.txt(E.titre.slice(0,58),G,y,taille+1.5,true);
+  doc.txt(entete,D-large(entete,taille-1,false),y,taille-1,false);
+  y+=1.8; doc.trait(G,y,D,y); y+=pas;
+
+  for(const e of E.exos){
+    if(!place(pas*2)) return false;
+    for(const l of couper(`${e.numero}. ${e.consigne}`,D-G,taille,true)){
+      if(!place(pas)) return false; doc.txt(l,G,y,taille,true); y+=pas;
+    }
+    if(e.type==='classement'){
+      const corrige = juste && e.cats.some(c=>c.rep.length);
+      for(const c of e.cats){
+        const dedans=e.etq.filter(t=>e.tri[t.id]===c.id);
+        const jetons=[{t:c.nom+' : ',gras:true}];
+        if(!dedans.length) jetons.push({t:'—',gras:false});
+        dedans.forEach((t,k)=>{
+          if(k) jetons.push({t:', ',gras:false});
+          if(!corrige){ jetons.push({t:t.texte,gras:false}); return; }
+          const bonne=c.rep.some(r=>memeMot(r,t.texte));
+          if(bonne) jetons.push({t:t.texte,gras:true,couleur:VERT});
+          else{
+            jetons.push({t:t.texte,gras:false,barre:true});
+            const vraie=e.cats.find(x=>x.rep.some(r=>memeMot(r,t.texte)));
+            if(vraie) jetons.push({t:' ('+vraie.nom+')',gras:true,couleur:ROUGE});
+          }
+        });
+        if(!poserJetons(doc,jetons,G+4,D,taille,pas,place,()=>y,v=>y=v)) return false;
+      }
+    }else{
+      for(let i=0;i<e.items.length;i++){
+        const it=e.items[i], jetons=[];
+        if(e.type==='marquage'){
+          let k=-1;
+          for(const m of it.seg.map(s=>s.t).join(' ').split(/\s+/)){
+            k++; const on=!!e.marq[`${i}-${k}`];
+            jetons.push({t:m,gras:on,souligne:on}); jetons.push({t:' ',gras:false});
+          }
+        }else{
+          for(const g of it.seg){
+            if(g.type==='trou'){
+              const donnee=texteEtq(e,e.rep[g.id]);
+              const attendue=String(g.reponse||'');
+              if(!juste||!attendue) jetons.push({t:donnee||'......',gras:true});
+              else if(donnee&&memeMot(donnee,attendue)) jetons.push({t:donnee,gras:true,couleur:VERT});
+              else{
+                jetons.push({t:donnee||'......',gras:true,barre:!!donnee});
+                jetons.push({t:' ',gras:false});
+                jetons.push({t:attendue,gras:true,couleur:ROUGE});
+              }
+            }else String(g.t).split(/(\s+)/).forEach(m=>{ if(m) jetons.push({t:m,gras:false}); });
+            jetons.push({t:' ',gras:false});
+          }
+        }
+        if(!poserJetons(doc,jetons,G+4,D,taille,pas,place,()=>y,v=>y=v)) return false;
+      }
+    }
+    y+=pas*0.5;
+  }
+  return true;
+}
+
+/* ---------------- démarrage ---------------- */
+$('#relais').value=lireRelais();
+majRelais();
+</script>
+</body>
+</html>
