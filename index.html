@@ -106,6 +106,10 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 .saisie:focus{background:var(--accent-pale);outline:none}
 .dedans{width:100%}
 .ligne{overflow-wrap:break-word}
+.tracoir{position:relative;display:inline-block;max-width:100%;line-height:0}
+.tracoir img{width:100%;display:block;border-radius:10px;border:1px solid var(--bord);
+  pointer-events:none;-webkit-user-drag:none}
+#crayon{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair}
 .enonce{font-size:19px}
 .choix{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 .opt{border:2px solid var(--bord);background:#fff;border-radius:12px;padding:11px 17px;font-size:18px}
@@ -159,7 +163,7 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <!-- ============ ACCUEIL ============ -->
 <section id="e-accueil" class="ecran actif"><div class="page">
   <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 30</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+  <p class="intro"><b style="color:var(--accent-clair)">version 31</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
 
   <div class="carte">
     <h2>La page</h2>
@@ -605,11 +609,11 @@ const TYPES=[
 [116,"Construire un graphique","widget",["etiq"]]
 ];
 
-const BRIQUES_PRETES=['etiq','touch','coche','relier','ordre'];   // étape 1
+const BRIQUES_PRETES=['etiq','touch','coche','relier','ordre','trace'];
 const TYPE=Object.fromEntries(TYPES.map(t=>[t[0],{nom:t[1],brique:t[2],aussi:t[3]||[]}]));
 /* Un type non encore implémenté retombe sur la brique la plus proche :
    mieux vaut un exercice à étiquettes qu'un écran vide. */
-const REPLI={scan:'touch',trace:'touch',widget:'etiq',auto:'coche'};
+const REPLI={scan:'trace',widget:'etiq',auto:'coche'};
 /* =====================================================================
    MODE APPRENTISSAGE — le maître juge chaque adaptation. Deux effets :
    immédiat (une correction devient une règle appliquée aux exercices
@@ -809,7 +813,7 @@ function normaliser(brut,i){
      l'emporte sur la table des types. */
   const brique  = (brut.force&&BRIQUES_PRETES.includes(brut.force))
                   ? brut.force : briqueDe(numType, brut.brique);
-  const e={ numero:String(i+1), type:numType, brique,
+  const e={ numero:String(i+1), type:numType, brique, traces:[], image:'',
             nom:(TYPE[numType]&&TYPE[numType].nom)||'',
             consigne:String(brut.consigne||'').trim(),
             dite:String(brut.consigne_dite||''),
@@ -877,6 +881,12 @@ function normaliser(brut,i){
       &&p[0]>=0&&p[0]<g.length&&p[1]>=0&&p[1]<d.length).map(p=>['g'+p[0],'d'+p[1]]);
     e.total=e.gauche.length; e.cle=e.paires.length>0;
     e.bon_a_faire=e.gauche.length>1&&e.droite.length>1;
+  }
+
+  else if(brique==='trace'){
+    e.image=String(brut.image||'');
+    e.traces=[];
+    e.total=0; e.bon_a_faire=true;      // l'image arrive juste après, au recadrage
   }
 
   else if(brique==='ordre'){
@@ -1124,6 +1134,76 @@ ordre:{
   }
 }
 };
+
+/* ---- 6. tracé au doigt sur l'image du manuel ---------------------- */
+BRIQUES.trace={
+  travail(e){
+    return `<p class="but">Entoure directement sur l'exercice, avec ton doigt.</p>
+      <div class="tracoir" id="tracoir">
+        <img id="fond-trace" src="${e.image||e.vignette||''}" alt="L'exercice">
+        <canvas id="crayon"></canvas>
+      </div>`;
+  },
+  tiroir(e){
+    return `<button class="b pale" id="b-annuler-trait" style="margin-right:8px">Effacer le dernier trait</button>`
+      +`<span class="vide">${(e.traces||[]).length} trait(s).</span>`;
+  },
+  apres(e){ dessinerTraces(e); },
+  commence(e){ return (e.traces||[]).length>0; },
+  lire(e){ return e.consigne; },
+  pdf(e){
+    return [{image:e.image||e.vignette||'', traces:e.traces||[]}];
+  }
+};
+
+/* Le tracé est mémorisé en coordonnées relatives : il résiste au changement
+   de taille de l'écran comme au passage à l'impression. */
+function dessinerTraces(e){
+  const img=$('#fond-trace'), cv=$('#crayon');
+  if(!img||!cv) return;
+  const pose=()=>{
+    const r=img.getBoundingClientRect();
+    if(!r.width) return setTimeout(pose,60);
+    cv.width=Math.round(r.width); cv.height=Math.round(r.height);
+    cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
+    const x=cv.getContext('2d');
+    x.clearRect(0,0,cv.width,cv.height);
+    x.strokeStyle='#D4351C'; x.lineWidth=Math.max(3,r.width/260);
+    x.lineCap='round'; x.lineJoin='round';
+    for(const t of (e.traces||[])){
+      if(t.length<2) continue;
+      x.beginPath();
+      t.forEach((p,i)=> i?x.lineTo(p[0]*cv.width,p[1]*cv.height):x.moveTo(p[0]*cv.width,p[1]*cv.height));
+      x.stroke();
+    }
+  };
+  if(img.complete) pose(); else img.onload=pose;
+}
+(function(){
+  let trait=null;
+  const relatif=ev=>{ const cv=$('#crayon'); const r=cv.getBoundingClientRect();
+    return [(ev.clientX-r.left)/r.width,(ev.clientY-r.top)/r.height]; };
+  addEventListener('pointerdown',ev=>{
+    if(!ev.target.closest('#crayon')) return;
+    ev.preventDefault();
+    const e=ex(); e.traces=e.traces||[];
+    trait=[relatif(ev)]; e.traces.push(trait);
+  });
+  addEventListener('pointermove',ev=>{
+    if(!trait) return;
+    ev.preventDefault();
+    trait.push(relatif(ev)); dessinerTraces(ex());
+  },{passive:false});
+  addEventListener('pointerup',()=>{
+    if(!trait) return;
+    if(trait.length<2) ex().traces.pop();      // simple appui : pas un trait
+    trait=null; peindre();
+  });
+  addEventListener('click',ev=>{
+    if(!ev.target.closest('#b-annuler-trait')) return;
+    const e=ex(); (e.traces||[]).pop(); peindre();
+  });
+})();
 
 /* ---- traits du « relier », recalculés à chaque changement ---------- */
 function tracerFils(e){
@@ -1385,7 +1465,7 @@ $('#panneau').onclick=ev=>{
   if(b&&!b.disabled) changerMode(b.dataset.mode);
 };
 $('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
-const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};
+const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};e.traces=[];
   if(e.brique==='ordre'&&e.bon.length) e.ordre=melanger(e.bon); };
 $('#b-effacer').onclick=()=>{ remettreAZero(ex()); prise=null; ouvrir(); };
 $('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
@@ -1404,6 +1484,7 @@ function faitsDe(e){
     case 'coche':  return Object.keys(e.choisi).length;
     case 'relier': return Object.keys(e.liens).length;
     case 'ordre':  return e.ordre.filter((id,i)=>e.bon[i]===id).length;
+    case 'trace':  return (e.traces||[]).length;
     default:       return 0;
   }
 }
@@ -1431,7 +1512,8 @@ const MODES=[
   ['touch',   'Toucher les mots'],
   ['coche',   'Cocher parmi trois'],
   ['relier',  'Relier deux colonnes'],
-  ['ordre',   'Remettre dans l\'ordre']
+  ['ordre',   'Remettre dans l\'ordre'],
+  ['trace',  "Entourer sur l'image"]
 ];
 
 function matiere(e){
@@ -1481,6 +1563,7 @@ function possible(e,cible){
     case 'coche':   return m.paires.length>0&&m.banque.length>=2;
     case 'relier':  return m.paires.length>1;
     case 'ordre':   return m.phrases.length>1;
+    case 'trace':   return !!(e.vignette||e.image);
   }
   return false;
 }
@@ -1517,6 +1600,8 @@ function versBrut(e,cible){
             paires:m.paires.map((_,i)=>[i,i])};
   if(cible==='ordre')
     return {...socle, force:'ordre', brique:'ordre', elements:m.phrases.map(texteDe)};
+  if(cible==='trace')
+    return {...socle, force:'trace', brique:'trace', image:e.vignette||e.image||''};
   return null;
 }
 
@@ -1580,17 +1665,43 @@ const MM=2.834645, L=210, H=297;
 const large=(()=>{const c=document.createElement('canvas').getContext('2d');
   return (t,taille,gras)=>{c.font=`${gras?'bold ':''}${taille}px Helvetica, Arial, sans-serif`;
     return c.measureText(t).width/MM*1.02;};})();
+/* dimensions d'un JPEG : on lit l'en-tête SOF, sans bibliothèque */
+function tailleJpeg(bin){
+  for(let i=2;i<bin.length-9;){
+    if(bin.charCodeAt(i)!==0xFF){ i++; continue; }
+    const m=bin.charCodeAt(i+1);
+    if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC)
+      return {h:(bin.charCodeAt(i+5)<<8)|bin.charCodeAt(i+6),
+              l:(bin.charCodeAt(i+7)<<8)|bin.charCodeAt(i+8)};
+    i+=2+((bin.charCodeAt(i+2)<<8)|bin.charCodeAt(i+3));
+  }
+  return {l:1000,h:700};
+}
 function encoder(s){
   // le jeu de caractères du PDF ignore les flèches : on les écrit en signes
   s=String(s).replace(/[→⟶]/g,'->').replace(/[←⟵]/g,'<-').replace(/[×✕]/g,'x');
+  /* Les consignes de phonologie sont truffées d'alphabet phonétique, absent
+     du PDF. On l'écrit à la française : [ɛ̃] devient [in], ce qui reste juste
+     pour l'élève comme pour le maître. */
+  s=s.replace(/ɑ̃|ã/g,'an').replace(/ɔ̃|õ/g,'on').replace(/ɛ̃/g,'in').replace(/œ̃/g,'un')
+     .replace(/ʃ/g,'ch').replace(/ʒ/g,'j').replace(/ɲ/g,'gn').replace(/ø|œ/g,'eu')
+     .replace(/ɛ/g,'è').replace(/ɔ/g,'o').replace(/ə/g,'e').replace(/ɑ/g,'a')
+     .replace(/[ʁʀ]/g,'r').replace(/ɥ/g,'u').replace(/ɡ/g,'g').replace(/\u0303/g,'');
   const T={'œ':'\x9C','Œ':'\x8C','…':'\x85','–':'\x96','—':'\x97','’':'\x92','‘':'\x91','“':'\x93','”':'\x94','€':'\x80','✓':'V','✗':'X'};
   let o=''; for(const ch of String(s)){ const c=T[ch]??ch; o+=c.charCodeAt(0)<256?c:'?'; }
   return o.replace(/[\\()]/g,m=>'\\'+m);
 }
 function Pdf(){
-  const pages=[[]]; let p=0;
+  const pages=[[]]; const images=[]; let p=0;
   return {
     page(){ pages.push([]); p=pages.length-1; },
+    /* une image JPEG s'incruste telle quelle : le PDF sait la décoder */
+    image(b64,x,y,lg,ht){
+      const k=images.push(atob(b64))-1;
+      pages[p].push(`q ${(lg*MM).toFixed(2)} 0 0 ${(ht*MM).toFixed(2)} `
+        +`${(x*MM).toFixed(2)} ${((H-y-ht)*MM).toFixed(2)} cm /Im${k} Do Q`);
+      return k;
+    },
     txt(t,x,y,taille,gras,couleur){
       const c=couleur||[0,0,0];
       pages[p].push(`BT ${c.join(' ')} rg /F${gras?2:1} ${taille} Tf 1 0 0 1 ${(x*MM).toFixed(2)} ${((H-y)*MM).toFixed(2)} Tm (${encoder(t)}) Tj ET`); },
@@ -1601,14 +1712,21 @@ function Pdf(){
       const o=[], n=pages.length;
       o.push(`<</Type/Catalog/Pages 2 0 R>>`);
       o.push(`<</Type/Pages/Kids[${pages.map((_,i)=>`${3+i*2} 0 R`).join(' ')}]/Count ${n}>>`);
-      const f1=3+n*2, f2=f1+1;
+      const f1=3+n*2, f2=f1+1, im0=f2+1;
+      const res=`<</Font<</F1 ${f1} 0 R/F2 ${f2} 0 R>>`
+        +(images.length?`/XObject<<${images.map((_,k)=>`/Im${k} ${im0+k} 0 R`).join('')}>>`:'')+`>>`;
       pages.forEach((ops,i)=>{
-        o.push(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${(L*MM).toFixed(2)} ${(H*MM).toFixed(2)}]/Resources<</Font<</F1 ${f1} 0 R/F2 ${f2} 0 R>>>>/Contents ${4+i*2} 0 R>>`);
+        o.push(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${(L*MM).toFixed(2)} ${(H*MM).toFixed(2)}]/Resources${res}/Contents ${4+i*2} 0 R>>`);
         const flux=ops.join('\n');
         o.push(`<</Length ${flux.length}>>\nstream\n${flux}\nendstream`);
       });
       o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>`);
       o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>`);
+      images.forEach(bin=>{
+        const d=tailleJpeg(bin);
+        o.push(`<</Type/XObject/Subtype/Image/Width ${d.l}/Height ${d.h}/ColorSpace/DeviceRGB`
+          +`/BitsPerComponent 8/Filter/DCTDecode/Length ${bin.length}>>\nstream\n${bin}\nendstream`);
+      });
       let out='%PDF-1.4\n', dec=[];
       o.forEach((x,i)=>{ dec.push(out.length); out+=`${i+1} 0 obj\n${x}\nendobj\n`; });
       const xref=out.length;
@@ -1684,6 +1802,23 @@ function composer(doc,taille,juste,maxPages){
     }
     const B=BRIQUES[e.brique]||BRIQUES.etiq;
     for(const bloc of B.pdf(e,juste)){
+      if(bloc.image){                      // l'exercice lui-même, avec les traits de l'élève
+        const b64=String(bloc.image).split(',')[1]||'';
+        if(!b64) continue;
+        const bin=atob(b64), d=tailleJpeg(bin);
+        let lg=D-G-4, ht=lg*d.h/d.l;
+        const dispo=BAS-HAUT;
+        if(ht>dispo){ ht=dispo; lg=ht*d.l/d.h; }
+        if(!place(ht+1.5)) return false;
+        doc.image(b64,G+4,y,lg,ht);
+        for(const t of (bloc.traces||[])){
+          for(let k=1;k<t.length;k++)
+            doc.trait(G+4+t[k-1][0]*lg, y+t[k-1][1]*ht,
+                      G+4+t[k][0]*lg,   y+t[k][1]*ht, 0.7, ROUGE_PDF);
+        }
+        y+=ht+1.5;
+        continue;
+      }
       if(!poserJetons(doc,bloc.jetons,G+(bloc.indent||4),D,taille,pas,place,()=>y,v=>y=v)) return false;
     }
     y+=pas*0.5;
