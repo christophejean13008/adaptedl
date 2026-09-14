@@ -77,6 +77,10 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 @keyframes bat{50%{background:var(--accent-clair)}}
 .consigne{display:flex;gap:13px;align-items:flex-start;padding:15px 18px;background:var(--papier);border-bottom:1px solid var(--bord)}
 .consigne .txt{flex:1;font-size:19px}
+#jury{background:#FFF8E6;border-bottom:1px solid var(--etq-bord);padding:9px 16px}
+.jury-haut{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.jury-haut span{flex:1 1 200px;font-size:14px;color:#6B5B28}
+#jury .b{padding:8px 13px;font-size:15px}
 .corps{flex:1;overflow:auto;padding:18px;-webkit-overflow-scrolling:touch}
 .dedans{max-width:740px;margin:0 auto}
 .but{text-align:center;color:var(--doux);font-size:15px;margin:0 0 14px}
@@ -102,6 +106,28 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 .saisie:focus{background:var(--accent-pale);outline:none}
 .dedans{width:100%}
 .ligne{overflow-wrap:break-word}
+.enonce{font-size:19px}
+.choix{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.opt{border:2px solid var(--bord);background:#fff;border-radius:12px;padding:11px 17px;font-size:18px}
+.opt-pris{background:var(--accent);color:#fff;border-color:var(--accent)}
+.bloc-q{line-height:1.5}
+.relier{position:relative;display:flex;gap:34px;justify-content:space-between}
+.relier .cote{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0}
+.borne{background:var(--papier);border:2px solid var(--bord);border-radius:12px;padding:12px 10px;
+  font-size:18px;text-align:center;position:relative;z-index:1}
+.borne.vise{border-color:var(--accent);background:var(--accent-pale)}
+#fils{position:absolute;inset:0;pointer-events:none;z-index:3}
+#fils line{stroke:var(--accent-clair);stroke-width:3;stroke-linecap:round;pointer-events:stroke}
+.carte{display:flex;gap:10px;align-items:center;background:var(--papier);border:1px solid var(--bord);
+  border-radius:var(--r);padding:11px 13px;margin-bottom:9px;font-size:19px;
+  touch-action:none;user-select:none;-webkit-user-select:none}
+.carte.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
+.carte.cachee{opacity:.3}
+.carte.vise{border-color:var(--accent-clair);background:var(--accent-pale)}
+.carte.vol{position:fixed;z-index:99;pointer-events:none;margin:0;
+  transform:translate(-50%,-50%) scale(1.03);box-shadow:0 8px 18px rgba(27,42,51,.3)}
+.rang{width:27px;height:27px;border-radius:50%;background:var(--accent-pale);color:var(--accent);
+  font-size:14px;font-weight:bold;display:grid;place-items:center;flex:0 0 auto}
 .cols{display:flex;gap:11px;flex-wrap:wrap}
 .col{flex:1 1 165px;background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:11px}
 .col h3{margin:0 0 9px;font-size:17px;text-align:center;padding-bottom:7px;border-bottom:2px solid var(--bord)}
@@ -119,9 +145,11 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
   justify-content:center;align-items:center;padding:13px 14px calc(13px + env(safe-area-inset-bottom))}
 .tiroir .vide{color:#8FA3AE;font-size:15px}
 .bas{display:flex;gap:10px;justify-content:center;padding:11px 14px;background:var(--papier);border-top:1px solid var(--bord)}
-#voile{position:fixed;inset:0;background:rgba(27,42,51,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:18px}
-#voile.on{display:flex}
-#voile .boite{background:#fff;border-radius:16px;padding:12px;max-width:920px;width:100%;max-height:92vh;overflow:auto}
+#voile,#panneau{position:fixed;inset:0;background:rgba(27,42,51,.85);z-index:200;display:none;
+  align-items:center;justify-content:center;padding:18px}
+#voile.on,#panneau.on{display:flex}
+#panneau .boite{max-width:480px}
+#voile .boite,#panneau .boite{background:#fff;border-radius:16px;padding:16px;max-width:920px;width:100%;max-height:92vh;overflow:auto}
 #voile img{width:100%;display:block;border-radius:8px}
 </style>
 </head>
@@ -130,7 +158,7 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <!-- ============ ACCUEIL ============ -->
 <section id="e-accueil" class="ecran actif"><div class="page">
   <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 26</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+  <p class="intro"><b style="color:var(--accent-clair)">version 29</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
 
   <div class="carte">
     <h2>La page</h2>
@@ -159,6 +187,19 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
     <button class="b pale" id="b-ouvrir-fiche" style="width:100%">Ouvrir une fiche déjà préparée</button>
     <input type="file" id="f-fiche" accept=".json,application/json" class="masque">
     <p class="note">Une fiche préparée fonctionne sans réseau : utile dans les écoles où ça ne capte pas.</p>
+  </div>
+
+  <div class="carte">
+    <h2>Mode apprentissage</h2>
+    <p class="note" style="margin:0 0 10px">Pour toi, pas pour l'élève : juge chaque adaptation. Une correction devient aussitôt une règle pour les exercices du même type.</p>
+    <button class="b pale large" id="b-apprentissage">Activer le mode apprentissage</button>
+    <p class="note" id="etat-appr"></p>
+    <div class="rangee masque" id="outils-appr" style="margin-top:10px">
+      <button class="b pale" id="b-exporter-obs">Exporter</button>
+      <button class="b pale" id="b-importer-obs">Importer</button>
+      <button class="b pale" id="b-effacer-obs">Effacer</button>
+    </div>
+    <input type="file" id="f-obs" accept=".json,application/json" class="masque">
   </div>
 
   <div class="carte">
@@ -203,12 +244,22 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <section id="e-exo" class="ecran">
   <div class="haut">
     <div class="pastilles" id="pastilles"></div>
+    <button class="rond" id="b-mode" aria-label="Changer de mode d'adaptation">⇄</button>
     <button class="rond masque" id="b-loupe" aria-label="Voir l'exercice du manuel">🔍</button>
     <button class="b nu" id="b-stop">Arrêter</button>
   </div>
   <div class="consigne">
     <button class="rond" id="b-dire" aria-label="Écouter la consigne">🔊</button>
     <div class="txt" id="consigne"></div>
+  </div>
+  <div id="jury" class="masque">
+    <div class="jury-haut">
+      <span id="jury-titre"></span>
+      <button class="b pale" id="b-oui">Adaptation correcte</button>
+      <button class="b pale" id="b-non">Non, plutôt…</button>
+    </div>
+    <div class="rangee masque" id="jury-choix" style="margin-top:8px"></div>
+    <p class="note" id="jury-note" style="margin:6px 0 0"></p>
   </div>
   <div class="corps"><div class="dedans" id="travail"></div></div>
   <div class="tiroir" id="tiroir"></div>
@@ -217,6 +268,13 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
     <button class="b" id="b-fini">J'ai fini</button>
   </div>
 </section>
+
+<div id="panneau"><div class="boite">
+  <h2>Changer de mode</h2>
+  <p class="note" style="margin:0 0 12px">Si l'adaptation proposée ne colle pas à l'exercice du manuel, choisis-en une autre.</p>
+  <div id="liste-modes"></div>
+  <button class="b pale large" id="b-fermer-panneau" style="margin-top:12px">Annuler</button>
+</div></div>
 
 <div id="voile"><div class="boite">
   <img id="voile-img" alt="L'exercice dans le manuel">
@@ -422,21 +480,295 @@ function dessinerCadres(){
   z.addEventListener('dragstart',ev=>ev.preventDefault());
 })();
 
+/* =====================================================================
+   TABLE DES TYPES — 116 types d'exercices du CP au CM2, chacun rattaché
+   à l'une des 9 briques d'interface. Ajouter un type = une ligne ici.
+   Format : [numéro, intitulé, brique principale, briques secondaires]
+   ===================================================================== */
+const TYPES=[
+[1,"Entourer les mots ou syllabes contenant un son","scan",["trace"]],
+[2,"Segmenter et compter les syllabes","etiq"],
+[3,"Localiser un son (début, milieu, fin)","coche"],
+[4,"Associer graphème et phonème","relier"],
+[5,"Combinatoire (consonne + voyelle)","etiq"],
+[6,"Discrimination visuelle de lettres ou mots proches","touch"],
+[7,"Trier des mots selon la graphie d'un son","etiq"],
+[8,"Lire des mots ou pseudo-mots","auto"],
+[9,"Écrire une syllabe ou un mot sous dictée","etiq"],
+[10,"Questions à réponse explicite dans le texte","coche"],
+[11,"Questions inférentielles","coche"],
+[12,"QCM de compréhension","coche"],
+[13,"Vrai ou faux","coche"],
+[14,"Remettre des images ou des phrases dans l'ordre","ordre"],
+[15,"Associer texte et illustration","relier"],
+[16,"Relever ou souligner un élément dans le texte","touch"],
+[17,"Choisir le bon titre ou le bon résumé","coche"],
+[18,"Identifier personnages, lieu, temps","etiq"],
+[19,"Lecture à voix haute et fluence","auto"],
+[20,"Synonymes et antonymes","etiq"],
+[21,"Familles de mots","etiq"],
+[22,"Mot-étiquette et catégories","etiq"],
+[23,"Préfixes et suffixes","etiq"],
+[24,"Homonymes","etiq"],
+[25,"Relier un mot à sa définition","relier"],
+[26,"Ordre alphabétique et dictionnaire","ordre"],
+[27,"Compléter une phrase avec le mot juste","etiq"],
+[28,"Sens propre, sens figuré, polysémie","relier"],
+[29,"Champ lexical","etiq"],
+[30,"Identifier la nature des mots","etiq"],
+[31,"Identifier la fonction (sujet, COD, complément)","etiq"],
+[32,"Souligner le sujet et le verbe","etiq"],
+[33,"Phrase ou non-phrase","touch"],
+[34,"Remettre les mots dans l'ordre","etiq"],
+[35,"Rétablir la ponctuation","etiq"],
+[36,"Transformer le type ou la forme de phrase","etiq"],
+[37,"Enrichir ou réduire un groupe nominal","etiq"],
+[38,"Genre et nombre du groupe nominal","etiq"],
+[39,"Pronominaliser","etiq"],
+[40,"Classer dans un tableau d'analyse","etiq"],
+[41,"Associer deux moitiés de phrase","relier"],
+[42,"Conjuguer un verbe à un temps donné","coche"],
+[43,"Compléter avec la bonne terminaison","coche"],
+[44,"Identifier le temps employé","etiq"],
+[45,"Donner l'infinitif et le groupe","etiq"],
+[46,"Relier pronom et forme verbale","relier"],
+[47,"Transposer un texte (personne ou temps)","etiq"],
+[48,"Classer des verbes","etiq"],
+[49,"Dictée de mots, de phrase ou de texte","etiq"],
+[50,"Accords dans le groupe nominal","etiq"],
+[51,"Accord sujet-verbe","etiq"],
+[52,"Homophones (a/à, et/est, son/sont)","etiq"],
+[53,"Écrire le féminin ou le pluriel","etiq"],
+[54,"Compléter la lettre ou le graphème manquant","etiq"],
+[55,"Repérer et corriger les erreurs","touch",["etiq"]],
+[56,"Mémoriser les mots invariables","etiq"],
+[57,"Graphisme et écriture cursive","trace"],
+[58,"Copie simple, différée ou sélective","etiq"],
+[59,"Écrire une phrase à partir d'une image","etiq",["scan"]],
+[60,"Compléter ou continuer une histoire","ordre"],
+[61,"Écrire un type de texte (portrait, lettre, recette)","etiq"],
+[62,"Écrire « à la manière de »","etiq"],
+[63,"Réécrire en changeant un élément","etiq"],
+[64,"Améliorer ou enrichir son texte","etiq"],
+[65,"Mémoriser et réciter une poésie","etiq"],
+[66,"Écrire en chiffres et en lettres","etiq"],
+[67,"Décomposer un nombre","etiq",["widget"]],
+[68,"Comparer, ranger, encadrer, intercaler","etiq"],
+[69,"Placer ou lire sur une droite graduée","etiq"],
+[70,"Compléter une suite numérique","etiq"],
+[71,"Dénombrer une collection illustrée","touch"],
+[72,"Constituer une collection","etiq"],
+[73,"Tableau de numération","etiq",["widget"]],
+[74,"Arrondir, ordre de grandeur","etiq"],
+[75,"Fractions : colorier, écrire, placer","touch"],
+[76,"Nombres décimaux : lire, comparer, convertir","etiq",["widget"]],
+[77,"Multiples, diviseurs, divisibilité","touch"],
+[78,"Calcul mental dicté","etiq"],
+[79,"Opérations posées","widget",["etiq"]],
+[80,"Calcul en ligne ou décomposé","etiq"],
+[81,"Égalités à trous","etiq"],
+[82,"Tables de multiplication","etiq"],
+[83,"Priorités et parenthèses","touch",["etiq"]],
+[84,"Utiliser la calculatrice","widget",["etiq"]],
+[85,"Problème à une étape","etiq"],
+[86,"Problème à plusieurs étapes","etiq"],
+[87,"Problème avec image, schéma ou tableau","scan",["etiq"]],
+[88,"Choisir la bonne opération","etiq"],
+[89,"Trouver ou choisir la question","etiq"],
+[90,"Trier les données utiles et inutiles","touch"],
+[91,"Rédiger la phrase-réponse","etiq"],
+[92,"Proportionnalité, échelles, pourcentages","etiq"],
+[93,"Lire l'heure, calculer une durée","widget"],
+[94,"Calendrier","widget",["touch"]],
+[95,"Convertir longueurs, masses, contenances","etiq",["widget"]],
+[96,"Mesurer avec la règle","widget"],
+[97,"Lire un instrument (balance, thermomètre, verre doseur)","widget"],
+[98,"Monnaie : composer une somme, rendre la monnaie","widget",["etiq"]],
+[99,"Périmètre","touch"],
+[100,"Aire","touch"],
+[101,"Volume et contenance","widget"],
+[102,"Reconnaître et nommer des figures","etiq"],
+[103,"Tracer avec les instruments","widget",["trace"]],
+[104,"Reproduire une figure sur quadrillage","widget",["touch"]],
+[105,"Suivre un programme de construction","widget",["trace"]],
+[106,"Décrire une figure","etiq"],
+[107,"Symétrie axiale","widget",["touch"]],
+[108,"Alignement, perpendiculaires, parallèles","touch"],
+[109,"Angles : comparer, mesurer, tracer","widget"],
+[110,"Se repérer sur un quadrillage, coordonnées","touch"],
+[111,"Coder un déplacement","etiq"],
+[112,"Solides et patrons","widget",["etiq"]],
+[113,"Lire un tableau à double entrée","scan",["etiq"]],
+[114,"Compléter un tableau","etiq"],
+[115,"Lire un graphique (bâtons, courbe, camembert)","scan",["etiq"]],
+[116,"Construire un graphique","widget",["etiq"]]
+];
+
+const BRIQUES_PRETES=['etiq','touch','coche','relier','ordre'];   // étape 1
+const TYPE=Object.fromEntries(TYPES.map(t=>[t[0],{nom:t[1],brique:t[2],aussi:t[3]||[]}]));
+/* Un type non encore implémenté retombe sur la brique la plus proche :
+   mieux vaut un exercice à étiquettes qu'un écran vide. */
+const REPLI={scan:'touch',trace:'touch',widget:'etiq',auto:'coche'};
+/* =====================================================================
+   MODE APPRENTISSAGE — le maître juge chaque adaptation. Deux effets :
+   immédiat (une correction devient une règle appliquée aux exercices
+   suivants du même type) et différé (le fichier exporté sert à corriger
+   la table des 116 types et l'instruction envoyée au modèle).
+   ===================================================================== */
+const CLE_OBS='adaptedl_observations', CLE_MODE='adaptedl_apprentissage';
+
+function lireObs(){
+  try{ return JSON.parse(localStorage.getItem(CLE_OBS)||'[]'); }catch(e){ return []; }
+}
+/* Les vignettes sont ce qui a le plus de valeur pour corriger l'application,
+   mais elles pèsent. Si la réserve du navigateur déborde, on sacrifie les
+   images les plus anciennes, jamais les observations elles-mêmes. */
+function sauverObs(liste){
+  const essais=[
+    l=>l,
+    l=>l.map((o,i)=>i<l.length-30?{...o,image:''}:o),
+    l=>l.map(o=>({...o,image:''})),
+    l=>l.slice(-200).map(o=>({...o,image:''}))
+  ];
+  for(const taille of essais){
+    try{ localStorage.setItem(CLE_OBS,JSON.stringify(taille(liste))); return true; }
+    catch(e){}
+  }
+  return false;
+}
+function corrections(){
+  const c={};
+  for(const o of lireObs()) if(!o.juste&&o.attendue) c[o.type]=o.attendue;   // la dernière gagne
+  return c;
+}
+let CORR=corrections();
+
+function apprentissageActif(){
+  try{ return localStorage.getItem(CLE_MODE)==='1'; }catch(e){ return !!E.apprentissage; }
+}
+function basculerApprentissage(){
+  const on=!apprentissageActif();
+  E.apprentissage=on;
+  try{ localStorage.setItem(CLE_MODE,on?'1':'0'); }catch(e){}
+  majApprentissage();
+}
+function majApprentissage(){
+  const on=apprentissageActif(), obs=lireObs();
+  const justes=obs.filter(o=>o.juste).length;
+  $('#b-apprentissage').textContent = on ? 'Mode apprentissage : activé' : 'Activer le mode apprentissage';
+  $('#b-apprentissage').className = on ? 'b large' : 'b pale large';
+  $('#etat-appr').textContent = obs.length
+    ? `${obs.length} observation(s) — ${justes} adaptation(s) jugée(s) bonnes, ${Object.keys(CORR).length} règle(s) appliquée(s) aux prochains exercices.`
+    : "Aucune observation pour l'instant.";
+  $('#outils-appr').classList.toggle('masque',!obs.length&&!on);
+}
+
+/* ---- la barre de jugement, sur l'écran de l'exercice ---- */
+function majJury(){
+  const on=apprentissageActif();
+  $('#jury').classList.toggle('masque',!on);
+  if(!on) return;
+  const e=E.exos[E.index];
+  $('#jury-titre').textContent=`Type ${e.type||'?'} · ${e.nom||'non identifié'} → ${e.brique}`;
+  $('#jury-choix').classList.add('masque');
+  $('#jury-note').textContent=e.juge===true?'Noté : adaptation correcte.'
+    :e.juge===false?`Noté : à remplacer par « ${e.attendue} ».`:'';
+}
+function noter(juste,attendue){
+  const e=E.exos[E.index];
+  e.juge=juste; e.attendue=attendue||'';
+  const obs=lireObs();
+  obs.push({date:new Date().toISOString(), type:e.type||0, nom:e.nom||'',
+            proposee:e.brique, juste:!!juste, attendue:attendue||'',
+            consigne:e.consigne.slice(0,240), image:e.vignette||''});
+  sauverObs(obs); CORR=corrections();
+  majApprentissage(); majJury();
+}
+function ouvrirJuryChoix(){
+  $('#jury-choix').innerHTML=MODES.map(([id,nom])=>
+    `<button class="b pale" data-juge="${id}" style="flex:1 1 140px">${nom}</button>`).join('');
+  $('#jury-choix').classList.remove('masque');
+}
+
+/* ---- export et import des observations ---- */
+function exporterObs(){
+  const obs=lireObs();
+  if(!obs.length) return;
+  telecharger(`adaptedl-observations-${new Date().toISOString().slice(0,10)}.json`,
+    new Blob([JSON.stringify({app:'adaptedl',observations:obs},null,1)],{type:'application/json'}));
+}
+async function importerObs(f){
+  if(!f) return;
+  try{
+    const d=JSON.parse(await f.text());
+    const venues=Array.isArray(d)?d:(d.observations||[]);
+    if(!venues.length) throw 0;
+    const obs=lireObs();
+    const vues=new Set(obs.map(o=>o.date+'|'+o.type));
+    let ajoutees=0;
+    for(const o of venues){
+      const k=(o.date||'')+'|'+(o.type||0);
+      if(vues.has(k)) continue;
+      vues.add(k); obs.push(o); ajoutees++;
+    }
+    sauverObs(obs); CORR=corrections(); majApprentissage();
+    $('#etat-appr').textContent=`${ajoutees} observation(s) ajoutée(s). ${Object.keys(CORR).length} règle(s) active(s).`;
+  }catch(e){ $('#etat-appr').textContent="Ce fichier n'est pas un relevé Adaptedl."; }
+}
+function effacerObs(){
+  try{ localStorage.removeItem(CLE_OBS); }catch(e){}
+  CORR={}; majApprentissage();
+}
+
+function briqueDe(id,propose){
+  if(CORR[id]&&BRIQUES_PRETES.includes(CORR[id])) return CORR[id];   // règle apprise
+  const t=TYPE[id];
+  let b = t ? t.brique : (propose||'etiq');
+  if(!BRIQUES_PRETES.includes(b)){
+    const secours=(t&&t.aussi.find(x=>BRIQUES_PRETES.includes(x)))||REPLI[b]||'etiq';
+    b=secours;
+  }
+  return b;
+}
+
 /* ---------------- appel au modèle, via le relais ---------------- */
 const MODELES=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
-const REGLE=`Tu assistes un maître E qui adapte des pages de manuels de français du primaire pour des élèves en difficulté.
+const REGLE=`Tu assistes un maître E qui adapte des pages de manuels du primaire pour des élèves en difficulté.
+Tu n'inventes PAS l'adaptation : elle est déjà décidée. Ton travail est double.
+1. IDENTIFIER le type de l'exercice dans la liste numérotée fournie, et renvoyer son numéro.
+2. EXTRAIRE les données brutes de l'exercice dans le format correspondant à sa brique.
 RÈGLE ABSOLUE : ne modifie jamais le contenu. Consignes et phrases sont recopiées MOT POUR MOT depuis l'image : même orthographe, même ponctuation, même ordre. N'invente aucune phrase, n'en simplifie aucune, n'en ajoute aucune.
 Ton seul travail : changer la façon de répondre. Là où l'élève devrait écrire, tu places un trou, et la réponse attendue devient une étiquette à glisser. Les pointillés, les cases vides et les lignes à remplir du manuel sont des trous.
 FIDÉLITÉ DES TROUS : un mot déjà imprimé dans le manuel reste imprimé. Il ne devient jamais une étiquette ni un trou. Le trou se place uniquement là où la page laisse un espace vide, des pointillés ou une ligne à remplir — c'est-à-dire là où l'élève devait écrire.
 Une phrase par item : ne regroupe jamais deux phrases dans un même item.
 Réponds uniquement par du JSON, sans texte autour ni balises de code.`;
-const FORME=`{"consigne":"la consigne mot pour mot","consigne_dite":"la même consigne en une phrase très simple, à lire à voix haute","type":"trous","cible":"","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}],"categories":[],"etiquettes":["dort","mange"]}
-• type "trous" : segments de texte et trous, chaque trou porte sa réponse.
-• type "classement" : "categories":[{"nom":"Noms","reponses":["chat"]}] et "items":[].
-• type "marquage" (souligner, entourer, relever) : "cible" dit ce qu'il faut repérer, les items n'ont aucun trou.
-• type "ecriture" : quand l'élève doit inventer ou choisir librement ses mots (« de ton choix », « invente », « imagine »). Mêmes segments avec des trous, mais "etiquettes":[] et "reponse":"" — l'élève tapera au clavier.
-"etiquettes" : la liste des réponses possibles, SANS DOUBLON. Si trois phrases attendent « le », « le » et « la », donne ["le","la"] et non trois étiquettes. Ajoute au plus deux intrus plausibles pris dans la page. Si le manuel fournit une liste de mots, reprends-la telle quelle.
+const SCHEMAS=`Champs communs à toute réponse :
+{"type": <numéro du type dans la liste>, "brique":"etiq|touch|coche|relier|ordre",
+ "consigne":"la consigne mot pour mot", "consigne_dite":"la même consigne en une phrase très simple à lire à voix haute", ...}
+
+brique "etiq" — étiquettes à glisser. Deux dispositions :
+ · phrases : "disposition":"phrases","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}]
+ · colonnes : "disposition":"colonnes","colonnes":[{"nom":"Noms","reponses":["chat"]}]
+ Dans les deux cas : "etiquettes":["dort","mange"] — les réponses possibles SANS DOUBLON (trois phrases attendant « le », « le », « la » donnent ["le","la"]), plus deux intrus au maximum pris dans la page.
+ Si l'élève doit inventer ses mots (« de ton choix »), laisse "etiquettes":[] : il écrira au clavier.
+
+brique "touch" — toucher des mots dans le texte.
+ "cible":"les verbes conjugués","items":[{"texte":"Le vent souffle fort."}]
+
+brique "coche" — choisir parmi deux ou trois propositions.
+ "questions":[{"enonce":"Où entends-tu [a] ?","choix":["début","milieu","fin"],"bonne":0}]
+ "bonne" est l'indice de la réponse juste, ou null si la page ne permet pas de la déduire.
+
+brique "relier" — relier deux colonnes par un trait.
+ "gauche":["chat","table"],"droite":["animal","meuble"],"paires":[[0,0],[1,1]]
+ "paires" donne les bons appariements par indices, ou [] si la page ne les donne pas.
+
+brique "ordre" — remettre dans l'ordre.
+ "elements":["Il se lève.","Il déjeune.","Il part."] donnés DANS LE BON ORDRE ; l'application les mélangera.
+
+FIDÉLITÉ : un mot déjà imprimé dans le manuel reste imprimé ; il ne devient jamais une étiquette. Le trou se place là où la page laisse un vide, des pointillés ou une ligne à remplir.
 Si l'exercice demande de rédiger, de recopier ou de dessiner sans rien à manipuler, réponds {"ignore":"motif court"}.`;
+const LISTE_TYPES=TYPES.map(t=>`${t[0]}. ${t[1]}`).join('\n');
 
 async function demander(dataUrl){
   const url=lireRelais();
@@ -449,7 +781,7 @@ async function demander(dataUrl){
         body:JSON.stringify({model:modele,max_tokens:4000,temperature:0.1,
           messages:[{role:'system',content:REGLE},
                     {role:'user',content:[{type:'image_url',image_url:{url:dataUrl}},
-                      {type:'text',text:`Cette image montre UN exercice d'un manuel de français du primaire. Transforme-le en activité à étiquettes.\nRéponds par ce JSON :\n${FORME}`}]}]})});
+                      {type:'text',text:`Cette image montre UN exercice d'un manuel du primaire.\n\nLISTE DES TYPES :\n${LISTE_TYPES}\n\nIdentifie son type dans cette liste, puis renvoie ses données brutes.\n\n${SCHEMAS}`}]}]})});
     }catch(e){ throw new Error("relais injoignable : vérifie son adresse et son déploiement"); }
     if(r.status===403) throw new Error("le relais refuse cette origine");
     if(r.status===405) throw new Error("adresse du relais fausse : la requête est partie ailleurs");
@@ -465,43 +797,353 @@ async function demander(dataUrl){
   throw derniere||new Error("aucun modèle n'a répondu");
 }
 
-function normaliserExo(brut,i){
-  const o={numero:String(i+1), consigne:String(brut.consigne||'').trim(),
-    dite:String(brut.consigne_dite||''), cible:String(brut.cible||''),
-    type:['trous','classement','marquage','ecriture'].includes(brut.type)?brut.type:'trous',
-    items:[], cats:[], etq:[], cle:false, rep:{}, tri:{}, marq:{},
-    clavier:false, reutilisable:false, total:0};
-  (brut.items||[]).forEach(it=>{
-    const s=(it.segments||[]).map(g=> g.type==='trou'
-      ? {type:'trou',reponse:String(g.reponse||'')}
-      : {type:'texte',t:String(g.t||'')}).filter(g=>g.type==='trou'||g.t.trim());
-    if(s.length) o.items.push({seg:s});
-  });
-  (brut.categories||[]).forEach((c,k)=>o.cats.push({id:'c'+k,nom:String(c.nom||''),rep:(c.reponses||[]).map(String)}));
-  let n=0; o.items.forEach(it=>it.seg.forEach(g=>{ if(g.type==='trou') g.id='t'+(n++); }));
-  if(o.type==='marquage'){
-    o.items.forEach(it=>it.seg=it.seg.filter(g=>g.type!=='trou'));
-    o.bon=o.items.length>0;
-  }else if(o.type==='classement'){
-    const m=(brut.etiquettes||[]).length?brut.etiquettes:o.cats.flatMap(c=>c.rep);
-    o.etq=melanger(m.map(String).filter(Boolean)).map((t,k)=>({id:'e'+k,texte:t}));
-    o.total=o.etq.length; o.cle=o.cats.some(c=>c.rep.length>0);
-    o.bon=o.cats.length>0&&o.etq.length>0;
-  }else{
-    const r=o.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse));
-    const brute=((brut.etiquettes||[]).length?brut.etiquettes.map(String):r).filter(Boolean);
-    // Pas de doublon : trois phrases qui attendent « le » ne méritent pas
-    // trois étiquettes identiques, mais une seule, réutilisable.
+/* =====================================================================
+   NORMALISATION — le modèle renvoie des données brutes, on les range
+   dans la forme qu'attend la brique. Tout ce qui manque est reconstruit
+   ici, jamais dans les fonctions d'affichage.
+   ===================================================================== */
+function normaliser(brut,i){
+  const numType = Number(brut.type)||0;
+  /* « force » vient du changement de mode fait par le maître : son choix
+     l'emporte sur la table des types. */
+  const brique  = (brut.force&&BRIQUES_PRETES.includes(brut.force))
+                  ? brut.force : briqueDe(numType, brut.brique);
+  const e={ numero:String(i+1), type:numType, brique,
+            nom:(TYPE[numType]&&TYPE[numType].nom)||'',
+            consigne:String(brut.consigne||'').trim(),
+            dite:String(brut.consigne_dite||''),
+            cible:String(brut.cible||''),
+            items:[], colonnes:[], etq:[], reutilisable:false,
+            questions:[], gauche:[], droite:[], paires:[], elements:[], bon:[],
+            rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}, ordre:[],
+            cle:false, total:0, bon_a_faire:0 };
+
+  if(brique==='etiq'){
+    (brut.items||[]).forEach(it=>{
+      const seg=(it.segments||[]).map(g=> g.type==='trou'
+        ? {type:'trou',reponse:String(g.reponse||'')}
+        : {type:'texte',t:String(g.t||'')}).filter(g=>g.type==='trou'||g.t.trim());
+      if(seg.length) e.items.push({seg});
+    });
+    (brut.colonnes||brut.categories||[]).forEach((c,k)=>
+      e.colonnes.push({id:'c'+k,nom:String(c.nom||''),rep:(c.reponses||[]).map(String)}));
+    e.disposition = e.colonnes.length ? 'colonnes' : 'phrases';
+    let n=0; e.items.forEach(it=>it.seg.forEach(g=>{ if(g.type==='trou') g.id='t'+(n++); }));
+    const attendues=e.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse));
+    const brute=((brut.etiquettes||[]).length?brut.etiquettes.map(String)
+                 :(e.disposition==='colonnes'?e.colonnes.flatMap(c=>c.rep):attendues)).filter(Boolean);
     const vues=new Set(), uniques=[];
     for(const t of brute){ const c=aplat(t); if(!c||vues.has(c)) continue; vues.add(c); uniques.push(t); }
-    o.etq=melanger(uniques).map((t,k)=>({id:'e'+k,texte:t}));
-    o.reutilisable = o.etq.length>0 && o.etq.length<n;
-    o.clavier = o.type==='ecriture' || o.etq.length===0;
-    if(o.clavier){ o.type='ecriture'; o.etq=[]; }
-    o.total=n; o.cle=!o.clavier&&r.some(x=>x); o.bon=n>0;
+    e.etq=melanger(uniques).map((t,k)=>({id:'e'+k,texte:t}));
+    if(brut.sans_etiquettes) e.etq=[];        // mode « remplir au clavier »
+    if(e.disposition==='colonnes'){
+      e.total=e.etq.length; e.cle=e.colonnes.some(c=>c.rep.length>0);
+      e.bon_a_faire=e.colonnes.length>0&&e.etq.length>0;
+    }else{
+      e.reutilisable = e.etq.length>0 && e.etq.length<n;
+      e.total=n; e.cle=attendues.some(x=>x); e.bon_a_faire=n>0;
+    }
   }
-  return o;
+
+  else if(brique==='touch'){
+    (brut.items||[]).forEach(it=>{
+      const t=String(it.texte!==undefined?it.texte
+              :(it.segments||[]).map(g=>g.t||'').join(' ')).replace(/\s+/g,' ').trim();
+      if(t) e.items.push({texte:t});
+    });
+    e.total=0; e.bon_a_faire=e.items.length>0;
+  }
+
+  else if(brique==='coche'){
+    (brut.questions||[]).forEach(q=>{
+      const choix=(q.choix||[]).map(String).filter(x=>x.trim());
+      if(choix.length<2) return;
+      const b=(q.bonne===0||q.bonne)?Number(q.bonne):null;
+      e.questions.push({enonce:String(q.enonce||''),choix,
+        bonne:(b!==null&&b>=0&&b<choix.length)?b:null});
+    });
+    e.total=e.questions.length;
+    e.cle=e.questions.some(q=>q.bonne!==null);
+    e.bon_a_faire=e.questions.length>0;
+  }
+
+  else if(brique==='relier'){
+    const g=(brut.gauche||[]).map(String).filter(x=>x.trim());
+    const d=(brut.droite||[]).map(String).filter(x=>x.trim());
+    e.gauche=g.map((t,k)=>({id:'g'+k,texte:t}));
+    e.droite=melanger(d.map((t,k)=>({id:'d'+k,texte:t})));
+    e.paires=(brut.paires||[]).filter(p=>Array.isArray(p)&&p.length===2
+      &&p[0]>=0&&p[0]<g.length&&p[1]>=0&&p[1]<d.length).map(p=>['g'+p[0],'d'+p[1]]);
+    e.total=e.gauche.length; e.cle=e.paires.length>0;
+    e.bon_a_faire=e.gauche.length>1&&e.droite.length>1;
+  }
+
+  else if(brique==='ordre'){
+    const l=(brut.elements||[]).map(String).filter(x=>x.trim());
+    e.elements=l.map((t,k)=>({id:'o'+k,texte:t}));
+    e.bon=e.elements.map(x=>x.id);
+    do{ e.ordre=melanger(e.bon); }while(l.length>1&&e.ordre.join()===e.bon.join());
+    e.total=l.length; e.cle=l.length>1; e.bon_a_faire=l.length>1;
+  }
+  return e;
 }
+
+/* =====================================================================
+   LES BRIQUES — chacune sait s'afficher, dire si l'exercice est
+   commencé, se relire à voix haute et s'imprimer. Ajouter une brique,
+   c'est ajouter une entrée ici ; aucun autre fichier ne change.
+   ===================================================================== */
+const VERT_PDF=[0.11,0.45,0.30], ROUGE_PDF=[0.75,0.15,0.10];
+const texteEtq=(e,id)=>{ const x=e.etq.find(t=>t.id===id); return x?x.texte:''; };
+const ligne=(i,dedans,cls)=>
+  `<div class="ligne ${cls||''}"><button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button><span class="phrase">${dedans}</span></div>`;
+/* e et idItem ne sont fournis que pour la brique « toucher » : c'est ce qui
+   rend chaque mot sélectionnable. Ailleurs, les mots sont seulement lisibles. */
+function mots(texte,e,idItem){
+  const marquable = !!e && idItem!=null;
+  let k=-1;
+  return String(texte).split(/(\s+)/).map(p=>{
+    if(/^\s*$/.test(p)) return p;
+    k++;
+    const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
+    const id=marquable?`${idItem}-${k}`:'';
+    const on=marquable&&e.marq[id]?' pris':'';
+    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}>${esc(p)}</span>`;
+  }).join('');
+}
+function restantes(e){
+  if(e.reutilisable) return e.etq;
+  const pris={};
+  for(const k in e.rep){ const c=aplat(e.rep[k]); if(c) pris[c]=(pris[c]||0)+1; }
+  for(const k in e.tri){ const c=aplat(texteEtq(e,k)); if(c) pris[c]=(pris[c]||0)+1; }
+  return e.etq.filter(t=>{ const c=aplat(t.texte); if(pris[c]>0){ pris[c]--; return false; } return true; });
+}
+
+const BRIQUES={
+
+/* ---- 1. étiquettes glissables ------------------------------------ */
+etiq:{
+  travail(e){
+    if(e.disposition==='colonnes')
+      return `<p class="but">Glisse chaque étiquette dans la bonne colonne.</p><div class="cols">`
+        + e.colonnes.map(c=>`<div class="col"><h3>${mots(c.nom)}</h3><div class="bac" data-cat="${c.id}"></div></div>`).join('')
+        + `</div>`;
+    return `<p class="but">${e.etq.length
+        ? "Glisse une étiquette, ou touche la ligne pour écrire."
+        : "Touche la ligne et écris ta réponse."}</p>`
+      + e.items.map((it,i)=>ligne(i, it.seg.map(s=> s.type==='trou'
+          ? `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
+              autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`
+          : mots(s.t)).join(' '))).join('');
+  },
+  tiroir(e){
+    const libres=restantes(e);
+    if(libres.length) return libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
+    return `<span class="vide">${e.etq.length?"Toutes les étiquettes sont posées.":"Écris les mots de ton choix."}</span>`;
+  },
+  apres(e){
+    $$('.bac').forEach(b=>{
+      b.innerHTML=e.etq.filter(t=>e.tri[t.id]===b.dataset.cat)
+        .map(t=>`<span class="etq posee" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
+    });
+  },
+  commence(e){ return e.disposition==='colonnes'
+    ? Object.keys(e.tri).length>0
+    : Object.values(e.rep).some(v=>String(v).trim()); },
+  lire(e,i){
+    const it=e.items[i]; if(!it) return '';
+    return it.seg.map(s=> s.type==='trou'?String(e.rep[s.id]||''):s.t)
+      .join(' ').replace(/\s+/g,' ').replace(/\s([.,;:!?])/g,'$1').trim();
+  },
+  pdf(e,juste){
+    const blocs=[];
+    if(e.disposition==='colonnes'){
+      const corrige=juste&&e.colonnes.some(c=>c.rep.length);
+      for(const c of e.colonnes){
+        const dedans=e.etq.filter(t=>e.tri[t.id]===c.id);
+        const j=[{t:c.nom+' : ',gras:true}];
+        if(!dedans.length) j.push({t:'—',gras:false});
+        dedans.forEach((t,k)=>{
+          if(k) j.push({t:', ',gras:false});
+          if(!corrige){ j.push({t:t.texte,gras:false}); return; }
+          if(c.rep.some(r=>memeMot(r,t.texte))) j.push({t:t.texte,gras:true,couleur:VERT_PDF});
+          else{
+            j.push({t:t.texte,gras:false,barre:true});
+            const vraie=e.colonnes.find(x=>x.rep.some(r=>memeMot(r,t.texte)));
+            if(vraie) j.push({t:' ('+vraie.nom+')',gras:true,couleur:ROUGE_PDF});
+          }
+        });
+        blocs.push({indent:4,jetons:j});
+      }
+      return blocs;
+    }
+    for(const it of e.items){
+      const j=[];
+      for(const g of it.seg){
+        if(g.type==='trou'){
+          const donnee=String(e.rep[g.id]||'').trim();
+          const attendue=String(g.reponse||'');
+          if(!juste||!attendue) j.push({t:donnee||'......',gras:true});
+          else if(donnee&&memeMot(donnee,attendue)) j.push({t:donnee,gras:true,couleur:VERT_PDF});
+          else{
+            j.push({t:donnee||'......',gras:true,barre:!!donnee});
+            j.push({t:' ',gras:false});
+            j.push({t:attendue,gras:true,couleur:ROUGE_PDF});
+          }
+        }else String(g.t).split(/(\s+)/).forEach(m=>{ if(m) j.push({t:m,gras:false}); });
+        j.push({t:' ',gras:false});
+      }
+      blocs.push({indent:4,jetons:j});
+    }
+    return blocs;
+  }
+},
+
+/* ---- 2. toucher des mots ----------------------------------------- */
+touch:{
+  travail(e){
+    return `<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`
+      + e.items.map((it,i)=>ligne(i, mots(it.texte,e,i))).join('');
+  },
+  tiroir(){ return `<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`; },
+  commence(){ return true; },
+  lire(e,i){ return e.items[i]?e.items[i].texte:''; },
+  pdf(e){
+    return e.items.map((it,i)=>{
+      const j=[]; let k=-1;
+      for(const m of it.texte.split(/\s+/)){
+        k++; const on=!!e.marq[`${i}-${k}`];
+        j.push({t:m,gras:on,souligne:on}); j.push({t:' ',gras:false});
+      }
+      return {indent:4,jetons:j};
+    });
+  }
+},
+
+/* ---- 3. cocher ---------------------------------------------------- */
+coche:{
+  travail(e){
+    return e.questions.map((q,i)=>
+      `<div class="ligne bloc-q">
+         <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
+         <div class="phrase">
+           <div class="enonce">${mots(q.enonce)}</div>
+           <div class="choix">${q.choix.map((c,k)=>
+             `<button class="opt${e.choisi[i]===k?' opt-pris':''}" data-q="${i}" data-c="${k}">${esc(c)}</button>`).join('')}</div>
+         </div>
+       </div>`).join('');
+  },
+  tiroir(e){ return `<span class="vide">Touche la bonne réponse. Tu peux changer d'avis.</span>`; },
+  commence(e){ return Object.keys(e.choisi).length>0; },
+  lire(e,i){ const q=e.questions[i]; return q?`${q.enonce}. ${q.choix.join(', ')}`:''; },
+  pdf(e,juste){
+    return e.questions.flatMap((q,i)=>{
+      const choisi=e.choisi[i];
+      const j=[{t:q.enonce+' ',gras:false}];
+      if(choisi===undefined) j.push({t:'(sans réponse)',gras:true});
+      else if(!juste||q.bonne===null) j.push({t:q.choix[choisi],gras:true});
+      else if(choisi===q.bonne) j.push({t:q.choix[choisi],gras:true,couleur:VERT_PDF});
+      else{
+        j.push({t:q.choix[choisi],gras:true,barre:true});
+        j.push({t:' ',gras:false});
+        j.push({t:q.choix[q.bonne],gras:true,couleur:ROUGE_PDF});
+      }
+      return [{indent:4,jetons:j}];
+    });
+  }
+},
+
+/* ---- 4. relier ---------------------------------------------------- */
+relier:{
+  travail(e){
+    return `<p class="but">Touche un mot à gauche, puis celui qui va avec à droite.</p>
+      <div class="relier" id="relier">
+        <svg id="fils"></svg>
+        <div class="cote">${e.gauche.map(x=>
+          `<button class="borne" data-b="${x.id}">${esc(x.texte)}</button>`).join('')}</div>
+        <div class="cote">${e.droite.map(x=>
+          `<button class="borne" data-b="${x.id}">${esc(x.texte)}</button>`).join('')}</div>
+      </div>`;
+  },
+  tiroir(e){
+    const n=Object.keys(e.liens).length;
+    return `<span class="vide">${n} trait(s) tracé(s) sur ${e.gauche.length}. Touche un trait pour l'effacer.</span>`;
+  },
+  apres(e){ tracerFils(e); },
+  commence(e){ return Object.keys(e.liens).length>0; },
+  lire(e,i){ const x=e.gauche[i]; return x?x.texte:''; },
+  pdf(e,juste){
+    return e.gauche.map(g=>{
+      const did=e.liens[g.id];
+      const dt=did?(e.droite.find(x=>x.id===did)||{}).texte:'';
+      const attendu=(e.paires.find(p=>p[0]===g.id)||[])[1];
+      const j=[{t:g.texte+'  →  ',gras:false}];
+      if(!dt) j.push({t:'......',gras:true});
+      else if(!juste||!attendu) j.push({t:dt,gras:true});
+      else if(attendu===did) j.push({t:dt,gras:true,couleur:VERT_PDF});
+      else{
+        j.push({t:dt,gras:true,barre:true}); j.push({t:' ',gras:false});
+        const vrai=(e.droite.find(x=>x.id===attendu)||{}).texte||'';
+        j.push({t:vrai,gras:true,couleur:ROUGE_PDF});
+      }
+      return {indent:4,jetons:j};
+    });
+  }
+},
+
+/* ---- 5. remettre dans l'ordre ------------------------------------- */
+ordre:{
+  travail(e){
+    return `<p class="but">Glisse les cartes pour les remettre dans l'ordre. Tu peux aussi toucher deux cartes pour les échanger.</p>`
+      + `<div id="pile">`+e.ordre.map((id,i)=>{
+          const x=e.elements.find(v=>v.id===id)||{texte:''};
+          return `<div class="carte" data-o="${id}">
+            <span class="rang">${i+1}</span>
+            <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
+            <span class="phrase">${esc(x.texte)}</span></div>`;
+        }).join('')+`</div>`;
+  },
+  tiroir(){ return `<span class="vide">Les cartes se déplacent par glissement.</span>`; },
+  commence(){ return true; },
+  lire(e,i){ const id=e.ordre[i]; const x=e.elements.find(v=>v.id===id); return x?x.texte:''; },
+  pdf(e,juste){
+    return e.ordre.map((id,i)=>{
+      const x=e.elements.find(v=>v.id===id)||{texte:''};
+      const bonne=e.bon[i]===id;
+      const j=[{t:(i+1)+'. ',gras:true}];
+      if(!juste||!e.cle) j.push({t:x.texte,gras:false});
+      else if(bonne) j.push({t:x.texte,gras:false,couleur:VERT_PDF});
+      else j.push({t:x.texte,gras:false,barre:true});
+      return {indent:4,jetons:j};
+    }).concat(juste&&e.cle&&e.ordre.join()!==e.bon.join()
+      ? [{indent:4,jetons:[{t:'Ordre attendu : ',gras:true,couleur:ROUGE_PDF},
+          {t:e.bon.map((id,k)=>k+1+'. '+((e.elements.find(v=>v.id===id)||{}).texte||'')).join('   '),
+           gras:false,couleur:ROUGE_PDF}]}]
+      : []);
+  }
+}
+};
+
+/* ---- traits du « relier », recalculés à chaque changement ---------- */
+function tracerFils(e){
+  const boite=$('#relier'), svg=$('#fils');
+  if(!boite||!svg) return;
+  const r=boite.getBoundingClientRect();
+  svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
+  svg.setAttribute('width',r.width); svg.setAttribute('height',r.height);
+  const point=(id,cote)=>{
+    const n=boite.querySelector(`.borne[data-b="${id}"]`);
+    if(!n) return null;
+    const b=n.getBoundingClientRect();
+    return {x:(cote==='g'?b.right:b.left)-r.left, y:b.top-r.top+b.height/2};
+  };
+  svg.innerHTML=Object.entries(e.liens).map(([g,d])=>{
+    const a=point(g,'g'), b=point(d,'d');
+    if(!a||!b) return '';
+    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" data-fil="${g}"/>`;
+  }).join('');
+}
+
 function decouper(r){
   const c=document.createElement('canvas');
   c.width=Math.round(r.x1-r.x0); c.height=Math.round(r.y1-r.y0);
@@ -512,8 +1154,8 @@ async function preparerRegion(i){
   const vignette=decouper(E.regions[i]);
   const brut=await demander(vignette);
   if(brut.ignore) return {hs:{n:i+1,raison:String(brut.ignore)}};
-  const ex=normaliserExo(brut,i);
-  if(!ex.bon) return {hs:{n:i+1,raison:"exercice non manipulable"}};
+  const ex=normaliser(brut,i);
+  if(!ex.bon_a_faire) return {hs:{n:i+1,raison:"exercice non manipulable"}};
   ex.vignette=vignette;
   return {ex};
 }
@@ -567,187 +1209,344 @@ $('#b-adapter').onclick=()=>{
 
 /* ---------------- l'élève ---------------- */
 const ex=()=>E.exos[E.index];
-function mots(texte,marquable,idItem){
-  let k=-1;
-  return String(texte).split(/(\s+)/).map(p=>{
-    if(/^\s*$/.test(p)) return p;
-    k++;
-    const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
-    const id=idItem!=null?`${idItem}-${k}`:'';
-    const on=marquable&&ex().marq[id]?' pris':'';
-    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}>${esc(p)}</span>`;
-  }).join('');
-}
-/* Chaque phrase porte son haut-parleur : l'élève l'écoute en entier sans
-   avoir à toucher les mots un par un. */
-const ligne=(i,dedans)=>
-  `<div class="ligne"><button class="lire" data-lire="${i}" aria-label="Écouter la phrase">🔊</button><span class="phrase">${dedans}</span></div>`;
-function texteItem(e,i){
-  const it=e.items[i]; if(!it) return '';
-  return it.seg.map(s=>{
-    if(s.type!=='trou') return s.t;
-    return String(e.rep[s.id]||'');
-  }).join(' ').replace(/\s+/g,' ').replace(/\s([.,;:!?])/g,'$1').trim();
-}
+const brique=()=>BRIQUES[ex().brique]||BRIQUES.etiq;
+
 function ouvrir(){
-  const e=ex();
+  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
   const total=E.flux?Math.max(E.regions.length,E.exos.length):E.exos.length;
   $('#pastilles').innerHTML=Array.from({length:total},(_,i)=>
     `<span class="pt ${i<E.index?'fait':''} ${i===E.index?'ici':''}"></span>`).join('');
   $('#consigne').innerHTML=mots(e.consigne);
-  if(e.type==='classement')
-    $('#travail').innerHTML=`<div class="cols">`+e.cats.map(c=>
-      `<div class="col"><h3>${mots(c.nom)}</h3><div class="bac" data-cat="${c.id}"></div></div>`).join('')+`</div>`;
-  else if(e.type==='marquage')
-    $('#travail').innerHTML=`<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`+
-      e.items.map((it,i)=>ligne(i, mots(it.seg.map(s=>s.t).join(' '),true,i))).join('');
-  else
-    $('#travail').innerHTML=
-      `<p class="but">${e.etq.length
-        ? "Glisse une étiquette, ou touche la ligne pour écrire."
-        : "Touche la ligne et écris ta réponse."}</p>`+
-      e.items.map((it,i)=>ligne(i, it.seg.map(s=>
-        s.type==='trou'
-          ? `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
-              autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`
-          : mots(s.t)).join(' '))).join('');
+  $('#travail').innerHTML=B.travail(e);
   $('#b-loupe').classList.toggle('masque',!e.vignette);
-  peindre(); ecran('e-exo');
+  majJury();
+  peindre();
+  ecran('e-exo');
+  if(B.apres) requestAnimationFrame(()=>B.apres(e));
   Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));
 }
-const texteEtq=(e,id)=>{ const x=e.etq.find(t=>t.id===id); return x?x.texte:''; };
-function restantes(e){
-  if(e.reutilisable) return e.etq;
-  const pris={};
-  for(const k in e.rep){ const c=aplat(e.rep[k]); if(c) pris[c]=(pris[c]||0)+1; }
-  return e.etq.filter(t=>{ const c=aplat(t.texte); if(pris[c]>0){ pris[c]--; return false; } return true; });
-}
 function peindre(){
-  const e=ex();
-  if(e.type==='trous'||e.type==='ecriture'){
-    const libres=restantes(e);
-    $('#tiroir').innerHTML = libres.length
-      ? libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('')
-      : `<span class="vide">${e.etq.length?"Toutes les étiquettes sont posées.":"Écris les mots de ton choix."}</span>`;
-    $('#b-fini').disabled=!Object.values(e.rep).some(v=>String(v).trim());
-  }else if(e.type==='marquage'){
-    $('#tiroir').innerHTML=`<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`;
-    $('#b-fini').disabled=false;
-  }else{
-    const pris=new Set(Object.keys(e.tri));
-    const libres=e.etq.filter(t=>!pris.has(t.id));
-    $('#tiroir').innerHTML=libres.length
-      ? libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('')
-      : `<span class="vide">Toutes les étiquettes sont posées. Touche-en une pour la reprendre.</span>`;
-    $$('.bac').forEach(b=>{
-      b.innerHTML=e.etq.filter(t=>e.tri[t.id]===b.dataset.cat)
-        .map(t=>`<span class="etq posee" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
-    });
-    $('#b-fini').disabled=Object.keys(e.tri).length===0;
-  }
+  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
+  $('#tiroir').innerHTML=B.tiroir(e);
+  if(B.apres) B.apres(e);
+  $('#b-fini').disabled=!B.commence(e);
   $('#b-fini').textContent=(!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini";
 }
+
+/* ---- glisser : étiquettes et cartes à réordonner ---- */
 let prise=null, vol=null, debut=null, glisse=false;
 function poser(id,cible){
   const e=ex();
   if(cible.classList.contains('saisie')){
-    e.rep[cible.dataset.t]=texteEtq(e,id);
-    cible.value=texteEtq(e,id);
+    e.rep[cible.dataset.t]=texteEtq(e,id); cible.value=texteEtq(e,id);
+  }else if(cible.classList.contains('bac')){
+    delete e.tri[id]; e.tri[id]=cible.dataset.cat;
   }
-  else if(cible.classList.contains('bac')){ delete e.tri[id]; e.tri[id]=cible.dataset.cat; }
   prise=null; peindre();
 }
-const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac'):null; };
+function deplacer(depuis,vers){
+  const e=ex(), l=e.ordre;
+  const a=l.indexOf(depuis), b=l.indexOf(vers);
+  if(a<0||b<0||a===b) return;
+  l.splice(a,1); l.splice(b,0,depuis);
+  ouvrir();
+}
+const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.carte'):null; };
+
 addEventListener('pointerdown',ev=>{
   if(!$('#e-exo').classList.contains('actif')) return;
   const champ=ev.target.closest('.saisie');
-  if(champ&&prise){ ev.preventDefault(); poser(prise,champ); return; }   // pas de clavier
-  const n=ev.target.closest('.etq');
-  if(!n) return;
-  debut={x:ev.clientX,y:ev.clientY,id:n.dataset.e,trou:n.dataset.t,node:n}; glisse=false;
+  if(champ&&prise){ ev.preventDefault(); poser(prise,champ); return; }   // pose sans ouvrir le clavier
+  const n=ev.target.closest('.etq,.carte');
+  if(!n||ev.target.closest('.lire')) return;
+  debut={x:ev.clientX,y:ev.clientY,node:n,
+         genre:n.classList.contains('carte')?'carte':'etq',
+         id:n.dataset.e||n.dataset.o};
+  glisse=false;
 });
 addEventListener('pointermove',ev=>{
   if(!debut) return;
   if(!glisse&&Math.hypot(ev.clientX-debut.x,ev.clientY-debut.y)>10){
-    glisse=true; vol=debut.node.cloneNode(true); vol.className='etq vol';
+    glisse=true;
+    vol=debut.node.cloneNode(true);
+    vol.className=(debut.genre==='carte'?'carte vol':'etq vol');
+    if(debut.genre==='carte') vol.style.width=debut.node.getBoundingClientRect().width+'px';
     document.body.appendChild(vol); debut.node.classList.add('cachee');
   }
-  if(glisse){ ev.preventDefault();
+  if(glisse){
+    ev.preventDefault();
     vol.style.left=ev.clientX+'px'; vol.style.top=ev.clientY+'px';
     const c=sous(ev.clientX,ev.clientY);
-    $$('.vise').forEach(n=>n.classList.remove('vise')); if(c) c.classList.add('vise'); }
+    $$('.vise').forEach(x=>x.classList.remove('vise'));
+    if(c&&c!==debut.node) c.classList.add('vise');
+  }
 },{passive:false});
 addEventListener('pointerup',ev=>{
   if(!debut) return;
-  const {id,node,trou}=debut;
+  const {id,node,genre}=debut;
   if(glisse){
-    vol.remove(); vol=null; $$('.vise').forEach(n=>n.classList.remove('vise'));
+    vol.remove(); vol=null; $$('.vise').forEach(x=>x.classList.remove('vise'));
+    node.classList.remove('cachee');
     const c=sous(ev.clientX,ev.clientY);
-    if(c) poser(id,c); else { delete ex().tri[id]; peindre(); }
+    if(genre==='carte'){ if(c&&c.classList.contains('carte')&&c!==node) deplacer(id,c.dataset.o); }
+    else if(c) poser(id,c);
+    else { delete ex().tri[id]; peindre(); }
+  }else if(genre==='carte'){
+    const e=ex();
+    if(prise&&prise!==id&&e.ordre.includes(prise)){ deplacer(prise,id); prise=null; }
+    else{ prise=(prise===id)?null:id;
+      $$('.carte').forEach(x=>x.classList.toggle('prise',x.dataset.o===prise)); }
+    Voix.dire(brique().lire(e,e.ordre.indexOf(id)),0.82);
   }else{
     Voix.dire(texteEtq(ex(),id),0.8);
-    if(node.classList.contains('posee')){       // étiquette rangée dans une colonne
+    if(node.classList.contains('posee')){
       delete ex().tri[id]; prise=id; peindre();
-      $$('.etq').forEach(n=>n.classList.toggle('prise',n.dataset.e===id));
-    }else{ prise=(prise===id)?null:id;
-      $$('.etq').forEach(n=>n.classList.toggle('prise',n.dataset.e===prise)); }
+      $$('.etq').forEach(x=>x.classList.toggle('prise',x.dataset.e===id));
+    }else{
+      prise=(prise===id)?null:id;
+      $$('.etq').forEach(x=>x.classList.toggle('prise',x.dataset.e===prise));
+    }
   }
   debut=null; glisse=false;
 });
+
 addEventListener('click',ev=>{
   if(!$('#e-exo').classList.contains('actif')) return;
-  const c=ev.target.closest('.saisie,.bac');
-  if(c&&prise){ poser(prise,c); return; }
-  const hp=ev.target.closest('.lire');
-  if(hp){ const t=texteItem(ex(),+hp.dataset.lire); if(t) Voix.dire(t,0.82,hp); return; }
+  const e=ex();
+
+  const cible=ev.target.closest('.saisie,.bac');
+  if(cible&&prise){ poser(prise,cible); return; }
+
+  const opt=ev.target.closest('.opt');                       // cocher
+  if(opt){
+    const q=+opt.dataset.q, c=+opt.dataset.c;
+    e.choisi[q]=c;
+    $$(`.opt[data-q="${q}"]`).forEach(b=>b.classList.toggle('opt-pris',+b.dataset.c===c));
+    Voix.dire(e.questions[q].choix[c],0.85);
+    peindre(); return;
+  }
+
+  const fil=ev.target.closest('line[data-fil]');             // effacer un trait
+  if(fil){ delete e.liens[fil.dataset.fil]; peindre(); return; }
+
+  const borne=ev.target.closest('.borne');                   // relier
+  if(borne){
+    const id=borne.dataset.b;
+    Voix.dire(borne.textContent,0.85);
+    if(id[0]==='g'){
+      prise=(prise===id)?null:id;
+      $$('.borne').forEach(b=>b.classList.toggle('vise',b.dataset.b===prise));
+    }else if(prise&&prise[0]==='g'){
+      for(const g in e.liens) if(e.liens[g]===id) delete e.liens[g];
+      e.liens[prise]=id; prise=null;
+      $$('.borne').forEach(b=>b.classList.remove('vise'));
+      peindre();
+    }
+    return;
+  }
+
+  const hp=ev.target.closest('.lire');                       // écouter une ligne
+  if(hp){ const t=brique().lire(e,+hp.dataset.lire); if(t) Voix.dire(t,0.82,hp); return; }
+
   const m=ev.target.closest('.mot');
   if(!m) return;
   Voix.dire(m.dataset.mot,0.8);
-  if(m.dataset.m){ const e=ex(), k=m.dataset.m;
+  if(m.dataset.m){                                            // toucher-sélection
+    const k=m.dataset.m;
     if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true;
-    m.classList.toggle('pris'); }
+    m.classList.toggle('pris');
+  }
 });
-$('#b-dire').onclick=()=>{const e=ex();Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));};
-$('#b-loupe').onclick=()=>{const e=ex(); if(!e.vignette) return;
-  $('#voile-img').src=e.vignette; $('#voile').classList.add('on');};
-$('#b-fermer').onclick=()=>$('#voile').classList.remove('on');
-$('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
-$('#b-effacer').onclick=()=>{const e=ex(); e.rep={};e.tri={};e.marq={};prise=null; ouvrir();};
-// saisie au clavier : on enregistre à la frappe, sans redessiner la ligne
+
 document.addEventListener('input',ev=>{
   const n=ev.target.closest('.saisie');
   if(!n||!$('#e-exo').classList.contains('actif')) return;
   ex().rep[n.dataset.t]=n.value;
   peindre();
 });
-// au clic dans un champ déjà rempli, tout est sélectionné : l'élève corrige
-// sans avoir à effacer lettre à lettre
 document.addEventListener('focusin',ev=>{
   const n=ev.target.closest('.saisie');
   if(n&&n.value) setTimeout(()=>n.select(),0);
 });
+addEventListener('resize',()=>{ if($('#e-exo').classList.contains('actif')){
+  const e=ex(); if(e.brique==='relier') tracerFils(e); } });
+
+$('#b-dire').onclick=()=>{const e=ex();Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));};
+$('#b-loupe').onclick=()=>{const e=ex(); if(!e.vignette) return;
+  $('#voile-img').src=e.vignette; $('#voile').classList.add('on');};
+$('#b-fermer').onclick=()=>$('#voile').classList.remove('on');
+// enveloppés : ces fonctions sont définies plus bas dans le fichier
+$('#b-mode').onclick=()=>ouvrirPanneau();
+$('#b-fermer-panneau').onclick=()=>fermerPanneau();
+$('#panneau').onclick=ev=>{
+  if(ev.target.id==='panneau'){ fermerPanneau(); return; }
+  const b=ev.target.closest('[data-mode]');
+  if(b&&!b.disabled) changerMode(b.dataset.mode);
+};
+$('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
+const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};
+  if(e.brique==='ordre'&&e.bon.length) e.ordre=melanger(e.bon); };
+$('#b-effacer').onclick=()=>{ remettreAZero(ex()); prise=null; ouvrir(); };
 $('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
 $('#b-fini').onclick=()=>{Voix.stop();
   if(E.index<E.exos.length-1){ E.index++; ouvrir(); }
   else if(E.flux) avancer();
   else terminer(); };
-$('#b-recommencer').onclick=()=>{E.exos.forEach(e=>{e.rep={};e.tri={};e.marq={};}); E.index=0; ouvrir();};
+$('#b-recommencer').onclick=()=>{E.exos.forEach(remettreAZero); E.index=0; ouvrir();};
 $('#b-accueil').onclick=()=>ecran('e-accueil');
 
 const memeMot=(a,b)=>aplat(a)===aplat(b);
+function faitsDe(e){
+  switch(e.brique){
+    case 'etiq':   return e.disposition==='colonnes'?Object.keys(e.tri).length
+                     :Object.values(e.rep).filter(v=>String(v).trim()).length;
+    case 'coche':  return Object.keys(e.choisi).length;
+    case 'relier': return Object.keys(e.liens).length;
+    case 'ordre':  return e.ordre.filter((id,i)=>e.bon[i]===id).length;
+    default:       return 0;
+  }
+}
+
 function terminer(){
   let faits=0,total=0;
-  E.exos.forEach(e=>{ total+=e.total;
-    faits+= e.type==='classement'?Object.keys(e.tri).length
-          : e.type==='marquage'?0
-          : Object.values(e.rep).filter(v=>String(v).trim()).length; });
+  E.exos.forEach(e=>{ total+=e.total; faits+=faitsDe(e); });
   $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} réponse(s) sur ${total}.`
     +(E.ecartes.length?` ${E.ecartes.length} cadre(s) écarté(s).`:'');
-  const avecCle=E.exos.some(e=>e.cle);
-  $('#opt-juste').parentElement.classList.toggle('masque',!avecCle);
+  $('#opt-juste').parentElement.classList.toggle('masque',!E.exos.some(e=>e.cle));
   alerte('#err-fin','');
   ecran('e-fin');
 }
+
+/* =====================================================================
+   CHANGER DE MODE — quand l'adaptation proposée ne convient pas, le
+   maître bascule l'exercice vers une autre brique. On ne peut pas passer
+   de l'une à l'autre directement : on extrait d'abord une matière neutre
+   (phrases, réponses attendues, paires, banque de mots), dont chaque
+   brique sait repartir. Les réponses déjà données sont perdues.
+   ===================================================================== */
+const MODES=[
+  ['etiq',    'Étiquettes à glisser'],
+  ['clavier', 'Remplir au clavier'],
+  ['touch',   'Toucher les mots'],
+  ['coche',   'Cocher parmi trois'],
+  ['relier',  'Relier deux colonnes'],
+  ['ordre',   'Remettre dans l\'ordre']
+];
+
+function matiere(e){
+  const phrases=[], paires=[], banque=new Set();
+  const ajoute=t=>{ t=String(t||'').replace(/\s+/g,' ').trim(); if(t) banque.add(t); };
+  if(e.brique==='etiq'&&e.disposition!=='colonnes'){
+    e.items.forEach(it=>{
+      phrases.push(it.seg.map(g=>g.type==='trou'?{trou:true,rep:g.reponse}:{t:g.t}));
+      const texte=it.seg.filter(g=>g.type==='texte').map(g=>g.t).join(' ').replace(/\s+/g,' ').trim();
+      it.seg.forEach(g=>{ if(g.type==='trou'&&g.reponse) paires.push([texte,g.reponse]); });
+    });
+    e.etq.forEach(t=>ajoute(t.texte));
+  }
+  else if(e.brique==='etiq'){
+    e.colonnes.forEach(c=>c.rep.forEach(m=>{ paires.push([m,c.nom]); phrases.push([{t:m}]); ajoute(m); }));
+    e.colonnes.forEach(c=>ajoute(c.nom));
+    e.etq.forEach(t=>{ ajoute(t.texte); if(!phrases.some(p=>p[0]&&p[0].t===t.texte)) phrases.push([{t:t.texte}]); });
+  }
+  else if(e.brique==='touch') e.items.forEach(it=>phrases.push([{t:it.texte}]));
+  else if(e.brique==='coche') e.questions.forEach(q=>{
+    phrases.push([{t:q.enonce}]); q.choix.forEach(ajoute);
+    if(q.bonne!==null) paires.push([q.enonce,q.choix[q.bonne]]);
+  });
+  else if(e.brique==='relier') e.gauche.forEach(g=>{
+    phrases.push([{t:g.texte}]);
+    const d=(e.paires.find(x=>x[0]===g.id)||[])[1];
+    const dt=(e.droite.find(x=>x.id===d)||{}).texte;
+    if(dt) paires.push([g.texte,dt]);
+    });
+  else if(e.brique==='ordre') e.bon.forEach(id=>{
+    const x=e.elements.find(v=>v.id===id); if(x) phrases.push([{t:x.texte}]);
+  });
+  if(e.brique==='relier') e.droite.forEach(d=>ajoute(d.texte));
+  return {phrases, paires, banque:[...banque]};
+}
+
+const texteDe=p=>p.map(x=>x.trou?(x.rep||'…'):x.t).join(' ').replace(/\s+/g,' ')
+                  .replace(/\s([.,;:!?])/g,'$1').trim();
+const aDesTrous=m=>m.phrases.some(p=>p.some(x=>x.trou));
+
+function possible(e,cible){
+  const m=matiere(e);
+  switch(cible){
+    case 'etiq':
+    case 'clavier': return aDesTrous(m)||m.paires.length>0;
+    case 'touch':   return m.phrases.length>0;
+    case 'coche':   return m.paires.length>0&&m.banque.length>=2;
+    case 'relier':  return m.paires.length>1;
+    case 'ordre':   return m.phrases.length>1;
+  }
+  return false;
+}
+
+/* Reconstruit des données brutes au format attendu par la brique visée,
+   puis les repasse dans la normalisation habituelle. */
+function versBrut(e,cible){
+  const m=matiere(e);
+  const socle={type:e.type, consigne:e.consigne, consigne_dite:e.dite, cible:e.cible};
+  if(cible==='etiq'||cible==='clavier'){
+    let items;
+    if(aDesTrous(m))
+      items=m.phrases.map(p=>({segments:p.map(x=>x.trou?{type:'trou',reponse:x.rep}:{type:'texte',t:x.t})}));
+    else
+      items=m.paires.map(([g,d])=>({segments:[{type:'texte',t:g+' '},{type:'trou',reponse:d}]}));
+    const etq=cible==='clavier'?[]:(m.banque.length?m.banque:m.paires.map(p=>p[1]));
+    return {...socle, force:'etiq', brique:'etiq', items, etiquettes:etq,
+            sans_etiquettes:cible==='clavier'};
+  }
+  if(cible==='touch')
+    return {...socle, force:'touch', brique:'touch', cible:e.cible||'les mots qui conviennent',
+            items:m.phrases.map(p=>({texte:texteDe(p)}))};
+  if(cible==='coche'){
+    const questions=m.paires.map(([g,d])=>{
+      const autres=melanger(m.banque.filter(x=>aplat(x)!==aplat(d))).slice(0,2);
+      const choix=melanger([d,...autres]);
+      return {enonce:g, choix, bonne:choix.findIndex(c=>aplat(c)===aplat(d))};
+    });
+    return {...socle, force:'coche', brique:'coche', questions};
+  }
+  if(cible==='relier')
+    return {...socle, force:'relier', brique:'relier',
+            gauche:m.paires.map(p=>p[0]), droite:m.paires.map(p=>p[1]),
+            paires:m.paires.map((_,i)=>[i,i])};
+  if(cible==='ordre')
+    return {...socle, force:'ordre', brique:'ordre', elements:m.phrases.map(texteDe)};
+  return null;
+}
+
+function changerMode(cible){
+  const avant=E.exos[E.index];
+  const brut=versBrut(avant,cible);
+  if(!brut) return;
+  const neuf=normaliser(brut,E.index);
+  if(!neuf.bon_a_faire) return;
+  neuf.vignette=avant.vignette;
+  neuf.numero=avant.numero;
+  neuf.nom=avant.nom;
+  neuf.repli=cible;              // mémorisé pour la fiche et pour « refaire »
+  neuf.juge=avant.juge; neuf.attendue=avant.attendue;
+  E.exos[E.index]=neuf;
+  fermerPanneau();
+  ouvrir();
+}
+
+function ouvrirPanneau(){
+  const e=E.exos[E.index];
+  const actuel=e.repli||(e.brique==='etiq'&&!e.etq.length?'clavier':e.brique);
+  $('#liste-modes').innerHTML=MODES.map(([id,nom])=>{
+    const ok=possible(e,id), ici=id===actuel;
+    return `<button class="b ${ici?'':'pale'} large" data-mode="${id}" ${ok||ici?'':'disabled'}
+      style="margin-bottom:8px">${nom}${ici?' · en cours':''}</button>`;
+  }).join('')
+   +`<p class="note">Type reconnu : ${esc(e.nom||'inconnu')}${e.type?` (n° ${e.type})`:''}. Changer de mode efface les réponses déjà données.</p>`;
+  $('#panneau').classList.add('on');
+}
+const fermerPanneau=()=>$('#panneau').classList.remove('on');
 
 /* ---------------- fiches enregistrées ---------------- */
 function telecharger(nom,blob){
@@ -756,7 +1555,7 @@ function telecharger(nom,blob){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
 }
 $('#b-enregistrer').onclick=()=>{
-  const propre=E.exos.map(e=>({...e, rep:{}, tri:{}, marq:{}}));
+  const propre=E.exos.map(e=>({...e, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}}));
   telecharger((($('#prenom').value.trim()||'fiche').toLowerCase().replace(/\s+/g,'-'))+'.json',
     new Blob([JSON.stringify({app:'adaptedl',version:2,titre:E.titre,exercices:propre})],{type:'application/json'}));
 };
@@ -766,7 +1565,9 @@ $('#f-fiche').onchange=async e=>{
   try{
     const d=JSON.parse(await f.text());
     if(!Array.isArray(d.exercices)||!d.exercices.length) throw 0;
-    E.exos=d.exercices.map(x=>({...x, rep:{}, tri:{}, marq:{}}));
+    E.exos=d.exercices.map(x=>{const e={...x, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}};
+      if(e.brique==='ordre'&&(e.bon||[]).length) e.ordre=melanger(e.bon);
+      return e;});
     E.titre=d.titre||'Exercices'; E.flux=false; E.index=0; E.ecartes=[];
     ouvrir();
   }catch(err){ majRelais("Ce fichier n'est pas une fiche Adaptedl."); }
@@ -779,6 +1580,8 @@ const large=(()=>{const c=document.createElement('canvas').getContext('2d');
   return (t,taille,gras)=>{c.font=`${gras?'bold ':''}${taille}px Helvetica, Arial, sans-serif`;
     return c.measureText(t).width/MM*1.02;};})();
 function encoder(s){
+  // le jeu de caractères du PDF ignore les flèches : on les écrit en signes
+  s=String(s).replace(/[→⟶]/g,'->').replace(/[←⟵]/g,'<-').replace(/[×✕]/g,'x');
   const T={'œ':'\x9C','Œ':'\x8C','…':'\x85','–':'\x96','—':'\x97','’':'\x92','‘':'\x91','“':'\x93','”':'\x94','€':'\x80','✓':'V','✗':'X'};
   let o=''; for(const ch of String(s)){ const c=T[ch]??ch; o+=c.charCodeAt(0)<256?c:'?'; }
   return o.replace(/[\\()]/g,m=>'\\'+m);
@@ -878,52 +1681,9 @@ function composer(doc,taille,juste,maxPages){
     for(const l of couper(`${e.numero}. ${e.consigne}`,D-G,taille,true)){
       if(!place(pas)) return false; doc.txt(l,G,y,taille,true); y+=pas;
     }
-    if(e.type==='classement'){
-      const corrige = juste && e.cats.some(c=>c.rep.length);
-      for(const c of e.cats){
-        const dedans=e.etq.filter(t=>e.tri[t.id]===c.id);
-        const jetons=[{t:c.nom+' : ',gras:true}];
-        if(!dedans.length) jetons.push({t:'—',gras:false});
-        dedans.forEach((t,k)=>{
-          if(k) jetons.push({t:', ',gras:false});
-          if(!corrige){ jetons.push({t:t.texte,gras:false}); return; }
-          const bonne=c.rep.some(r=>memeMot(r,t.texte));
-          if(bonne) jetons.push({t:t.texte,gras:true,couleur:VERT});
-          else{
-            jetons.push({t:t.texte,gras:false,barre:true});
-            const vraie=e.cats.find(x=>x.rep.some(r=>memeMot(r,t.texte)));
-            if(vraie) jetons.push({t:' ('+vraie.nom+')',gras:true,couleur:ROUGE});
-          }
-        });
-        if(!poserJetons(doc,jetons,G+4,D,taille,pas,place,()=>y,v=>y=v)) return false;
-      }
-    }else{
-      for(let i=0;i<e.items.length;i++){
-        const it=e.items[i], jetons=[];
-        if(e.type==='marquage'){
-          let k=-1;
-          for(const m of it.seg.map(s=>s.t).join(' ').split(/\s+/)){
-            k++; const on=!!e.marq[`${i}-${k}`];
-            jetons.push({t:m,gras:on,souligne:on}); jetons.push({t:' ',gras:false});
-          }
-        }else{
-          for(const g of it.seg){
-            if(g.type==='trou'){
-              const donnee=String(e.rep[g.id]||'').trim();
-              const attendue=String(g.reponse||'');
-              if(!juste||!attendue) jetons.push({t:donnee||'......',gras:true});
-              else if(donnee&&memeMot(donnee,attendue)) jetons.push({t:donnee,gras:true,couleur:VERT});
-              else{
-                jetons.push({t:donnee||'......',gras:true,barre:!!donnee});
-                jetons.push({t:' ',gras:false});
-                jetons.push({t:attendue,gras:true,couleur:ROUGE});
-              }
-            }else String(g.t).split(/(\s+)/).forEach(m=>{ if(m) jetons.push({t:m,gras:false}); });
-            jetons.push({t:' ',gras:false});
-          }
-        }
-        if(!poserJetons(doc,jetons,G+4,D,taille,pas,place,()=>y,v=>y=v)) return false;
-      }
+    const B=BRIQUES[e.brique]||BRIQUES.etiq;
+    for(const bloc of B.pdf(e,juste)){
+      if(!poserJetons(doc,bloc.jetons,G+(bloc.indent||4),D,taille,pas,place,()=>y,v=>y=v)) return false;
     }
     y+=pas*0.5;
   }
@@ -931,6 +1691,20 @@ function composer(doc,taille,juste,maxPages){
 }
 
 /* ---------------- démarrage ---------------- */
+$('#b-apprentissage').onclick=()=>basculerApprentissage();
+$('#b-exporter-obs').onclick=()=>exporterObs();
+$('#b-importer-obs').onclick=()=>$('#f-obs').click();
+$('#f-obs').onchange=ev=>{ importerObs(ev.target.files[0]); ev.target.value=''; };
+$('#b-effacer-obs').onclick=()=>effacerObs();
+$('#b-oui').onclick=()=>noter(true);
+$('#b-non').onclick=()=>ouvrirJuryChoix();
+$('#jury-choix').onclick=ev=>{
+  const b=ev.target.closest('[data-juge]'); if(!b) return;
+  noter(false,b.dataset.juge);
+  if(b.dataset.juge!==E.exos[E.index].brique) changerMode(b.dataset.juge); else majJury();
+};
+majApprentissage();
+
 $('#relais').value=lireRelais();
 majRelais();
 </script>
