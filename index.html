@@ -118,13 +118,14 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 .borne.vise{border-color:var(--accent);background:var(--accent-pale)}
 #fils{position:absolute;inset:0;pointer-events:none;z-index:3}
 #fils line{stroke:var(--accent-clair);stroke-width:3;stroke-linecap:round;pointer-events:stroke}
-.carte{display:flex;gap:10px;align-items:center;background:var(--papier);border:1px solid var(--bord);
+/* « tuile » et non « carte » : .carte désigne déjà les panneaux de l'accueil */
+.tuile{display:flex;gap:10px;align-items:center;background:var(--papier);border:1px solid var(--bord);
   border-radius:var(--r);padding:11px 13px;margin-bottom:9px;font-size:19px;
   touch-action:none;user-select:none;-webkit-user-select:none}
-.carte.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
-.carte.cachee{opacity:.3}
-.carte.vise{border-color:var(--accent-clair);background:var(--accent-pale)}
-.carte.vol{position:fixed;z-index:99;pointer-events:none;margin:0;
+.tuile.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
+.tuile.cachee{opacity:.3}
+.tuile.vise{border-color:var(--accent-clair);background:var(--accent-pale)}
+.tuile.vol{position:fixed;z-index:99;pointer-events:none;margin:0;
   transform:translate(-50%,-50%) scale(1.03);box-shadow:0 8px 18px rgba(27,42,51,.3)}
 .rang{width:27px;height:27px;border-radius:50%;background:var(--accent-pale);color:var(--accent);
   font-size:14px;font-weight:bold;display:grid;place-items:center;flex:0 0 auto}
@@ -158,7 +159,7 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <!-- ============ ACCUEIL ============ -->
 <section id="e-accueil" class="ecran actif"><div class="page">
   <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 29</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+  <p class="intro"><b style="color:var(--accent-clair)">version 30</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
 
   <div class="carte">
     <h2>La page</h2>
@@ -1094,16 +1095,16 @@ relier:{
 /* ---- 5. remettre dans l'ordre ------------------------------------- */
 ordre:{
   travail(e){
-    return `<p class="but">Glisse les cartes pour les remettre dans l'ordre. Tu peux aussi toucher deux cartes pour les échanger.</p>`
+    return `<p class="but">Glisse les étiquettes pour les remettre dans l'ordre. Tu peux aussi en toucher deux pour les échanger.</p>`
       + `<div id="pile">`+e.ordre.map((id,i)=>{
           const x=e.elements.find(v=>v.id===id)||{texte:''};
-          return `<div class="carte" data-o="${id}">
+          return `<div class="tuile" data-o="${id}">
             <span class="rang">${i+1}</span>
             <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
             <span class="phrase">${esc(x.texte)}</span></div>`;
         }).join('')+`</div>`;
   },
-  tiroir(){ return `<span class="vide">Les cartes se déplacent par glissement.</span>`; },
+  tiroir(){ return `<span class="vide">Les lignes se déplacent par glissement.</span>`; },
   commence(){ return true; },
   lire(e,i){ const id=e.ordre[i]; const x=e.elements.find(v=>v.id===id); return x?x.texte:''; },
   pdf(e,juste){
@@ -1251,16 +1252,16 @@ function deplacer(depuis,vers){
   l.splice(a,1); l.splice(b,0,depuis);
   ouvrir();
 }
-const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.carte'):null; };
+const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.tuile'):null; };
 
 addEventListener('pointerdown',ev=>{
   if(!$('#e-exo').classList.contains('actif')) return;
   const champ=ev.target.closest('.saisie');
   if(champ&&prise){ ev.preventDefault(); poser(prise,champ); return; }   // pose sans ouvrir le clavier
-  const n=ev.target.closest('.etq,.carte');
+  const n=ev.target.closest('.etq,.tuile');
   if(!n||ev.target.closest('.lire')) return;
   debut={x:ev.clientX,y:ev.clientY,node:n,
-         genre:n.classList.contains('carte')?'carte':'etq',
+         genre:n.classList.contains('tuile')?'tuile':'etq',
          id:n.dataset.e||n.dataset.o};
   glisse=false;
 });
@@ -1269,8 +1270,8 @@ addEventListener('pointermove',ev=>{
   if(!glisse&&Math.hypot(ev.clientX-debut.x,ev.clientY-debut.y)>10){
     glisse=true;
     vol=debut.node.cloneNode(true);
-    vol.className=(debut.genre==='carte'?'carte vol':'etq vol');
-    if(debut.genre==='carte') vol.style.width=debut.node.getBoundingClientRect().width+'px';
+    vol.className=(debut.genre==='tuile'?'tuile vol':'etq vol');
+    if(debut.genre==='tuile') vol.style.width=debut.node.getBoundingClientRect().width+'px';
     document.body.appendChild(vol); debut.node.classList.add('cachee');
   }
   if(glisse){
@@ -1288,14 +1289,14 @@ addEventListener('pointerup',ev=>{
     vol.remove(); vol=null; $$('.vise').forEach(x=>x.classList.remove('vise'));
     node.classList.remove('cachee');
     const c=sous(ev.clientX,ev.clientY);
-    if(genre==='carte'){ if(c&&c.classList.contains('carte')&&c!==node) deplacer(id,c.dataset.o); }
+    if(genre==='tuile'){ if(c&&c.classList.contains('tuile')&&c!==node) deplacer(id,c.dataset.o); }
     else if(c) poser(id,c);
     else { delete ex().tri[id]; peindre(); }
-  }else if(genre==='carte'){
+  }else if(genre==='tuile'){
     const e=ex();
     if(prise&&prise!==id&&e.ordre.includes(prise)){ deplacer(prise,id); prise=null; }
     else{ prise=(prise===id)?null:id;
-      $$('.carte').forEach(x=>x.classList.toggle('prise',x.dataset.o===prise)); }
+      $$('.tuile').forEach(x=>x.classList.toggle('prise',x.dataset.o===prise)); }
     Voix.dire(brique().lire(e,e.ordre.indexOf(id)),0.82);
   }else{
     Voix.dire(texteEtq(ex(),id),0.8);
