@@ -77,6 +77,9 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 @keyframes bat{50%{background:var(--accent-clair)}}
 .consigne{display:flex;gap:13px;align-items:flex-start;padding:15px 18px;background:var(--papier);border-bottom:1px solid var(--bord)}
 .consigne .txt{flex:1;font-size:19px}
+.manuel{background:var(--etq);color:var(--encre);border:2px solid var(--etq-bord);box-shadow:none;
+  padding:11px 18px;font-size:17px;white-space:nowrap}
+.manuel:active{background:var(--etq-bord)}
 #jury{background:#FFF8E6;border-bottom:1px solid var(--etq-bord);padding:9px 16px}
 .jury-haut{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .jury-haut span{flex:1 1 200px;font-size:14px;color:#6B5B28}
@@ -105,7 +108,8 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
   font-size:20px;font-family:inherit;padding:0 8px;text-align:center;color:var(--encre)}
 .saisie:focus{background:var(--accent-pale);outline:none}
 .dedans{width:100%}
-.ligne{overflow-wrap:break-word}
+.ligne{overflow-wrap:break-word;break-inside:avoid;-webkit-column-break-inside:avoid}
+.tuile{break-inside:avoid}
 .tracoir{position:relative;display:inline-block;max-width:100%;line-height:0}
 .tracoir img{width:100%;display:block;border-radius:10px;border:1px solid var(--bord);
   pointer-events:none;-webkit-user-drag:none}
@@ -149,6 +153,9 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 .tiroir{background:var(--papier);border-top:1px solid var(--bord);display:flex;flex-wrap:wrap;gap:9px;
   justify-content:center;align-items:center;padding:13px 14px calc(13px + env(safe-area-inset-bottom))}
 .tiroir .vide{color:#8FA3AE;font-size:15px}
+.tiroir.serre{gap:6px;padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
+.tiroir.serre .etq{font-size:17px;padding:6px 11px}
+.tiroir{max-height:34vh;overflow:auto}
 .bas{display:flex;gap:10px;justify-content:center;padding:11px 14px;background:var(--papier);border-top:1px solid var(--bord)}
 #voile,#panneau{position:fixed;inset:0;background:rgba(27,42,51,.85);z-index:200;display:none;
   align-items:center;justify-content:center;padding:18px}
@@ -163,7 +170,7 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <!-- ============ ACCUEIL ============ -->
 <section id="e-accueil" class="ecran actif"><div class="page">
   <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 31</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+  <p class="intro"><b style="color:var(--accent-clair)">version 33</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
 
   <div class="carte">
     <h2>La page</h2>
@@ -249,8 +256,8 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 <section id="e-exo" class="ecran">
   <div class="haut">
     <div class="pastilles" id="pastilles"></div>
+    <button class="b manuel masque" id="b-manuel">✏️ Sur le manuel</button>
     <button class="rond" id="b-mode" aria-label="Changer de mode d'adaptation">⇄</button>
-    <button class="rond masque" id="b-loupe" aria-label="Voir l'exercice du manuel">🔍</button>
     <button class="b nu" id="b-stop">Arrêter</button>
   </div>
   <div class="consigne">
@@ -674,7 +681,8 @@ function majJury(){
   $('#jury').classList.toggle('masque',!on);
   if(!on) return;
   const e=E.exos[E.index];
-  $('#jury-titre').textContent=`Type ${e.type||'?'} · ${e.nom||'non identifié'} → ${e.brique}`;
+  $('#jury-titre').textContent=`Type ${e.type||'?'} · ${e.nom||'non identifié'} → ${e.brique}`
+    +(e.secours?`  (repli : ${e.secours})`:'');
   $('#jury-choix').classList.add('masque');
   $('#jury-note').textContent=e.juge===true?'Noté : adaptation correcte.'
     :e.juge===false?`Noté : à remplacer par « ${e.attendue} ».`:'';
@@ -1231,18 +1239,31 @@ function decouper(r){
   c.getContext('2d').drawImage(E.canvas,r.x0,r.y0,c.width,c.height,0,0,c.width,c.height);
   return c.toDataURL('image/jpeg',0.8);
 }
+function surLeManuel(vignette,brut,i,motif){
+  const t=normaliser({type:Number(brut&&brut.type)||0, force:'trace',
+    consigne:(brut&&brut.consigne)||"Fais cet exercice directement sur le manuel.",
+    consigne_dite:(brut&&brut.consigne_dite)||'', image:vignette}, i);
+  t.vignette=vignette; t.secours=motif||'';
+  return t;
+}
 async function preparerRegion(i){
   const vignette=decouper(E.regions[i]);
-  const brut=await demander(vignette);
-  if(brut.ignore) return {hs:{n:i+1,raison:String(brut.ignore)}};
-  const ex=normaliser(brut,i);
-  if(!ex.bon_a_faire) return {hs:{n:i+1,raison:"exercice non manipulable"}};
-  ex.vignette=vignette;
-  return {ex};
+  let brut=null, motif='';
+  try{ brut=await demander(vignette); }
+  catch(err){ motif=(err&&err.message)||'lecture impossible'; }
+  if(brut&&!brut.ignore){
+    const ex=normaliser(brut,i);
+    if(ex.bon_a_faire){ ex.vignette=vignette; return {ex}; }
+    motif="exercice non manipulable";
+  }else if(brut&&brut.ignore) motif=String(brut.ignore);
+  /* Rien n'est jamais abandonné : ce qu'on ne sait pas adapter est proposé
+     tel quel, à faire sur le manuel avec le doigt. */
+  return {ex:surLeManuel(vignette,brut,i,motif)};
 }
 function lancer(i){
   if(i<0||i>=E.regions.length) return null;
-  if(!E.cache.has(i)) E.cache.set(i, preparerRegion(i).catch(e=>({hs:{n:i+1,raison:e.message||'échec'}})));
+  if(!E.cache.has(i)) E.cache.set(i, preparerRegion(i)
+    .catch(err=>({ex:surLeManuel(decouper(E.regions[i]),null,i,(err&&err.message)||'échec')})));
   return E.cache.get(i);
 }
 async function suivant(){
@@ -1251,7 +1272,7 @@ async function suivant(){
     const r=await p;
     lancer(E.curseur);                    // le suivant se prépare en fond
     if(r&&r.ex) return r.ex;
-    if(r&&r.hs) E.ecartes.push(r.hs);
+    if(r&&r.ex&&r.ex.secours) E.ecartes.push({n:E.curseur,raison:r.ex.secours});
   }
   return null;
 }
@@ -1273,9 +1294,7 @@ async function avancer(){
   ecran('e-attente');
   $('#a-titre').textContent="Rien n'a pu être adapté"; $('#a-detail').textContent='';
   $('#a-barre').style.width='100%';
-  alerte('#err-attente', E.ecartes.length
-    ? E.ecartes.map(x=>`Cadre ${x.n} : ${x.raison}`).join(' · ')
-    : "Aucun exercice reconnu dans les cadres.");
+  alerte('#err-attente', "Aucun cadre n'a pu être lu. Vérifie le relais, puis reprends les cadres.");
   $('#b-retour-attente').classList.remove('masque');
 }
 $('#b-retour-attente').onclick=()=>ecran('e-cadres');
@@ -1299,16 +1318,53 @@ function ouvrir(){
     `<span class="pt ${i<E.index?'fait':''} ${i===E.index?'ici':''}"></span>`).join('');
   $('#consigne').innerHTML=mots(e.consigne);
   $('#travail').innerHTML=B.travail(e);
-  $('#b-loupe').classList.toggle('masque',!e.vignette);
+  const surManuel=e.brique==='trace';
+  $('#b-manuel').classList.toggle('masque', !e.vignette || (surManuel&&!e.origine));
+  $('#b-manuel').textContent = surManuel ? '↩ Revenir à l\'exercice' : '✏️ Sur le manuel';
   majJury();
   peindre();
   ecran('e-exo');
-  if(B.apres) requestAnimationFrame(()=>B.apres(e));
+  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); });
   Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));
+}
+/* Tirer une étiquette en devant faire défiler la page est impraticable pour
+   un élève en difficulté. Quand l'exercice comporte des étiquettes, on réduit
+   l'ensemble jusqu'à ce qu'il tienne d'un seul tenant — sans descendre sous
+   une taille lisible. Les briques sans glisser gardent leur défilement :
+   rapetisser un texte long à souligner ferait plus de mal que de bien. */
+const AJUSTABLE=['etiq','ordre'];
+function ajuster(){
+  const e=ex(), corps=document.querySelector('.corps'), t=$('#travail');
+  if(!corps||!t) return;
+  t.style.transform='none'; t.style.width='100%'; t.style.transformOrigin='top center';
+  if(!AJUSTABLE.includes(e.brique)) return;
+  t.style.columnCount='';
+  const dispo=corps.clientHeight-12;
+  if(dispo<80) return;
+  let z=1;
+  const caler=()=>{
+    z=1; t.style.transform='none'; t.style.width='100%';
+    for(let i=0;i<4;i++){
+      const entier=t.getBoundingClientRect().height/z;    // hauteur à l'échelle 1
+      const vise=Math.max(0.68, Math.min(1, dispo/entier));
+      if(Math.abs(vise-z)<0.015) break;
+      z=vise;
+      t.style.transform = z<1 ? `scale(${z})` : 'none';
+      t.style.width     = z<1 ? (100/z)+'%'   : '100%';
+    }
+    return t.getBoundingClientRect().height;
+  };
+  const uneColonne=caler();
+  if(uneColonne>dispo && corps.clientWidth>820){
+    // en paysage, deux colonnes valent mieux qu'un texte minuscule
+    t.style.columnCount='2'; t.style.columnGap='20px';
+    if(caler()>=uneColonne){ t.style.columnCount=''; caler(); }   // sans gain : on renonce
+  }
 }
 function peindre(){
   const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
   $('#tiroir').innerHTML=B.tiroir(e);
+  $('#tiroir').classList.toggle('serre', (e.etq||[]).length>8);
   if(B.apres) B.apres(e);
   $('#b-fini').disabled=!B.commence(e);
   $('#b-fini').textContent=(!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini";
@@ -1450,11 +1506,18 @@ document.addEventListener('focusin',ev=>{
   if(n&&n.value) setTimeout(()=>n.select(),0);
 });
 addEventListener('resize',()=>{ if($('#e-exo').classList.contains('actif')){
-  const e=ex(); if(e.brique==='relier') tracerFils(e); } });
+  const e=ex(); if(e.brique==='relier') tracerFils(e); ajuster(); } });
 
 $('#b-dire').onclick=()=>{const e=ex();Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));};
-$('#b-loupe').onclick=()=>{const e=ex(); if(!e.vignette) return;
-  $('#voile-img').src=e.vignette; $('#voile').classList.add('on');};
+/* Va-et-vient entre l'exercice adapté et le manuel : chacun garde son travail,
+   l'élève peut essayer l'un puis l'autre sans rien perdre. */
+function basculerManuel(){
+  const e=ex();
+  if(e.brique==='trace'&&e.origine){ const o=e.origine; o.trace_sauve=e; E.exos[E.index]=o; ouvrir(); return; }
+  if(e.trace_sauve){ e.trace_sauve.origine=e; E.exos[E.index]=e.trace_sauve; ouvrir(); return; }
+  changerMode('trace');
+}
+$('#b-manuel').onclick=()=>basculerManuel();
 $('#b-fermer').onclick=()=>$('#voile').classList.remove('on');
 // enveloppés : ces fonctions sont définies plus bas dans le fichier
 $('#b-mode').onclick=()=>ouvrirPanneau();
@@ -1493,7 +1556,7 @@ function terminer(){
   let faits=0,total=0;
   E.exos.forEach(e=>{ total+=e.total; faits+=faitsDe(e); });
   $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} réponse(s) sur ${total}.`
-    +(E.ecartes.length?` ${E.ecartes.length} cadre(s) écarté(s).`:'');
+    +(E.ecartes.length?` ${E.ecartes.length} exercice(s) proposé(s) sur le manuel.`:'');
   $('#opt-juste').parentElement.classList.toggle('masque',!E.exos.some(e=>e.cle));
   alerte('#err-fin','');
   ecran('e-fin');
@@ -1616,6 +1679,7 @@ function changerMode(cible){
   neuf.nom=avant.nom;
   neuf.repli=cible;              // mémorisé pour la fiche et pour « refaire »
   neuf.juge=avant.juge; neuf.attendue=avant.attendue;
+  if(cible==='trace') neuf.origine=avant.origine||avant;   // pour pouvoir revenir
   E.exos[E.index]=neuf;
   fermerPanneau();
   ouvrir();
