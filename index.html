@@ -77,9 +77,11 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 @keyframes bat{50%{background:var(--accent-clair)}}
 .consigne{display:flex;gap:13px;align-items:flex-start;padding:15px 18px;background:var(--papier);border-bottom:1px solid var(--bord)}
 .consigne .txt{flex:1;font-size:19px}
-.manuel{background:var(--etq);color:var(--encre);border:2px solid var(--etq-bord);box-shadow:none;
-  padding:11px 18px;font-size:17px;white-space:nowrap}
-.manuel:active{background:var(--etq-bord)}
+.manuel{background:#FFE9C7;color:var(--encre);border:3px solid #E08A1E;box-shadow:none;
+  padding:13px 20px;font-size:19px;font-weight:700;white-space:nowrap;border-radius:14px}
+.manuel:active{background:#E08A1E}
+.etape{display:inline-block;background:var(--etq);border:1px solid var(--etq-bord);
+  border-radius:999px;padding:3px 12px;font-size:15px;color:var(--doux);margin-bottom:10px}
 #jury{background:#FFF8E6;border-bottom:1px solid var(--etq-bord);padding:9px 16px}
 .jury-haut{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .jury-haut span{flex:1 1 200px;font-size:14px;color:#6B5B28}
@@ -822,6 +824,7 @@ function normaliser(brut,i){
   const brique  = (brut.force&&BRIQUES_PRETES.includes(brut.force))
                   ? brut.force : briqueDe(numType, brut.brique);
   const e={ numero:String(i+1), type:numType, brique, traces:[], image:'',
+            pas:0, lot:{},
             nom:(TYPE[numType]&&TYPE[numType].nom)||'',
             consigne:String(brut.consigne||'').trim(),
             dite:String(brut.consigne_dite||''),
@@ -938,6 +941,49 @@ function restantes(e){
   return e.etq.filter(t=>{ const c=aplat(t.texte); if(pris[c]>0){ pris[c]--; return false; } return true; });
 }
 
+/* =====================================================================
+   PAGINATION INTERNE — un écran, un item. L'élève ne voit jamais qu'une
+   seule phrase, et les étiquettes qui la concernent sont juste dessous.
+   ===================================================================== */
+function nbPas(e){
+  if(e.brique==='etiq')  return e.disposition==='colonnes'?1:Math.max(1,e.items.length);
+  if(e.brique==='coche') return Math.max(1,e.questions.length);
+  if(e.brique==='touch') return Math.max(1,e.items.length);
+  return 1;
+}
+function etape(e){
+  const n=nbPas(e);
+  return n>1?`<div class="etape">${e.pas+1} sur ${n}</div>`:'';
+}
+/* Étiquettes de l'item courant : les réponses attendues, plus un leurre
+   pris ailleurs dans l'exercice. Le tirage est mémorisé pour que les
+   étiquettes ne changent pas de place à chaque dépôt. */
+function lotDe(e){
+  if(e.disposition==='colonnes') return restantes(e);
+  if(!e.etq.length) return [];
+  const it=e.items[e.pas];
+  if(!it) return restantes(e);
+  if(!e.lot[e.pas]){
+    const reps=it.seg.filter(s=>s.type==='trou').map(s=>s.reponse).filter(Boolean);
+    const pris=new Set(), choix=[];
+    for(const r of reps){
+      const t=e.etq.find(x=>!pris.has(x.id)&&memeMot(x.texte,r));
+      if(t){ pris.add(t.id); choix.push(t.id); }
+    }
+    if(!choix.length) e.lot[e.pas]=e.etq.map(t=>t.id);          // réponses inconnues : tout proposer
+    else{
+      const reste=e.etq.filter(x=>!pris.has(x.id));
+      if(reste.length) choix.push(reste[0|Math.random()*reste.length].id);
+      e.lot[e.pas]=melanger(choix);
+    }
+  }
+  const posees=new Set();
+  if(!e.reutilisable) for(const s of it.seg)
+    if(s.type==='trou'){ const v=aplat(e.rep[s.id]||''); if(v) posees.add(v); }
+  return e.lot[e.pas].map(id=>e.etq.find(t=>t.id===id))
+    .filter(t=>t && !posees.has(aplat(t.texte)));
+}
+
 const BRIQUES={
 
 /* ---- 1. étiquettes glissables ------------------------------------ */
@@ -947,18 +993,21 @@ etiq:{
       return `<p class="but">Glisse chaque étiquette dans la bonne colonne.</p><div class="cols">`
         + e.colonnes.map(c=>`<div class="col"><h3>${mots(c.nom)}</h3><div class="bac" data-cat="${c.id}"></div></div>`).join('')
         + `</div>`;
-    return `<p class="but">${e.etq.length
-        ? "Glisse une étiquette, ou touche la ligne pour écrire."
+    const it=e.items[e.pas];
+    if(!it) return '';
+    return etape(e)
+      + `<p class="but">${e.etq.length
+        ? "Glisse la bonne étiquette dans le trou."
         : "Touche la ligne et écris ta réponse."}</p>`
-      + e.items.map((it,i)=>ligne(i, it.seg.map(s=> s.type==='trou'
+      + ligne(e.pas, it.seg.map(s=> s.type==='trou'
           ? `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
               autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`
-          : mots(s.t)).join(' '))).join('');
+          : mots(s.t)).join(' '));
   },
   tiroir(e){
-    const libres=restantes(e);
+    const libres=lotDe(e);
     if(libres.length) return libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
-    return `<span class="vide">${e.etq.length?"Toutes les étiquettes sont posées.":"Écris les mots de ton choix."}</span>`;
+    return `<span class="vide">${e.etq.length?"L'étiquette est posée.":"Écris les mots de ton choix."}</span>`;
   },
   apres(e){
     $$('.bac').forEach(b=>{
@@ -966,9 +1015,11 @@ etiq:{
         .map(t=>`<span class="etq posee" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
     });
   },
-  commence(e){ return e.disposition==='colonnes'
-    ? Object.keys(e.tri).length>0
-    : Object.values(e.rep).some(v=>String(v).trim()); },
+  commence(e){
+    if(e.disposition==='colonnes') return Object.keys(e.tri).length>0;
+    const it=e.items[e.pas]; if(!it) return false;
+    return it.seg.some(s=>s.type==='trou'&&String(e.rep[s.id]||'').trim());
+  },
   lire(e,i){
     const it=e.items[i]; if(!it) return '';
     return it.seg.map(s=> s.type==='trou'?String(e.rep[s.id]||''):s.t)
@@ -1021,8 +1072,11 @@ etiq:{
 /* ---- 2. toucher des mots ----------------------------------------- */
 touch:{
   travail(e){
-    return `<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`
-      + e.items.map((it,i)=>ligne(i, mots(it.texte,e,i))).join('');
+    const it=e.items[e.pas];
+    if(!it) return '';
+    return etape(e)
+      + `<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`
+      + ligne(e.pas, mots(it.texte,e,e.pas));
   },
   tiroir(){ return `<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`; },
   commence(){ return true; },
@@ -1042,18 +1096,20 @@ touch:{
 /* ---- 3. cocher ---------------------------------------------------- */
 coche:{
   travail(e){
-    return e.questions.map((q,i)=>
-      `<div class="ligne bloc-q">
+    const i=e.pas, q=e.questions[i];
+    if(!q) return '';
+    return etape(e)
+      + `<div class="ligne bloc-q">
          <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
          <div class="phrase">
            <div class="enonce">${mots(q.enonce)}</div>
            <div class="choix">${q.choix.map((c,k)=>
              `<button class="opt${e.choisi[i]===k?' opt-pris':''}" data-q="${i}" data-c="${k}">${esc(c)}</button>`).join('')}</div>
          </div>
-       </div>`).join('');
+       </div>`;
   },
   tiroir(e){ return `<span class="vide">Touche la bonne réponse. Tu peux changer d'avis.</span>`; },
-  commence(e){ return Object.keys(e.choisi).length>0; },
+  commence(e){ return e.choisi[e.pas]!==undefined; },
   lire(e,i){ const q=e.questions[i]; return q?`${q.enonce}. ${q.choix.join(', ')}`:''; },
   pdf(e,juste){
     return e.questions.flatMap((q,i)=>{
@@ -1246,11 +1302,25 @@ function surLeManuel(vignette,brut,i,motif){
   t.vignette=vignette; t.secours=motif||'';
   return t;
 }
+/* Le relais ne supporte pas deux demandes simultanées : la préparation du
+   cadre suivant partait en même temps que la demande en cours et se faisait
+   refuser (429). Les demandes passent maintenant à la queue leu leu, et une
+   demande refusée est retentée une fois. */
+let file=Promise.resolve();
+function enFile(f){
+  const p=file.then(()=>f());
+  file=p.then(()=>{},()=>{});
+  return p;
+}
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function preparerRegion(i){
   const vignette=decouper(E.regions[i]);
   let brut=null, motif='';
-  try{ brut=await demander(vignette); }
-  catch(err){ motif=(err&&err.message)||'lecture impossible'; }
+  try{ brut=await enFile(()=>demander(vignette)); }
+  catch(err1){
+    try{ brut=await enFile(async()=>{ await pause(1500); return demander(vignette); }); }
+    catch(err){ motif=(err&&err.message)||'lecture impossible'; }
+  }
   if(brut&&!brut.ignore){
     const ex=normaliser(brut,i);
     if(ex.bon_a_faire){ ex.vignette=vignette; return {ex}; }
@@ -1319,8 +1389,10 @@ function ouvrir(){
   $('#consigne').innerHTML=mots(e.consigne);
   $('#travail').innerHTML=B.travail(e);
   const surManuel=e.brique==='trace';
-  $('#b-manuel').classList.toggle('masque', !e.vignette || (surManuel&&!e.origine));
-  $('#b-manuel').textContent = surManuel ? '↩ Revenir à l\'exercice' : '✏️ Sur le manuel';
+  /* Le scan reste accessible en permanence : si l'adaptation ne convient pas,
+     l'élève ouvre la page d'origine et écrit dessus au doigt. */
+  $('#b-manuel').classList.toggle('masque', !(e.vignette||e.image));
+  $('#b-manuel').textContent = surManuel ? '↩ Revenir à l\'exercice' : '✏️ Écrire sur le manuel';
   majJury();
   peindre();
   ecran('e-exo');
@@ -1367,7 +1439,8 @@ function peindre(){
   $('#tiroir').classList.toggle('serre', (e.etq||[]).length>8);
   if(B.apres) B.apres(e);
   $('#b-fini').disabled=!B.commence(e);
-  $('#b-fini').textContent=(!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini";
+  $('#b-fini').textContent = (e.pas < nbPas(e)-1) ? 'Suivant'
+    : ((!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini");
 }
 
 /* ---- glisser : étiquettes et cartes à réordonner ---- */
@@ -1529,10 +1602,13 @@ $('#panneau').onclick=ev=>{
 };
 $('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
 const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};e.traces=[];
+  e.pas=0; e.lot={};
   if(e.brique==='ordre'&&e.bon.length) e.ordre=melanger(e.bon); };
 $('#b-effacer').onclick=()=>{ remettreAZero(ex()); prise=null; ouvrir(); };
 $('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
 $('#b-fini').onclick=()=>{Voix.stop();
+  const e=ex();
+  if(e && e.pas < nbPas(e)-1){ e.pas++; ouvrir(); return; }
   if(E.index<E.exos.length-1){ E.index++; ouvrir(); }
   else if(E.flux) avancer();
   else terminer(); };
@@ -1555,8 +1631,11 @@ function faitsDe(e){
 function terminer(){
   let faits=0,total=0;
   E.exos.forEach(e=>{ total+=e.total; faits+=faitsDe(e); });
+  const attendus=(E.cache&&E.cache.size)?((E.regions||[]).length):0;
   $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} réponse(s) sur ${total}.`
-    +(E.ecartes.length?` ${E.ecartes.length} exercice(s) proposé(s) sur le manuel.`:'');
+    +(attendus&&attendus!==E.exos.length
+      ? ` ${attendus} cadre(s) avaient été tracés : ${attendus-E.exos.length} n'a pas été proposé.`
+      : '');
   $('#opt-juste').parentElement.classList.toggle('masque',!E.exos.some(e=>e.cle));
   alerte('#err-fin','');
   ecran('e-fin');
@@ -1715,10 +1794,11 @@ $('#f-fiche').onchange=async e=>{
   try{
     const d=JSON.parse(await f.text());
     if(!Array.isArray(d.exercices)||!d.exercices.length) throw 0;
-    E.exos=d.exercices.map(x=>{const e={...x, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}};
+    E.exos=d.exercices.map(x=>{const e={...x, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}, pas:0, lot:{}};
       if(e.brique==='ordre'&&(e.bon||[]).length) e.ordre=melanger(e.bon);
       return e;});
     E.titre=d.titre||'Exercices'; E.flux=false; E.index=0; E.ecartes=[];
+    E.regions=[]; E.cache=new Map();
     ouvrir();
   }catch(err){ majRelais("Ce fichier n'est pas une fiche Adaptedl."); }
   e.target.value='';
