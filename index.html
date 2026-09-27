@@ -100,6 +100,11 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
 .mot{padding:2px 3px;border-radius:5px}
 .mot:active{background:var(--accent-pale)}
 .mot.pris{background:var(--marque);border-bottom:3px solid var(--etq-bord);font-weight:bold}
+.mot.cat{color:#fff;font-weight:bold;border-radius:7px;padding:1px 4px;border-bottom:none}
+.aide{display:inline-block;background:var(--etq);border:1px solid var(--etq-bord);border-radius:999px;
+  padding:2px 10px;font-size:16px;color:var(--encre);margin-left:6px;vertical-align:middle}
+.etq.categorie{border-width:3px;font-weight:700}
+.etq.categorie.active{outline:4px solid var(--encre);outline-offset:2px}
 .trou{display:inline-block;min-width:108px;height:42px;vertical-align:middle;margin:0 4px;
   border-bottom:3px dashed var(--accent-clair);border-radius:6px 6px 0 0;background:#F4FAFB;
   text-align:center;line-height:42px}
@@ -109,6 +114,9 @@ textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace
   border:none;border-bottom:3px solid var(--accent-clair);border-radius:6px 6px 0 0;background:#F4FAFB;
   font-size:20px;font-family:inherit;padding:0 8px;text-align:center;color:var(--encre)}
 .saisie:focus{background:var(--accent-pale);outline:none}
+/* Dans une phrase, le trou fait la largeur du mot attendu : la mise en page
+   du manuel est conservée, la phrase reste lisible d'un seul tenant. */
+.ligne .saisie{width:auto;min-width:72px;margin:0 2px}
 .dedans{width:100%}
 .ligne{overflow-wrap:break-word;break-inside:avoid;-webkit-column-break-inside:avoid}
 .tuile{break-inside:avoid}
@@ -764,11 +772,52 @@ const SCHEMAS=`Champs communs à toute réponse :
 brique "etiq" — étiquettes à glisser. Deux dispositions :
  · phrases : "disposition":"phrases","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}]
  · colonnes : "disposition":"colonnes","colonnes":[{"nom":"Noms","reponses":["chat"]}]
+   Réservé aux exercices qui demandent EXPLICITEMENT de classer, trier ou ranger des mots
+   dans des groupes nommés. Un exercice où l'élève doit écrire quelque chose n'est jamais
+   en colonnes.
  Dans les deux cas : "etiquettes":["dort","mange"] — les réponses possibles SANS DOUBLON (trois phrases attendant « le », « le », « la » donnent ["le","la"]), plus deux intrus au maximum pris dans la page.
+ BANQUE DE MOTS : les mots à placer sont souvent imprimés à l'écart des phrases — dans la
+ consigne elle-même, sur une ligne au-dessus de l'exercice, dans un encadré ou en marge
+ (« in- ou im-, en- ou em-, é- ou ex- ? », une colonne de mots à droite des phrases, une
+ liste sur fond coloré : « seul, soleil, solitude, parasol, solaire, solitaire, soliste,
+ ensoleillé »). Cette liste n'appartient à AUCUNE phrase : c'est la banque. Recopie-la TOUTE
+ dans "etiquettes", sans en oublier et sans en inventer d'autres, et ne les compte pas comme
+ du texte de la phrase.
+ ESPACES : recopie les espaces tels quels dans "t". Un préfixe ou une terminaison se colle au
+ mot voisin : {"type":"trou","reponse":"en"},{"type":"texte","t":"rhumée, je suis allée"}
+ s'écrit sans espace entre le trou et « rhumée ».
  Si l'élève doit inventer ses mots (« de ton choix »), laisse "etiquettes":[] : il écrira au clavier.
+ MOT À TRANSFORMER : quand la page donne un mot que l'élève doit modifier avant de l'écrire
+ (un infinitif à conjuguer, un adjectif à accorder, un nom à mettre au pluriel), ce mot n'est
+ PAS une étiquette, car la forme à écrire n'est pas celle qui est imprimée. Mets-le dans le
+ trou comme aide : {"type":"trou","aide":"être","reponse":"serons"}. "reponse" est la forme
+ attendue si tu peux la déduire, sinon "". Dans ce cas envoie "etiquettes":[] : l'élève écrira
+ au clavier, avec le mot donné affiché à côté du trou.
+ N'abandonne JAMAIS un exercice dont les phrases comportent des trous : même sans étiquettes
+ possible, renvoie la brique "etiq" avec ses items.
 
 brique "touch" — toucher des mots dans le texte.
  "cible":"les verbes conjugués","items":[{"texte":"Le vent souffle fort."}]
+ Si la consigne demande de repérer PLUSIEURS sortes de choses à la fois (par exemple
+ les CCT, les CCL et les CCC, ou les noms et les verbes), ajoute la liste de ces sortes :
+ "categories":["CCT","CCL","CCC"] — telles qu'elles sont écrites dans la consigne,
+ abrégées si la consigne les abrège. Une seule sorte demandée : n'envoie pas ce champ.
+ EN DEUX TEMPS : si la consigne enchaîne deux tâches — d'abord trouver des mots, PUIS dire
+ ce qu'ils sont (« trouve les homonymes, puis indique leur classe grammaticale : nom, verbe
+ ou adjectif ») — ajoute "deux_etapes":true en plus de "categories". L'élève touchera d'abord
+ les mots, puis leur posera une étiquette.
+
+NOMBRES (écrire en chiffres, écrire en lettres, décomposer, compléter un tableau de
+ numération) : brique "etiq", disposition "phrases", UN SEUL nombre par item, jamais de
+ colonnes. Recopie l'énoncé du nombre et place le trou là où l'élève écrit sa réponse :
+ "items":[{"segments":[{"type":"texte","t":"32 dizaines et 16 unités  →  "},{"type":"trou","reponse":"336"}]}]
+ · réponse à écrire en chiffres : ajoute "clavier":"nombre" et laisse "etiquettes":[] ;
+   l'application ouvrira le pavé numérique.
+ · réponse à écrire en lettres : laisse "etiquettes":[] sans "clavier".
+ · décomposition à compléter avec des mots de numération : mets-les en étiquettes,
+   "etiquettes":["unités","dizaines","centaines","milliers"].
+ Ne donne JAMAIS la réponse dans les étiquettes d'un exercice d'écriture de nombres : les
+ nombres attendus ne sont pas des étiquettes, l'élève les écrit.
 
 brique "coche" — choisir parmi deux ou trois propositions.
  "questions":[{"enonce":"Où entends-tu [a] ?","choix":["début","milieu","fin"],"bonne":0}]
@@ -793,7 +842,7 @@ async function demander(dataUrl){
     let r;
     try{
       r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:modele,max_tokens:4000,temperature:0.1,
+        body:JSON.stringify({model:modele,max_tokens:8000,temperature:0.1,
           messages:[{role:'system',content:REGLE},
                     {role:'user',content:[{type:'image_url',image_url:{url:dataUrl}},
                       {type:'text',text:`Cette image montre UN exercice d'un manuel du primaire.\n\nLISTE DES TYPES :\n${LISTE_TYPES}\n\nIdentifie son type dans cette liste, puis renvoie ses données brutes.\n\n${SCHEMAS}`}]}]})});
@@ -829,7 +878,8 @@ function normaliser(brut,i){
             consigne:String(brut.consigne||'').trim(),
             dite:String(brut.consigne_dite||''),
             cible:String(brut.cible||''),
-            items:[], colonnes:[], etq:[], reutilisable:false,
+            items:[], colonnes:[], etq:[], reutilisable:false, cats:[], catActive:'',
+            deux:false, phase:1, clavier:'',
             questions:[], gauche:[], droite:[], paires:[], elements:[], bon:[],
             rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}, ordre:[],
             cle:false, total:0, bon_a_faire:0 };
@@ -837,9 +887,15 @@ function normaliser(brut,i){
   if(brique==='etiq'){
     (brut.items||[]).forEach(it=>{
       const seg=(it.segments||[]).map(g=> g.type==='trou'
-        ? {type:'trou',reponse:String(g.reponse||'')}
+        ? {type:'trou',reponse:String(g.reponse||''),aide:String(g.aide||'')}
         : {type:'texte',t:String(g.t||'')}).filter(g=>g.type==='trou'||g.t.trim());
-      if(seg.length) e.items.push({seg});
+      if(seg.length){
+        /* Si le modèle a gardé les espaces dans ses segments de texte, on les
+           respecte : c'est ce qui permet à un préfixe de se coller au mot
+           suivant (« en » + « rhumée »). Sinon on sépare par une espace. */
+        const colle=seg.some(g=>g.type==='texte'&&/^\s|\s$/.test(g.t));
+        e.items.push({seg,colle});
+      }
     });
     (brut.colonnes||brut.categories||[]).forEach((c,k)=>
       e.colonnes.push({id:'c'+k,nom:String(c.nom||''),rep:(c.reponses||[]).map(String)}));
@@ -851,7 +907,15 @@ function normaliser(brut,i){
     const vues=new Set(), uniques=[];
     for(const t of brute){ const c=aplat(t); if(!c||vues.has(c)) continue; vues.add(c); uniques.push(t); }
     e.etq=melanger(uniques).map((t,k)=>({id:'e'+k,texte:t}));
+    e.clavier=String(brut.clavier||'');
+    /* Une réponse faite de chiffres appelle le pavé numérique, même si le
+       modèle a oublié de le préciser. */
+    const attend=e.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse)).filter(Boolean);
+    if(!e.clavier && attend.length && attend.every(x=>/^[\d\s.,]+$/.test(x))) e.clavier='nombre';
     if(brut.sans_etiquettes) e.etq=[];        // mode « remplir au clavier »
+    /* Un mot donné à transformer (infinitif à conjuguer) ne peut pas devenir
+       une étiquette : la forme à écrire n'est pas celle qui est imprimée. */
+    if(e.items.some(it=>it.seg.some(g=>g.type==='trou'&&g.aide))) e.etq=[];
     if(e.disposition==='colonnes'){
       e.total=e.etq.length; e.cle=e.colonnes.some(c=>c.rep.length>0);
       e.bon_a_faire=e.colonnes.length>0&&e.etq.length>0;
@@ -862,6 +926,10 @@ function normaliser(brut,i){
   }
 
   else if(brique==='touch'){
+    const noms=(brut.categories||[]).map(String).map(x=>x.trim()).filter(Boolean).slice(0,5);
+    e.cats=noms.map((nom,k)=>({id:'k'+k, nom, couleur:PALETTE[k%PALETTE.length]}));
+    e.deux=!!brut.deux_etapes && e.cats.length>0;   // trouver d'abord, qualifier ensuite
+    e.phase=1;
     (brut.items||[]).forEach(it=>{
       const t=String(it.texte!==undefined?it.texte
               :(it.segments||[]).map(g=>g.t||'').join(' ')).replace(/\s+/g,' ').trim();
@@ -916,6 +984,10 @@ function normaliser(brut,i){
    c'est ajouter une entrée ici ; aucun autre fichier ne change.
    ===================================================================== */
 const VERT_PDF=[0.11,0.45,0.30], ROUGE_PDF=[0.75,0.15,0.10];
+/* Couleurs des catégories à repérer (CCT, CCL, CCC…), à l'écran et à l'impression. */
+const PALETTE=['#1D4E89','#1D7A4F','#B3541E','#7A4F9E','#0E7490'];
+const PALETTE_PDF=[[0.11,0.31,0.54],[0.11,0.48,0.31],[0.70,0.33,0.12],[0.48,0.31,0.62],[0.05,0.45,0.56]];
+const catDe=(e,id)=>(e.cats||[]).find(c=>c.id===id)||null;
 const texteEtq=(e,id)=>{ const x=e.etq.find(t=>t.id===id); return x?x.texte:''; };
 const ligne=(i,dedans,cls)=>
   `<div class="ligne ${cls||''}"><button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button><span class="phrase">${dedans}</span></div>`;
@@ -929,8 +1001,11 @@ function mots(texte,e,idItem){
     k++;
     const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
     const id=marquable?`${idItem}-${k}`:'';
-    const on=marquable&&e.marq[id]?' pris':'';
-    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}>${esc(p)}</span>`;
+    const v=marquable?e.marq[id]:null;
+    const c=v&&v!==true?catDe(e,v):null;
+    const on=v?(c?' pris cat':' pris'):'';
+    const style=c?` style="background:${c.couleur}"`:'';
+    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}${style}>${esc(p)}</span>`;
   }).join('');
 }
 function restantes(e){
@@ -995,19 +1070,28 @@ etiq:{
         + `</div>`;
     const it=e.items[e.pas];
     if(!it) return '';
+    const aide=it.seg.some(s=>s.type==='trou'&&s.aide);
     return etape(e)
       + `<p class="but">${e.etq.length
         ? "Glisse la bonne étiquette dans le trou."
-        : "Touche la ligne et écris ta réponse."}</p>`
+        : (aide ? "Écris le mot donné, transformé comme le demande la consigne."
+                : (e.clavier==='nombre' ? "Touche la case et écris le nombre."
+                                        : "Touche la ligne et écris ta réponse."))}</p>`
       + ligne(e.pas, it.seg.map(s=> s.type==='trou'
           ? `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
+              inputmode="${e.clavier==='nombre'?'numeric':'text'}"
+              size="${Math.max(3,String(s.reponse||s.aide||'').length+2)}"
               autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`
-          : mots(s.t)).join(' '));
+             + (s.aide?`<span class="aide">${esc(s.aide)}</span>`:'')
+          : mots(s.t)).join(it.colle?'':' '));
   },
   tiroir(e){
     const libres=lotDe(e);
     if(libres.length) return libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
-    return `<span class="vide">${e.etq.length?"L'étiquette est posée.":"Écris les mots de ton choix."}</span>`;
+    const it=e.items[e.pas];
+    const aide=it&&it.seg.some(s=>s.type==='trou'&&s.aide);
+    return `<span class="vide">${e.etq.length?"L'étiquette est posée."
+      :(aide?"Le mot donné est affiché à côté du trou. Écris-le transformé.":"Écris les mots de ton choix.")}</span>`;
   },
   apres(e){
     $$('.bac').forEach(b=>{
@@ -1060,6 +1144,7 @@ etiq:{
             j.push({t:' ',gras:false});
             j.push({t:attendue,gras:true,couleur:ROUGE_PDF});
           }
+          if(g.aide) j.push({t:' ('+g.aide+')',gras:false});
         }else String(g.t).split(/(\s+)/).forEach(m=>{ if(m) j.push({t:m,gras:false}); });
         j.push({t:' ',gras:false});
       }
@@ -1074,19 +1159,47 @@ touch:{
   travail(e){
     const it=e.items[e.pas];
     if(!it) return '';
-    return etape(e)
-      + `<p class="but">Touche ${esc(e.cible||'les mots demandés')}.</p>`
-      + ligne(e.pas, mots(it.texte,e,e.pas));
+    const but=e.deux
+      ? (e.phase===1 ? `Première étape : touche ${esc(e.cible||'les mots demandés')}.`
+                     : "Deuxième étape : pose une étiquette sur chaque mot trouvé.")
+      : ((e.cats||[]).length
+        ? "Choisis une étiquette en bas, puis touche les mots qui vont avec."
+        : `Touche ${esc(e.cible||'les mots demandés')}.`);
+    return etape(e) + `<p class="but">${but}</p>` + ligne(e.pas, mots(it.texte,e,e.pas));
   },
-  tiroir(){ return `<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`; },
+  tiroir(e){
+    if(!(e.cats||[]).length)
+      return `<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`;
+    if(e.deux&&e.phase===1){
+      const trouves=Object.keys(e.marq).filter(k=>k.startsWith(e.pas+'-')).length;
+      return `<span class="vide">Touche les mots que tu as trouvés. ${trouves} trouvé(s).</span>`
+        + (trouves?`<button class="b" id="b-etape2" style="margin-left:10px">Étape 2 : les qualifier</button>`:'');
+    }
+    if(!e.catActive) e.catActive=e.cats[0].id;
+    const glissable=e.deux?' glissable':'';
+    return e.cats.map(c=>
+      `<span class="etq categorie${glissable}${e.catActive===c.id?' active':''}"
+             data-cat-etq="${c.id}" data-e="${c.id}"
+             style="background:${c.couleur};border-color:${c.couleur};color:#fff">${esc(c.nom)}</span>`
+      ).join('')
+      + `<span class="vide" style="flex-basis:100%;margin-top:6px">${e.deux
+          ? "Glisse une étiquette sur un mot trouvé, ou touche l'étiquette puis le mot."
+          : "Choisis une étiquette, puis touche les mots de la phrase."}</span>`;
+  },
   commence(){ return true; },
   lire(e,i){ return e.items[i]?e.items[i].texte:''; },
   pdf(e){
     return e.items.map((it,i)=>{
       const j=[]; let k=-1;
       for(const m of it.texte.split(/\s+/)){
-        k++; const on=!!e.marq[`${i}-${k}`];
-        j.push({t:m,gras:on,souligne:on}); j.push({t:' ',gras:false});
+        k++;
+        const v=e.marq[`${i}-${k}`];
+        const c=(v&&v!==true)?catDe(e,v):null;
+        const rang=c?(e.cats||[]).findIndex(x=>x.id===c.id):-1;
+        const coul=rang>=0?PALETTE_PDF[rang%PALETTE_PDF.length]:null;
+        j.push({t:m,gras:!!v,souligne:!!v,couleur:coul||undefined});
+        if(c) j.push({t:' ('+c.nom+')',gras:true,couleur:coul});
+        j.push({t:' ',gras:false});
       }
       return {indent:4,jetons:j};
     });
@@ -1202,7 +1315,9 @@ ordre:{
 /* ---- 6. tracé au doigt sur l'image du manuel ---------------------- */
 BRIQUES.trace={
   travail(e){
-    return `<p class="but">Entoure directement sur l'exercice, avec ton doigt.</p>
+    return `<p class="but">Entoure directement sur l'exercice, avec ton doigt.</p>`
+      + (e.secours?`<p class="but" style="color:#B3541E">Adaptation impossible : ${esc(e.secours)}.</p>`:'')
+      + `
       <div class="tracoir" id="tracoir">
         <img id="fond-trace" src="${e.image||e.vignette||''}" alt="L'exercice">
         <canvas id="crayon"></canvas>
@@ -1433,6 +1548,12 @@ function ajuster(){
     if(caler()>=uneColonne){ t.style.columnCount=''; caler(); }   // sans gain : on renonce
   }
 }
+function rafraichir(){
+  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
+  $('#travail').innerHTML=B.travail(e);
+  peindre();
+  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); });
+}
 function peindre(){
   const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
   $('#tiroir').innerHTML=B.tiroir(e);
@@ -1447,6 +1568,14 @@ function peindre(){
 let prise=null, vol=null, debut=null, glisse=false;
 function poser(id,cible){
   const e=ex();
+  if(cible.classList.contains('mot')){
+    /* deuxième étape : qualifier un mot déjà trouvé */
+    const k=cible.dataset.m;
+    if(!k||!e.marq[k]){ prise=null; peindre(); return; }
+    const c=catDe(e,id);
+    if(c) e.marq[k]=(e.marq[k]===c.id)?true:c.id;
+    prise=null; rafraichir(); return;
+  }
   if(cible.classList.contains('saisie')){
     e.rep[cible.dataset.t]=texteEtq(e,id); cible.value=texteEtq(e,id);
   }else if(cible.classList.contains('bac')){
@@ -1461,7 +1590,7 @@ function deplacer(depuis,vers){
   l.splice(a,1); l.splice(b,0,depuis);
   ouvrir();
 }
-const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.tuile'):null; };
+const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.tuile,.mot'):null; };
 
 addEventListener('pointerdown',ev=>{
   if(!$('#e-exo').classList.contains('actif')) return;
@@ -1469,6 +1598,7 @@ addEventListener('pointerdown',ev=>{
   if(champ&&prise){ ev.preventDefault(); poser(prise,champ); return; }   // pose sans ouvrir le clavier
   const n=ev.target.closest('.etq,.tuile');
   if(!n||ev.target.closest('.lire')) return;
+  if(n.classList.contains('categorie')&&!n.classList.contains('glissable')) return;   // simple choix
   debut={x:ev.clientX,y:ev.clientY,node:n,
          genre:n.classList.contains('tuile')?'tuile':'etq',
          id:n.dataset.e||n.dataset.o};
@@ -1555,6 +1685,15 @@ addEventListener('click',ev=>{
     return;
   }
 
+  if(ev.target.closest('#b-etape2')){
+    e.phase=2; rafraichir();
+    Voix.dire("Maintenant, pose une étiquette sur chaque mot que tu as trouvé.",0.85);
+    return;
+  }
+
+  const ce=ev.target.closest('[data-cat-etq]');              // choisir une sorte à repérer
+  if(ce){ e.catActive=ce.dataset.catEtq; peindre(); return; }
+
   const hp=ev.target.closest('.lire');                       // écouter une ligne
   if(hp){ const t=brique().lire(e,+hp.dataset.lire); if(t) Voix.dire(t,0.82,hp); return; }
 
@@ -1563,8 +1702,25 @@ addEventListener('click',ev=>{
   Voix.dire(m.dataset.mot,0.8);
   if(m.dataset.m){                                            // toucher-sélection
     const k=m.dataset.m;
-    if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true;
-    m.classList.toggle('pris');
+    const cats=e.cats||[];
+    if(e.deux&&e.phase===1){ if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true; }
+    else if(e.deux){
+      /* deuxième étape : seuls les mots trouvés se qualifient */
+      if(!e.marq[k]){ Voix.dire("Ce mot n'a pas été trouvé à la première étape.",0.85); return; }
+      const actif=e.catActive||cats[0].id;
+      e.marq[k]=(e.marq[k]===actif)?true:actif;
+      rafraichir();
+    }
+    else if(!cats.length){ if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true; }
+    else{
+      /* Le mot prend la couleur de l'étiquette choisie. Le toucher à nouveau
+         avec la même étiquette l'efface ; avec une autre, il change de sorte. */
+      const actif=e.catActive||cats[0].id;
+      if(e.marq[k]===actif) delete e.marq[k]; else e.marq[k]=actif;
+    }
+    const v=e.marq[k], c=(v&&v!==true)?catDe(e,v):null;
+    m.className='mot'+(v?(c?' pris cat':' pris'):'');
+    m.style.background=c?c.couleur:'';
   }
 });
 
@@ -1602,13 +1758,13 @@ $('#panneau').onclick=ev=>{
 };
 $('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
 const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};e.traces=[];
-  e.pas=0; e.lot={};
+  e.pas=0; e.lot={}; e.phase=1;
   if(e.brique==='ordre'&&e.bon.length) e.ordre=melanger(e.bon); };
 $('#b-effacer').onclick=()=>{ remettreAZero(ex()); prise=null; ouvrir(); };
 $('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
 $('#b-fini').onclick=()=>{Voix.stop();
   const e=ex();
-  if(e && e.pas < nbPas(e)-1){ e.pas++; ouvrir(); return; }
+  if(e && e.pas < nbPas(e)-1){ e.pas++; if(e.deux) e.phase=1; ouvrir(); return; }
   if(E.index<E.exos.length-1){ E.index++; ouvrir(); }
   else if(E.flux) avancer();
   else terminer(); };
