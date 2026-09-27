@@ -787,6 +787,13 @@ brique "etiq" — étiquettes à glisser. Deux dispositions :
  mot voisin : {"type":"trou","reponse":"en"},{"type":"texte","t":"rhumée, je suis allée"}
  s'écrit sans espace entre le trou et « rhumée ».
  Si l'élève doit inventer ses mots (« de ton choix »), laisse "etiquettes":[] : il écrira au clavier.
+ TRANSFORMER UNE PHRASE (positive ↔ négative, singulier ↔ pluriel, masculin ↔ féminin,
+ changement de temps ou de personne) : la forme à écrire n'existe nulle part sur la page,
+ donc elle ne peut pas être une étiquette. Recopie la phrase de départ en plaçant le trou
+ sur la partie à transformer, et mets la forme d'origine en aide :
+ "items":[{"segments":[{"type":"texte","t":"J'"},{"type":"trou","aide":"aime","reponse":"n'aime"},{"type":"texte","t":" pas les fraises."}]}]
+ avec "etiquettes":[]. N'utilise JAMAIS les formes d'origine comme étiquettes dans ce cas :
+ l'élève les recopierait sans rien transformer.
  MOT À TRANSFORMER : quand la page donne un mot que l'élève doit modifier avant de l'écrire
  (un infinitif à conjuguer, un adjectif à accorder, un nom à mettre au pluriel), ce mot n'est
  PAS une étiquette, car la forme à écrire n'est pas celle qui est imprimée. Mets-le dans le
@@ -831,7 +838,13 @@ brique "ordre" — remettre dans l'ordre.
  "elements":["Il se lève.","Il déjeune.","Il part."] donnés DANS LE BON ORDRE ; l'application les mélangera.
 
 FIDÉLITÉ : un mot déjà imprimé dans le manuel reste imprimé ; il ne devient jamais une étiquette. Le trou se place là où la page laisse un vide, des pointillés ou une ligne à remplir.
-Si l'exercice demande de rédiger, de recopier ou de dessiner sans rien à manipuler, réponds {"ignore":"motif court"}.`;
+POINTILLÉS ET POPULARITÉ DU MOT « COMPLÈTE » : trois points de suspension (…), une ligne de
+pointillés, un blanc souligné ou une case vide sont TOUJOURS un trou, y compris en tête de
+phrase (« ... coûte ce porte-clés ? »). Un exercice qui dit « complète » se rend toujours en
+brique "etiq", une phrase par item, même si la réponse est libre (« un mot interrogatif de ton
+choix », « le mot que tu veux ») : dans ce cas "etiquettes":[] et l'élève écrit au clavier.
+Ne réponds {"ignore":"motif court"} QUE si l'exercice n'a aucune phrase à trou et demande
+uniquement de rédiger un texte, de recopier ou de dessiner.`;
 const LISTE_TYPES=TYPES.map(t=>`${t[0]}. ${t[1]}`).join('\n');
 
 async function demander(dataUrl){
@@ -1073,15 +1086,16 @@ etiq:{
     const aide=it.seg.some(s=>s.type==='trou'&&s.aide);
     return etape(e)
       + `<p class="but">${e.etq.length
-        ? "Glisse la bonne étiquette dans le trou."
+        ? "Glisse une étiquette dans le trou, ou touche-le et écris au clavier."
         : (aide ? "Écris le mot donné, transformé comme le demande la consigne."
                 : (e.clavier==='nombre' ? "Touche la case et écris le nombre."
                                         : "Touche la ligne et écris ta réponse."))}</p>`
       + ligne(e.pas, it.seg.map(s=> s.type==='trou'
-          ? `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
-              inputmode="${e.clavier==='nombre'?'numeric':'text'}"
-              size="${Math.max(3,String(s.reponse||s.aide||'').length+2)}"
-              autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`
+          ? (()=>{ const n=Math.min(22,Math.max(4,String(e.rep[s.id]||s.reponse||s.aide||'').length+3));
+              return `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
+              inputmode="${e.clavier==='nombre'?'numeric':'text'}" size="${n}"
+              style="width:${n}ch;min-width:0;max-width:100%"
+              autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`; })()
              + (s.aide?`<span class="aide">${esc(s.aide)}</span>`:'')
           : mots(s.t)).join(it.colle?'':' '));
   },
@@ -1511,7 +1525,7 @@ function ouvrir(){
   majJury();
   peindre();
   ecran('e-exo');
-  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); });
+  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); ouvrirClavier(e); });
   Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));
 }
 /* Tirer une étiquette en devant faire défiler la page est impraticable pour
@@ -1547,6 +1561,15 @@ function ajuster(){
     t.style.columnCount='2'; t.style.columnGap='20px';
     if(caler()>=uneColonne){ t.style.columnCount=''; caler(); }   // sans gain : on renonce
   }
+}
+/* Quand il n'y a rien à glisser, l'élève doit écrire : on place le curseur
+   dans le premier trou vide. Sur iPad, le clavier ne s'ouvre pas toujours sans
+   un appui, mais le trou est au moins désigné. */
+function ouvrirClavier(e){
+  if(e.brique!=='etiq'||e.disposition==='colonnes') return;
+  if((e.etq||[]).length) return;
+  const vide=$$('.saisie').find(n=>!n.value.trim());
+  if(vide){ try{ vide.focus({preventScroll:true}); }catch(err){ vide.focus(); } }
 }
 function rafraichir(){
   const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
