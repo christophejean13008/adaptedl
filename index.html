@@ -2,2170 +2,1227 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0F4C5C">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <title>Adaptedl</title>
-<link rel="manifest" href="./manifest.webmanifest">
 <style>
 :root{
-  --encre:#1B2A33; --doux:#5C7482; --fond:#EDF1F3; --papier:#FFFFFF; --bord:#CBD8DE;
-  --accent:#0F4C5C; --accent-clair:#178098; --accent-pale:#DCEEF2;
-  --etq:#FFE7A3; --etq-bord:#D9A82E; --marque:#FFF0BD; --vert:#2F7D57; --r:16px;
+  --encre:#17232e; --doux:#5b6a78; --bord:#dde3e9; --papier:#fff; --fond:#eef2f6;
+  --accent:#1D4E89; --accent-clair:#7FB3D5; --accent-pale:#E8F1F8;
+  --etq:#FFE7A3; --etq-bord:#D9A82E; --orange:#E08A1E; --orange-pale:#FFE9C7;
+  --vert:#2F7D57; --rouge:#B3541E; --r:16px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;margin:0;overflow-x:hidden}
-body{background:var(--fond);color:var(--encre);font-size:17px;line-height:1.5;
-  font-family:"Trebuchet MS",Verdana,-apple-system,system-ui,sans-serif;overscroll-behavior:none}
+html,body{height:100%}
+body{margin:0;background:var(--fond);color:var(--encre);overscroll-behavior:none;
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;font-size:17px;line-height:1.45}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer}
-.ecran{display:none;min-height:100%;flex-direction:column}
-.ecran.actif{display:flex}
+
+.ecran{display:none;height:100%;flex-direction:column}
+.ecran.on{display:flex}
+
+/* ---------- barres ---------- */
+.barre{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px;
+  background:var(--papier);border-bottom:1px solid var(--bord);
+  padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.barre.bas{border-bottom:none;border-top:1px solid var(--bord);justify-content:center;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+.titre{font-weight:700;margin-right:auto}
+.pousse{margin-left:auto}
+
+.b{background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px 18px;
+  font-size:17px;font-weight:600;cursor:pointer}
+.b:active{transform:translateY(1px)}
+.b:disabled{opacity:.45}
+.b.clair{background:var(--papier);color:var(--encre);border:2px solid var(--bord);font-weight:500}
+.b.orange{background:var(--orange-pale);color:var(--encre);border:3px solid var(--orange);font-weight:700}
+.b.petit{padding:8px 13px;font-size:15px}
+.b.danger{background:#fff;color:var(--rouge);border:2px solid var(--rouge)}
+
+/* ---------- accueil ---------- */
+.page{flex:1;overflow:auto;padding:22px 18px 40px;max-width:760px;margin:0 auto;width:100%}
+.page h1{font-size:28px;margin:6px 0 4px}
+.page h2{font-size:18px;margin:26px 0 8px}
+.note{color:var(--doux);font-size:15px}
+.carte{background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:16px;margin:12px 0}
+.gros{display:block;width:100%;margin:10px 0;padding:20px;font-size:19px}
+.champ{display:block;margin:10px 0}
+.champ span{display:block;font-size:15px;color:var(--doux);margin-bottom:4px}
+.champ textarea,.champ input,.champ select{width:100%;padding:10px;border:1px solid var(--bord);
+  border-radius:10px;background:var(--fond)}
+.liste-fiches{display:flex;flex-direction:column;gap:8px}
+.fiche{display:flex;gap:10px;align-items:center;background:var(--papier);border:1px solid var(--bord);
+  border-radius:12px;padding:10px 14px}
+.fiche .nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- cadrage ---------- */
+.zone{flex:1;overflow:auto;padding:14px;display:flex;justify-content:center;align-items:flex-start}
+.plan{position:relative;max-width:100%;touch-action:none;user-select:none}
+.plan img{display:block;max-width:100%;height:auto;border-radius:10px}
+.cadre{position:absolute;border:3px solid var(--accent);background:rgba(29,78,137,.10);border-radius:4px}
+.cadre .num{position:absolute;top:-14px;left:-14px;width:30px;height:30px;border-radius:50%;
+  background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
+.cadre.actif{border-color:var(--orange);background:rgba(224,138,30,.12)}
+.cadre.actif .num{background:var(--orange)}
+.poignee{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;
+  background:#fff;border:3px solid var(--orange);touch-action:none}
+.poignee.cote{border-radius:7px;background:var(--orange);border-color:#fff}
+.croix{position:absolute;top:-16px;right:-16px;width:32px;height:32px;border-radius:50%;
+  background:#fff;border:2px solid var(--rouge);color:var(--rouge);font-size:19px;line-height:1;
+  display:flex;align-items:center;justify-content:center}
+
+/* ---------- travail ---------- */
+.scene-enveloppe{flex:1;display:flex;min-height:0}
+.scene-zone{flex:1;overflow:auto;padding:12px 12px 12px 54px;position:relative}
+.scene{position:relative;margin:0 auto;touch-action:none;user-select:none;background:#fff;
+  border:1px solid var(--bord);border-radius:10px;overflow:visible}
+.scene>img.fond{display:block;width:100%;height:auto;border-radius:9px;pointer-events:none}
+#calque{position:absolute;inset:0;width:100%;height:100%}
+.zt{position:absolute;min-width:60px;min-height:34px;padding:3px 7px;background:#FFFDF2;
+  border:2px dashed var(--etq-bord);border-radius:8px;font-size:20px;outline:none;white-space:pre-wrap}
+.zt.pose{border-style:solid}
+.decoupe{position:absolute;border:2px solid var(--etq-bord);border-radius:6px;background:#fff;
+  box-shadow:0 3px 10px rgba(0,0,0,.22)}
+.decoupe img{display:block;width:100%;height:100%;border-radius:4px;pointer-events:none}
+.selection{position:absolute;border:2px dashed var(--orange);background:rgba(224,138,30,.14)}
+.hp{position:absolute;left:-46px;width:38px;height:38px;border-radius:50%;background:var(--accent);
+  color:#fff;border:none;font-size:17px;display:flex;align-items:center;justify-content:center;
+  touch-action:none;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.hp.consigne{background:var(--orange);color:var(--encre)}
+.hp .rep{position:absolute;right:-9px;bottom:-5px;background:#fff;color:var(--encre);border:1px solid var(--bord);
+  border-radius:6px;font-size:11px;padding:0 3px;font-weight:700}
+.hp.lit{outline:4px solid var(--accent-clair)}
+
+.outils{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.outil{background:var(--papier);border:2px solid var(--bord);border-radius:12px;padding:9px 14px;font-size:16px}
+.outil.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ---------- aides ---------- */
+.aides{width:0;overflow:hidden;background:var(--papier);border-left:1px solid var(--bord);transition:width .18s}
+.aides.on{width:340px;max-width:72vw}
+.aides-dedans{width:340px;max-width:72vw;height:100%;overflow:auto;padding:14px}
+.aides h3{margin:4px 0 10px;font-size:17px}
+.onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.onglet{background:var(--fond);border:1px solid var(--bord);border-radius:999px;padding:7px 12px;font-size:15px}
+.onglet.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.calc-ecran{background:var(--encre);color:#fff;border-radius:10px;padding:12px;font-size:26px;
+  text-align:right;min-height:52px;word-break:break-all}
+.calc-touches{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:9px}
+.calc-touches button{padding:15px 0;font-size:20px;border:1px solid var(--bord);background:var(--fond);border-radius:10px}
+.calc-touches button.op{background:var(--accent-pale)}
+.tables{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:9px}
+.table-bloc{border:1px solid var(--bord);border-radius:10px;padding:9px;background:var(--fond);font-size:15px}
+.table-bloc b{display:block;margin-bottom:5px;color:var(--accent)}
+.conj table,.sons table{width:100%;border-collapse:collapse;font-size:16px}
+.conj td,.conj th{border:1px solid var(--bord);padding:6px 8px;text-align:left}
+.lettre-carte{display:flex;gap:12px;align-items:center;border:1px solid var(--bord);border-radius:12px;
+  padding:10px;margin-bottom:9px;background:var(--fond)}
+.lettre-carte .gros-l{font-size:46px;font-weight:700;color:var(--accent);width:52px;text-align:center}
+.regle-bulle{position:absolute;background:rgba(255,255,255,.95);border:2px solid var(--accent);
+  border-radius:6px;touch-action:none;box-shadow:0 3px 12px rgba(0,0,0,.25)}
+.regle-bulle canvas{display:block}
+.poignee-regle{position:absolute;right:-16px;top:50%;margin-top:-16px;width:32px;height:32px;border-radius:50%;
+  background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px}
+
 .masque{display:none!important}
-:focus-visible{outline:3px solid var(--accent-clair);outline-offset:2px}
-
-.page{max-width:760px;margin:0 auto;padding:22px 18px 40px;width:100%}
-h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.4px}
-h2{font-size:20px;margin:0 0 10px}
-.intro{color:var(--doux);margin:0 0 20px}
-.carte{background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:18px;margin-bottom:14px}
-.b{border:none;border-radius:var(--r);background:var(--accent);color:#fff;padding:14px 20px;
-  font-weight:bold;box-shadow:0 2px 0 #0A3944}
-.b:active{transform:translateY(2px);box-shadow:none}
-.b.pale{background:var(--papier);color:var(--encre);border:2px solid var(--bord);box-shadow:none}
-.b.nu{background:none;border:none;box-shadow:none;color:var(--accent-clair);text-decoration:underline;padding:8px}
-.b[disabled]{opacity:.4;pointer-events:none}
-.b.large{width:100%;padding:17px;font-size:19px}
-.rangee{display:flex;gap:10px;flex-wrap:wrap}
-.rangee>.b{flex:1 1 140px}
-.champ{display:block;margin-bottom:10px}
-.champ span{display:block;font-size:14px;color:var(--doux);margin-bottom:5px}
-textarea,input[type=text]{width:100%;padding:12px;border:2px solid var(--bord);border-radius:10px;background:#fff}
-textarea{min-height:58px;font-size:14px;font-family:ui-monospace,Menlo,monospace;resize:vertical}
-.note{font-size:14px;color:var(--doux);margin:8px 0 0}
-.alerte{background:#FBE7E3;border:1px solid #C25A4A;border-radius:12px;padding:13px;margin-top:12px;font-size:15px}
-.ok{color:var(--vert)}
-
-/* cadres */
-#zone{position:relative;display:block;width:100%;touch-action:none;user-select:none;-webkit-user-select:none;margin-top:10px}
-#zone img{width:100%;display:block;border-radius:12px;border:1px solid var(--bord);
-  pointer-events:none;-webkit-user-drag:none}
-#calque{position:absolute;inset:0;pointer-events:none}
-.cadre{position:absolute;border:3px solid var(--accent-clair);background:rgba(23,128,152,.14);border-radius:8px}
-.cadre.trace{border-style:dashed}
-.cadre .n{position:absolute;top:-3px;left:-3px;background:var(--accent-clair);color:#fff;
-  font-size:15px;font-weight:bold;padding:2px 9px;border-radius:8px 0 8px 0}
-.cadre .x{position:absolute;top:-15px;right:-15px;width:34px;height:34px;border-radius:50%;
-  background:#fff;border:2px solid var(--accent-clair);color:var(--accent-clair);font-weight:bold;
-  line-height:30px;text-align:center;pointer-events:auto}
-
-/* attente */
-.milieu{margin:auto;text-align:center;padding:28px;max-width:520px}
-.barre{height:8px;background:var(--papier);border:1px solid var(--bord);border-radius:6px;overflow:hidden;margin:18px 0}
-.barre i{display:block;height:100%;background:var(--accent-clair);width:0;transition:width .4s}
-
-/* élève */
-.haut{display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--papier);border-bottom:1px solid var(--bord)}
-.pastilles{display:flex;gap:6px;flex:1;flex-wrap:wrap}
-.pt{width:10px;height:10px;border-radius:50%;background:var(--bord)}
-.pt.fait{background:var(--vert)}
-.pt.ici{background:var(--accent-clair);transform:scale(1.4)}
-.rond{width:46px;height:46px;border-radius:50%;border:none;background:var(--accent);color:#fff;
-  font-size:21px;display:grid;place-items:center;box-shadow:0 2px 0 #0A3944;flex:0 0 auto}
-.rond:active{transform:translateY(2px);box-shadow:none}
-.rond.parle{animation:bat 1s infinite}
-@keyframes bat{50%{background:var(--accent-clair)}}
-.consigne{display:flex;gap:13px;align-items:flex-start;padding:15px 18px;background:var(--papier);border-bottom:1px solid var(--bord)}
-.consigne .txt{flex:1;font-size:19px}
-.manuel{background:#FFE9C7;color:var(--encre);border:3px solid #E08A1E;box-shadow:none;
-  padding:13px 20px;font-size:19px;font-weight:700;white-space:nowrap;border-radius:14px}
-.manuel:active{background:#E08A1E}
-.etape{display:inline-block;background:var(--etq);border:1px solid var(--etq-bord);
-  border-radius:999px;padding:3px 12px;font-size:15px;color:var(--doux);margin-bottom:10px}
-#jury{background:#FFF8E6;border-bottom:1px solid var(--etq-bord);padding:9px 16px}
-.jury-haut{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.jury-haut span{flex:1 1 200px;font-size:14px;color:#6B5B28}
-#jury .b{padding:8px 13px;font-size:15px}
-.corps{flex:1;overflow:auto;padding:18px;-webkit-overflow-scrolling:touch}
-.dedans{max-width:740px;margin:0 auto}
-.but{text-align:center;color:var(--doux);font-size:15px;margin:0 0 14px}
-.ligne{background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);
-  padding:13px 15px;margin-bottom:11px;font-size:21px;line-height:2;
-  display:flex;gap:11px;align-items:flex-start}
-.lire{flex:0 0 auto;width:36px;height:36px;margin-top:5px;border:none;border-radius:50%;
-  background:var(--accent-pale);color:var(--accent);font-size:17px;line-height:36px;padding:0}
-.lire:active{background:var(--accent);color:#fff}
-.lire.parle{background:var(--accent);color:#fff;animation:bat 1s infinite}
-.phrase{flex:1;min-width:0}
-.mot{padding:2px 3px;border-radius:5px}
-.mot:active{background:var(--accent-pale)}
-.mot.pris{background:var(--marque);border-bottom:3px solid var(--etq-bord);font-weight:bold}
-.mot.cat{color:#fff;font-weight:bold;border-radius:7px;padding:1px 4px;border-bottom:none}
-.aide{display:inline-block;background:var(--etq);border:1px solid var(--etq-bord);border-radius:999px;
-  padding:2px 10px;font-size:16px;color:var(--encre);margin-left:6px;vertical-align:middle}
-.etq.categorie{border-width:3px;font-weight:700}
-.etq.categorie.active{outline:4px solid var(--encre);outline-offset:2px}
-.trou{display:inline-block;min-width:108px;height:42px;vertical-align:middle;margin:0 4px;
-  border-bottom:3px dashed var(--accent-clair);border-radius:6px 6px 0 0;background:#F4FAFB;
-  text-align:center;line-height:42px}
-.trou.vise{background:var(--accent-pale);border-bottom-style:solid}
-.trou.plein{background:transparent;border-bottom-style:solid}
-.saisie{display:inline-block;min-width:130px;max-width:100%;height:42px;vertical-align:middle;margin:0 4px;
-  border:none;border-bottom:3px solid var(--accent-clair);border-radius:6px 6px 0 0;background:#F4FAFB;
-  font-size:20px;font-family:inherit;padding:0 8px;text-align:center;color:var(--encre)}
-.saisie:focus{background:var(--accent-pale);outline:none}
-/* Dans une phrase, le trou fait la largeur du mot attendu : la mise en page
-   du manuel est conservée, la phrase reste lisible d'un seul tenant. */
-.ligne .saisie{width:auto;min-width:72px;margin:0 2px}
-.dedans{width:100%}
-.ligne{overflow-wrap:break-word;break-inside:avoid;-webkit-column-break-inside:avoid}
-.tuile{break-inside:avoid}
-.tracoir{position:relative;display:inline-block;max-width:100%;line-height:0}
-.tracoir img{width:100%;display:block;border-radius:10px;border:1px solid var(--bord);
-  pointer-events:none;-webkit-user-drag:none}
-#crayon{position:absolute;left:0;top:0;touch-action:none;cursor:crosshair}
-.enonce{font-size:19px}
-.choix{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-.opt{border:2px solid var(--bord);background:#fff;border-radius:12px;padding:11px 17px;font-size:18px}
-.opt-pris{background:var(--accent);color:#fff;border-color:var(--accent)}
-.bloc-q{line-height:1.5}
-.relier{position:relative;display:flex;gap:34px;justify-content:space-between}
-.relier .cote{display:flex;flex-direction:column;gap:10px;flex:1;min-width:0}
-.borne{background:var(--papier);border:2px solid var(--bord);border-radius:12px;padding:12px 10px;
-  font-size:18px;text-align:center;position:relative;z-index:1}
-.borne.vise{border-color:var(--accent);background:var(--accent-pale)}
-#fils{position:absolute;inset:0;pointer-events:none;z-index:3}
-#fils line{stroke:var(--accent-clair);stroke-width:3;stroke-linecap:round;pointer-events:stroke}
-/* « tuile » et non « carte » : .carte désigne déjà les panneaux de l'accueil */
-.tuile{display:flex;gap:10px;align-items:center;background:var(--papier);border:1px solid var(--bord);
-  border-radius:var(--r);padding:11px 13px;margin-bottom:9px;font-size:19px;
-  touch-action:none;user-select:none;-webkit-user-select:none}
-.tuile.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
-.tuile.cachee{opacity:.3}
-.tuile.vise{border-color:var(--accent-clair);background:var(--accent-pale)}
-.tuile.vol{position:fixed;z-index:99;pointer-events:none;margin:0;
-  transform:translate(-50%,-50%) scale(1.03);box-shadow:0 8px 18px rgba(27,42,51,.3)}
-.rang{width:27px;height:27px;border-radius:50%;background:var(--accent-pale);color:var(--accent);
-  font-size:14px;font-weight:bold;display:grid;place-items:center;flex:0 0 auto}
-.cols{display:flex;gap:11px;flex-wrap:wrap}
-.col{flex:1 1 165px;background:var(--papier);border:1px solid var(--bord);border-radius:var(--r);padding:11px}
-.col h3{margin:0 0 9px;font-size:17px;text-align:center;padding-bottom:7px;border-bottom:2px solid var(--bord)}
-.bac{min-height:105px;display:flex;flex-direction:column;gap:7px;align-items:center;border-radius:10px;padding:4px}
-.bac.vise{background:var(--accent-pale)}
-.etq{display:inline-block;background:var(--etq);border:2px solid var(--etq-bord);border-radius:9px;
-  padding:8px 14px;font-size:20px;font-weight:bold;line-height:1.2;box-shadow:0 2px 3px rgba(27,42,51,.18);
-  touch-action:none;user-select:none;-webkit-user-select:none}
-.etq.prise{outline:4px solid var(--accent-clair);outline-offset:2px}
-.etq.cachee{visibility:hidden}
-.etq.posee{box-shadow:none;margin:0;vertical-align:middle}
-.etq.vol{position:fixed;z-index:99;pointer-events:none;transform:translate(-50%,-50%) rotate(-3deg) scale(1.07);
-  box-shadow:0 8px 18px rgba(27,42,51,.3)}
-.tiroir{background:var(--papier);border-top:1px solid var(--bord);display:flex;flex-wrap:wrap;gap:9px;
-  justify-content:center;align-items:center;padding:13px 14px calc(13px + env(safe-area-inset-bottom))}
-.tiroir .vide{color:#8FA3AE;font-size:15px}
-.tiroir.serre{gap:6px;padding:9px 12px calc(9px + env(safe-area-inset-bottom))}
-.tiroir.serre .etq{font-size:17px;padding:6px 11px}
-.tiroir{max-height:34vh;overflow:auto}
-.bas{display:flex;gap:10px;justify-content:center;padding:11px 14px;background:var(--papier);border-top:1px solid var(--bord)}
-#voile,#panneau{position:fixed;inset:0;background:rgba(27,42,51,.85);z-index:200;display:none;
-  align-items:center;justify-content:center;padding:18px}
-#voile.on,#panneau.on{display:flex}
-#panneau .boite{max-width:480px}
-#voile .boite,#panneau .boite{background:#fff;border-radius:16px;padding:16px;max-width:920px;width:100%;max-height:92vh;overflow:auto}
-#voile img{width:100%;display:block;border-radius:8px}
+.alerte{background:#FDECEA;border:1px solid var(--rouge);color:var(--rouge);border-radius:10px;
+  padding:9px 12px;margin:10px 0;font-size:15px}
+.attente{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:14px;color:var(--doux)}
+.roue{width:46px;height:46px;border:5px solid var(--bord);border-top-color:var(--accent);
+  border-radius:50%;animation:tourne .9s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+@media print{body{background:#fff}}
 </style>
 </head>
 <body>
 
-<!-- ============ ACCUEIL ============ -->
-<section id="e-accueil" class="ecran actif"><div class="page">
-  <h1>Adaptedl</h1>
-  <p class="intro"><b style="color:var(--accent-clair)">version 33</b> · Photographie une page de manuel, encadre les exercices, l'élève les fait sur l'iPad. Fiche imprimable à la fin.</p>
+<!-- ======================= ACCUEIL ======================= -->
+<section class="ecran on" id="e-accueil">
+  <div class="page">
+    <h1>Adaptedl</h1>
+    <p class="note">Photographie une page de manuel, encadre les exercices, et l'élève travaille
+      directement dessus : il écrit au clavier ou à la main, découpe ses étiquettes dans la photo,
+      et fait lire les consignes.</p>
 
-  <div class="carte">
-    <h2>La page</h2>
-    <div class="rangee">
-      <button class="b" id="b-photo">Photo</button>
-      <button class="b pale" id="b-image">Image</button>
-      <button class="b pale" id="b-pdf">PDF</button>
-    </div>
+    <button class="b gros" id="b-photo">📷 Prendre une photo de la page</button>
+    <button class="b gros clair" id="b-fichier">🖼️ Choisir une image</button>
     <input type="file" id="f-photo" accept="image/*" capture="environment" class="masque">
     <input type="file" id="f-image" accept="image/*" class="masque">
-    <input type="file" id="f-pdf" accept="application/pdf" class="masque">
-    <img id="apercu" class="masque" style="width:100%;border-radius:12px;border:1px solid var(--bord);margin-top:12px">
-    <div class="rangee masque" id="outils-page" style="margin-top:10px">
-      <button class="b pale" id="b-pivot">Pivoter</button>
-      <button class="b pale" id="b-prec">◀</button>
-      <span id="p-num" style="align-self:center;color:var(--doux)"></span>
-      <button class="b pale" id="b-suiv">▶</button>
+
+    <h2>Fiches enregistrées</h2>
+    <div class="liste-fiches" id="liste-fiches"></div>
+
+    <h2>Réglages</h2>
+    <div class="carte">
+      <label class="champ"><span>Adresse du relais Albert</span>
+        <textarea id="relais" rows="2" spellcheck="false" autocomplete="off"
+          autocapitalize="off" autocorrect="off" placeholder="https://….workers.dev"></textarea></label>
+      <button class="b petit clair" id="b-garder">Enregistrer le relais</button>
+      <p class="note" id="etat-relais"></p>
     </div>
-    <button class="b large" id="b-encadrer" style="margin-top:12px" disabled>Encadrer les exercices</button>
-  </div>
-
-  <div class="carte">
-    <h2>L'élève</h2>
-    <label class="champ"><span>Prénom, imprimé sur la fiche</span>
-      <input type="text" id="prenom" autocomplete="off" placeholder="Prénom"></label>
-    <button class="b pale" id="b-ouvrir-fiche" style="width:100%">Ouvrir une fiche déjà préparée</button>
-    <input type="file" id="f-fiche" accept=".json,application/json" class="masque">
-    <p class="note">Une fiche préparée fonctionne sans réseau : utile dans les écoles où ça ne capte pas.</p>
-  </div>
-
-  <div class="carte">
-    <h2>Mode apprentissage</h2>
-    <p class="note" style="margin:0 0 10px">Pour toi, pas pour l'élève : juge chaque adaptation. Une correction devient aussitôt une règle pour les exercices du même type.</p>
-    <button class="b pale large" id="b-apprentissage">Activer le mode apprentissage</button>
-    <p class="note" id="etat-appr"></p>
-    <div class="rangee masque" id="outils-appr" style="margin-top:10px">
-      <button class="b pale" id="b-exporter-obs">Exporter</button>
-      <button class="b pale" id="b-importer-obs">Importer</button>
-      <button class="b pale" id="b-effacer-obs">Effacer</button>
-    </div>
-    <input type="file" id="f-obs" accept=".json,application/json" class="masque">
-  </div>
-
-  <div class="carte">
-    <h2>Le relais</h2>
-    <p class="note" style="margin:0 0 10px">Déjà configuré. À ne toucher que si tu redéploies le worker ailleurs.</p>
-    <label class="champ"><span>Adresse du relais Cloudflare</span>
-      <textarea id="relais" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off"
-        autocorrect="off" placeholder="https://….workers.dev"></textarea></label>
-    <div class="rangee">
-      <button class="b pale" id="b-garder">Enregistrer</button>
-      <button class="b pale" id="b-tester">Tester</button>
-    </div>
-    <p class="note" id="etat-relais"></p>
-  </div>
-</div></section>
-
-<!-- ============ CADRES ============ -->
-<section id="e-cadres" class="ecran"><div class="page">
-  <button class="b pale" id="b-retour-cadres">← Revenir</button>
-  <h2 style="margin-top:14px">Encadre les exercices</h2>
-  <p class="intro">Fais glisser ton doigt autour de chaque exercice, consigne comprise, dans l'ordre où l'élève les fera. Un cadre par exercice, sur une seule colonne.</p>
-  <div id="zone"><img id="img-cadres" draggable="false" alt="Page"><div id="calque"></div></div>
-  <div class="rangee" style="margin-top:12px">
-    <button class="b pale" id="b-annuler">Annuler le dernier</button>
-    <button class="b pale" id="b-vider">Tout effacer</button>
-  </div>
-  <button class="b large" id="b-adapter" style="margin-top:12px" disabled>Adapter les exercices</button>
-  <p class="note" id="aide-cadres"></p>
-  <div id="err-cadres" class="alerte masque"></div>
-</div></section>
-
-<!-- ============ ATTENTE ============ -->
-<section id="e-attente" class="ecran"><div class="milieu">
-  <h2 id="a-titre">Préparation…</h2>
-  <div class="barre"><i id="a-barre"></i></div>
-  <p class="note" id="a-detail"></p>
-  <div id="err-attente" class="alerte masque"></div>
-  <button class="b pale masque" id="b-retour-attente" style="margin-top:14px">Revenir</button>
-</div></section>
-
-<!-- ============ ÉLÈVE ============ -->
-<section id="e-exo" class="ecran">
-  <div class="haut">
-    <div class="pastilles" id="pastilles"></div>
-    <button class="b manuel masque" id="b-manuel">✏️ Sur le manuel</button>
-    <button class="rond" id="b-mode" aria-label="Changer de mode d'adaptation">⇄</button>
-    <button class="b nu" id="b-stop">Arrêter</button>
-  </div>
-  <div class="consigne">
-    <button class="rond" id="b-dire" aria-label="Écouter la consigne">🔊</button>
-    <div class="txt" id="consigne"></div>
-  </div>
-  <div id="jury" class="masque">
-    <div class="jury-haut">
-      <span id="jury-titre"></span>
-      <button class="b pale" id="b-oui">Adaptation correcte</button>
-      <button class="b pale" id="b-non">Non, plutôt…</button>
-    </div>
-    <div class="rangee masque" id="jury-choix" style="margin-top:8px"></div>
-    <p class="note" id="jury-note" style="margin:6px 0 0"></p>
-  </div>
-  <div class="corps"><div class="dedans" id="travail"></div></div>
-  <div class="tiroir" id="tiroir"></div>
-  <div class="bas">
-    <button class="b pale" id="b-effacer">Tout enlever</button>
-    <button class="b" id="b-fini">J'ai fini</button>
   </div>
 </section>
 
-<div id="panneau"><div class="boite">
-  <h2>Changer de mode</h2>
-  <p class="note" style="margin:0 0 12px">Si l'adaptation proposée ne colle pas à l'exercice du manuel, choisis-en une autre.</p>
-  <div id="liste-modes"></div>
-  <button class="b pale large" id="b-fermer-panneau" style="margin-top:12px">Annuler</button>
-</div></div>
-
-<div id="voile"><div class="boite">
-  <img id="voile-img" alt="L'exercice dans le manuel">
-  <button class="b pale large" id="b-fermer" style="margin-top:10px">Fermer</button>
-</div></div>
-
-<!-- ============ FIN ============ -->
-<section id="e-fin" class="ecran"><div class="milieu">
-  <h2>C'est terminé.</h2>
-  <p class="note" id="bilan"></p>
-  <label style="display:flex;gap:9px;align-items:center;justify-content:center;margin:16px 0">
-    <input type="checkbox" id="opt-juste" checked style="width:22px;height:22px;accent-color:var(--accent-clair)">
-    <span style="font-size:16px">Corriger : juste en vert, erreur barrée et réponse en rouge</span>
-  </label>
-  <div style="display:grid;gap:9px">
-    <button class="b large" id="b-fiche">Fiche imprimable</button>
-    <button class="b pale" id="b-enregistrer">Enregistrer ces exercices</button>
-    <button class="b pale" id="b-recommencer">Refaire</button>
-    <button class="b pale" id="b-accueil">Nouvelle page</button>
+<!-- ======================= CADRAGE ======================= -->
+<section class="ecran" id="e-cadrage">
+  <div class="barre">
+    <span class="titre">Encadre chaque exercice</span>
+    <button class="b petit clair" id="b-retour-accueil">Changer de photo</button>
+    <button class="b petit" id="b-commencer">C'est parti</button>
   </div>
-  <div id="err-fin" class="alerte masque"></div>
-</div></section>
+  <div class="zone">
+    <div class="plan" id="plan">
+      <img id="img-page" alt="La page du manuel">
+    </div>
+  </div>
+  <div class="barre bas">
+    <span class="note" id="compte-cadres">Trace un rectangle en glissant le doigt sur un exercice.</span>
+    <button class="b petit danger" id="b-vider">Tout effacer</button>
+  </div>
+</section>
 
-<script src="./vendor/pdf.min.js"></script>
+<!-- ======================= ANALYSE ======================= -->
+<section class="ecran" id="e-analyse">
+  <div class="attente">
+    <div class="roue"></div>
+    <p id="txt-analyse">Lecture des exercices…</p>
+  </div>
+</section>
+
+<!-- ======================= TRAVAIL ======================= -->
+<section class="ecran" id="e-travail">
+  <div class="barre">
+    <span class="titre" id="titre-exo">Exercice 1</span>
+    <span class="note" id="etiq-matiere"></span>
+    <button class="b petit clair" id="b-aides">🧰 Aides</button>
+    <button class="b petit clair" id="b-stop">Arrêter</button>
+  </div>
+
+  <div class="scene-enveloppe">
+    <div class="scene-zone" id="scene-zone">
+      <div class="scene" id="scene">
+        <img class="fond" id="fond" alt="L'exercice">
+        <canvas id="calque"></canvas>
+      </div>
+    </div>
+    <aside class="aides" id="aides">
+      <div class="aides-dedans">
+        <div class="onglets" id="onglets-aides"></div>
+        <div id="contenu-aide"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="barre bas">
+    <div class="outils" id="outils">
+      <button class="outil on" data-o="main">✋ Déplacer</button>
+      <button class="outil" data-o="crayon">✏️ Écrire à la main</button>
+      <button class="outil" data-o="texte">⌨️ Zone de texte</button>
+      <button class="outil" data-o="ciseaux">✂️ Découper une étiquette</button>
+      <button class="outil" data-o="gomme">🧽 Gomme</button>
+      <button class="b petit clair" id="b-annuler">↶ Annuler</button>
+      <button class="b petit" id="b-suivant">Exercice suivant</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FIN ======================= -->
+<section class="ecran" id="e-fin">
+  <div class="page">
+    <h1>C'est terminé</h1>
+    <p class="note" id="bilan"></p>
+
+    <div class="carte">
+      <h2 style="margin-top:0">Enregistrer</h2>
+      <label class="champ"><span>Nom de la fiche</span>
+        <input id="nom-fiche" type="text" placeholder="Ex. : Léo — conjugaison"></label>
+      <button class="b" id="b-enregistrer">💾 Enregistrer le travail</button>
+      <p class="note" id="etat-sauvegarde"></p>
+    </div>
+
+    <div class="carte">
+      <h2 style="margin-top:0">Imprimer</h2>
+      <label class="champ"><span>Exercices par page</span>
+        <select id="par-page">
+          <option value="1">1 par page — le plus grand</option>
+          <option value="2" selected>2 par page</option>
+          <option value="4">4 par page — le moins de papier</option>
+        </select></label>
+      <button class="b" id="b-imprimer">🖨️ Imprimer</button>
+    </div>
+
+    <button class="b clair gros" id="b-fin-accueil">Revenir à l'accueil</button>
+  </div>
+</section>
+
 <script>
-/* =====================================================================
-   Adaptedl — adaptation de pages de manuel pour élèves en difficulté.
-   Chaîne : import → cadres tracés à la main → un appel IA par cadre
-   (via le relais Albert) → activité à étiquettes → fiche imprimable.
-   ===================================================================== */
+"use strict";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const E={ source:null, canvas:null, rotation:0, pdf:null, page:1,
-          cadres:[], regions:[], curseur:0, cache:new Map(), flux:false,
-          exos:[], index:0, ecartes:[], titre:'Exercices' };
-const ecran=id=>{ $$('.ecran').forEach(s=>s.classList.toggle('actif', s.id===id)); scrollTo(0,0); };
-const esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const alerte=(sel,msg)=>{ const n=$(sel); if(!msg){n.classList.add('masque');return;} n.textContent=msg; n.classList.remove('masque'); };
-const aplat=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9']/g,'');
-const melanger=a=>{const t=[...a];for(let i=t.length-1;i>0;i--){const j=0|Math.random()*(i+1);[t[i],t[j]]=[t[j],t[i]];}return t;};
-if(window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc='./vendor/pdf.worker.min.js';
-if('serviceWorker' in navigator && navigator.serviceWorker)
-  navigator.serviceWorker.register('./sw.js').then(r=>r.update()).catch(()=>{});
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const borne=(v,a,b)=>Math.max(a,Math.min(b,v));
+const ecran=id=>{ $$('.ecran').forEach(s=>s.classList.toggle('on',s.id===id)); };
 
-/* ---------------- voix du système, sans réseau ---------------- */
-const Voix={ v:null,
-  init(){ const c=()=>{ const l=speechSynthesis.getVoices().filter(x=>x.lang&&/^fr/i.test(x.lang));
-    this.v=l.find(x=>/Audrey|Thomas|Amelie|Amélie|Marie/i.test(x.name))||l[0]||null; };
-    c(); speechSynthesis.onvoiceschanged=c; },
-  dire(t,vit=0.9,bouton=null){ if(!t) return; speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; u.rate=vit;
-    if(this.v) u.voice=this.v;
-    if(bouton){ bouton.classList.add('parle'); u.onend=u.onerror=()=>bouton.classList.remove('parle'); }
-    speechSynthesis.speak(u); },
-  stop(){ speechSynthesis.cancel(); $$('.parle').forEach(b=>b.classList.remove('parle')); } };
-Voix.init();
+/* =====================================================================
+   ÉTAT
+   ===================================================================== */
+const E={
+  image:'', iw:0, ih:0,
+  cadres:[],          // {x0,y0,x1,y1} normalisés sur la page
+  actif:-1,
+  exos:[],            // voir creerExo()
+  i:0,
+  outil:'main',
+  aide:''
+};
+const exo=()=>E.exos[E.i]||null;
 
-/* ---------------- relais ---------------- */
-const STOCK='adaptedl_relais';
-/* Relais intégré : plus rien à configurer sur l'iPad. L'adresse n'est pas un
-   secret — la clé Albert vit dans le worker — mais elle reste réservée à cette
-   origine par le worker lui-même. */
-const RELAIS_INTEGRE='https://adaptedl-relais.chris333j.workers.dev';
-function lireRelais(){
-  try{ return localStorage.getItem(STOCK)||E.relais||RELAIS_INTEGRE; }
-  catch(e){ return E.relais||RELAIS_INTEGRE; } }
-function ecrireRelais(v){ E.relais=v; try{ v?localStorage.setItem(STOCK,v):localStorage.removeItem(STOCK); }catch(e){} }
-function normaliser(v){
-  let u=String(v).trim().replace(/\s+/g,'');
-  if(!u) return '';
-  if(!/^https?:\/\//i.test(u)) u='https://'+u.replace(/^\/+/,'');
-  u=u.replace(/^http:/i,'https:').replace(/\/+$/,'');
-  try{ const a=new URL(u); if(!a.hostname.includes('.')) return ''; }catch(e){ return ''; }
-  return u;
+function creerExo(vignette){
+  return { vignette, matiere:'', niveau:'', consigne:'', consigneY:0.08,
+           lignes:[], motif:'',
+           traits:[], textes:[], decoupes:[] };
 }
+
+/* =====================================================================
+   VOIX
+   ===================================================================== */
+const Voix={
+  actif:null,
+  dire(texte,bouton){
+    if(!texte) return;
+    try{ speechSynthesis.cancel(); }catch(e){}
+    $$('.hp').forEach(h=>h.classList.remove('lit'));
+    if(bouton) bouton.classList.add('lit');
+    const u=new SpeechSynthesisUtterance(String(texte));
+    u.lang='fr-FR'; u.rate=0.85;
+    u.onend=u.onerror=()=>{ if(bouton) bouton.classList.remove('lit'); };
+    try{ speechSynthesis.speak(u); }catch(e){}
+  },
+  stop(){ try{ speechSynthesis.cancel(); }catch(e){} $$('.hp').forEach(h=>h.classList.remove('lit')); }
+};
+
+/* =====================================================================
+   RELAIS ALBERT
+   ===================================================================== */
+const STOCK='adaptedl_relais';
+const RELAIS_INTEGRE='https://adaptedl-relais.chris333j.workers.dev';
+const MODELES=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
+
+function lireRelais(){ try{ return localStorage.getItem(STOCK)||RELAIS_INTEGRE; }catch(e){ return RELAIS_INTEGRE; } }
 function majRelais(msg){
-  const u=lireRelais();
-  const perso=(()=>{ try{ return !!localStorage.getItem(STOCK); }catch(e){ return !!E.relais; } })();
+  let perso=false; try{ perso=!!localStorage.getItem(STOCK); }catch(e){}
   $('#etat-relais').textContent = msg!==undefined ? msg
-    : perso ? `Relais personnalisé : ${u}`
-            : "Relais intégré : rien à configurer. Le champ ne sert qu'à en changer.";
-  $('#b-encadrer').disabled = !E.canvas;
+    : (perso?'Relais personnalisé enregistré.':'Relais intégré utilisé.');
 }
 $('#b-garder').onclick=()=>{
-  const brut=$('#relais').value.trim();
-  if(!brut || normaliser(brut)===RELAIS_INTEGRE){   // retour au relais d'origine
-    ecrireRelais(''); $('#relais').value=RELAIS_INTEGRE; majRelais("Relais intégré rétabli.");
-    return;
-  }
-  const u=normaliser(brut);
-  if(!u){ majRelais("Adresse inutilisable. Elle ressemble à https://adaptedl-relais.xxx.workers.dev"); return; }
-  $('#relais').value=u; ecrireRelais(u); majRelais(`Relais personnalisé enregistré : ${u}`);
-};
-$('#relais').addEventListener('change',()=>$('#b-garder').click());
-$('#b-tester').onclick=async()=>{
-  const u=lireRelais();
-  if(!u){ majRelais("Enregistre d'abord une adresse."); return; }
-  majRelais("Test en cours…");
-  let r; try{ r=await fetch(u,{method:'GET'}); }
-  catch(e){ majRelais("Aucune réponse : adresse fausse, ou worker non déployé."); return; }
-  let c={}; try{ c=await r.json(); }catch(e){}
-  if(r.status===405&&c.ok) majRelais("Relais en ligne, origine acceptée. Tout est prêt.");
-  else if(r.status===403) majRelais("Le relais refuse cette origine. "+(c.error||''));
-  else if(r.status===500) majRelais(c.error||"Le secret CLE_ALBERT manque dans le worker.");
-  else majRelais(`Le relais a répondu ${r.status}. ${c.error||c.message||''}`);
-};
-
-/* ---------------- import ---------------- */
-$('#b-photo').onclick=()=>$('#f-photo').click();
-$('#b-image').onclick=()=>$('#f-image').click();
-$('#b-pdf').onclick=()=>$('#f-pdf').click();
-$('#f-photo').onchange=e=>chargerImage(e.target.files[0]);
-$('#f-image').onchange=e=>chargerImage(e.target.files[0]);
-$('#f-pdf').onchange=e=>chargerPdf(e.target.files[0]);
-$('#b-pivot').onclick=()=>{ E.rotation=(E.rotation+90)%360; appliquer(); };
-$('#b-prec').onclick=()=>{ if(E.pdf&&E.page>1){E.page--;rendrePdf();} };
-$('#b-suiv').onclick=()=>{ if(E.pdf&&E.page<E.pdf.numPages){E.page++;rendrePdf();} };
-
-function reduire(img,maxi){
-  const f=Math.min(1,maxi/Math.max(img.width,img.height));
-  const c=document.createElement('canvas');
-  c.width=Math.round(img.width*f); c.height=Math.round(img.height*f);
-  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-  return c;
-}
-function appliquer(){
-  const s=E.source, r=E.rotation, pivote=(r===90||r===270);
-  const c=document.createElement('canvas');
-  c.width=pivote?s.height:s.width; c.height=pivote?s.width:s.height;
-  const x=c.getContext('2d');
-  x.translate(c.width/2,c.height/2); x.rotate(r*Math.PI/180);
-  x.drawImage(s,-s.width/2,-s.height/2);
-  E.canvas=c;
-  $('#apercu').src=c.toDataURL('image/jpeg',0.7);
-  $('#apercu').classList.remove('masque');
-  $('#outils-page').classList.remove('masque');
-  $$('#b-prec,#b-suiv,#p-num').forEach(n=>n.classList.toggle('masque',!E.pdf||E.pdf.numPages<2));
-  majRelais();
-}
-async function chargerImage(f){
-  if(!f) return; E.pdf=null; E.rotation=0;
+  const v=$('#relais').value.trim();
   try{
-    const url=await new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=ko;r.readAsDataURL(f);});
-    const img=await new Promise((ok,ko)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=ko;i.src=url;});
-    E.source=reduire(img,2600); appliquer();
-  }catch(e){ majRelais("Cette image n'a pas pu être ouverte."); }
-}
-async function chargerPdf(f){
-  if(!f) return; E.rotation=0;
-  try{ E.pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; E.page=1; await rendrePdf(); }
-  catch(e){ majRelais("Ce PDF n'a pas pu être ouvert. Essaie une photo."); }
-}
-async function rendrePdf(){
-  const p=await E.pdf.getPage(E.page);
-  const base=p.getViewport({scale:1});
-  const vp=p.getViewport({scale:Math.min(3,2600/Math.max(base.width,base.height))});
-  const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
-  const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
-  await p.render({canvasContext:x,viewport:vp}).promise;
-  E.source=c; $('#p-num').textContent=`${E.page} / ${E.pdf.numPages}`;
-  appliquer();
-}
-
-/* ---------------- cadres ---------------- */
-$('#b-encadrer').onclick=()=>{
-  $('#img-cadres').src=E.canvas.toDataURL('image/jpeg',0.85);
-  E.cadres=[]; dessinerCadres(); alerte('#err-cadres',''); ecran('e-cadres');
+    if(!v||v===RELAIS_INTEGRE){ localStorage.removeItem(STOCK); $('#relais').value=RELAIS_INTEGRE;
+      majRelais('Relais intégré rétabli.'); return; }
+    localStorage.setItem(STOCK,v.replace(/\/+$/,'')); majRelais('Relais personnalisé enregistré.');
+  }catch(e){ majRelais("Impossible d'enregistrer sur cet appareil."); }
 };
-$('#b-retour-cadres').onclick=()=>ecran('e-accueil');
-$('#b-annuler').onclick=()=>{E.cadres.pop();dessinerCadres();};
-$('#b-vider').onclick=()=>{E.cadres=[];dessinerCadres();};
-function dessinerCadres(){
-  $('#calque').innerHTML=E.cadres.map((c,i)=>
-    `<div class="cadre" style="left:${c.x0*100}%;top:${c.y0*100}%;width:${(c.x1-c.x0)*100}%;height:${(c.y1-c.y0)*100}%">
-      <span class="n">${i+1}</span><span class="x" data-x="${i}">×</span></div>`).join('');
-  $('#b-adapter').disabled=!E.cadres.length;
-  $('#aide-cadres').textContent=E.cadres.length
-    ? `${E.cadres.length} exercice(s) encadré(s).`
-    : "Trace le premier cadre autour de la consigne et de ses phrases.";
-}
-(function(){
-  const z=$('#zone'); let d=null, vu=null;
-  const pos=ev=>{ const r=z.getBoundingClientRect();
-    return {x:Math.min(1,Math.max(0,(ev.clientX-r.left)/r.width)),
-            y:Math.min(1,Math.max(0,(ev.clientY-r.top)/r.height))}; };
-  z.addEventListener('pointerdown',ev=>{
-    const x=ev.target.closest('.x');
-    if(x){ E.cadres.splice(+x.dataset.x,1); dessinerCadres(); return; }
-    ev.preventDefault(); d=pos(ev);
-    try{ z.setPointerCapture(ev.pointerId); }catch(e){}
-    vu=document.createElement('div'); vu.className='cadre trace'; $('#calque').appendChild(vu);
-  });
-  const bouge=ev=>{ if(!d||!vu) return; ev.preventDefault(); const p=pos(ev);
-    Object.assign(vu.style,{left:Math.min(d.x,p.x)*100+'%',top:Math.min(d.y,p.y)*100+'%',
-      width:Math.abs(p.x-d.x)*100+'%',height:Math.abs(p.y-d.y)*100+'%'}); };
-  const fin=ev=>{ if(!d) return; const p=pos(ev);
-    const c={x0:Math.min(d.x,p.x),y0:Math.min(d.y,p.y),x1:Math.max(d.x,p.x),y1:Math.max(d.y,p.y)};
-    d=null; if(vu){vu.remove();vu=null;}
-    if(c.x1-c.x0>0.04&&c.y1-c.y0>0.02) E.cadres.push(c);
-    dessinerCadres(); };
-  z.addEventListener('pointermove',bouge); addEventListener('pointermove',bouge);
-  z.addEventListener('pointerup',fin);     addEventListener('pointerup',fin);
-  addEventListener('pointercancel',()=>{ d=null; if(vu){vu.remove();vu=null;} });
-  z.addEventListener('dragstart',ev=>ev.preventDefault());
-})();
 
-/* =====================================================================
-   TABLE DES TYPES — 116 types d'exercices du CP au CM2, chacun rattaché
-   à l'une des 9 briques d'interface. Ajouter un type = une ligne ici.
-   Format : [numéro, intitulé, brique principale, briques secondaires]
-   ===================================================================== */
-const TYPES=[
-[1,"Entourer les mots ou syllabes contenant un son","scan",["trace"]],
-[2,"Segmenter et compter les syllabes","etiq"],
-[3,"Localiser un son (début, milieu, fin)","coche"],
-[4,"Associer graphème et phonème","relier"],
-[5,"Combinatoire (consonne + voyelle)","etiq"],
-[6,"Discrimination visuelle de lettres ou mots proches","touch"],
-[7,"Trier des mots selon la graphie d'un son","etiq"],
-[8,"Lire des mots ou pseudo-mots","auto"],
-[9,"Écrire une syllabe ou un mot sous dictée","etiq"],
-[10,"Questions à réponse explicite dans le texte","coche"],
-[11,"Questions inférentielles","coche"],
-[12,"QCM de compréhension","coche"],
-[13,"Vrai ou faux","coche"],
-[14,"Remettre des images ou des phrases dans l'ordre","ordre"],
-[15,"Associer texte et illustration","relier"],
-[16,"Relever ou souligner un élément dans le texte","touch"],
-[17,"Choisir le bon titre ou le bon résumé","coche"],
-[18,"Identifier personnages, lieu, temps","etiq"],
-[19,"Lecture à voix haute et fluence","auto"],
-[20,"Synonymes et antonymes","etiq"],
-[21,"Familles de mots","etiq"],
-[22,"Mot-étiquette et catégories","etiq"],
-[23,"Préfixes et suffixes","etiq"],
-[24,"Homonymes","etiq"],
-[25,"Relier un mot à sa définition","relier"],
-[26,"Ordre alphabétique et dictionnaire","ordre"],
-[27,"Compléter une phrase avec le mot juste","etiq"],
-[28,"Sens propre, sens figuré, polysémie","relier"],
-[29,"Champ lexical","etiq"],
-[30,"Identifier la nature des mots","etiq"],
-[31,"Identifier la fonction (sujet, COD, complément)","etiq"],
-[32,"Souligner le sujet et le verbe","etiq"],
-[33,"Phrase ou non-phrase","touch"],
-[34,"Remettre les mots dans l'ordre","etiq"],
-[35,"Rétablir la ponctuation","etiq"],
-[36,"Transformer le type ou la forme de phrase","etiq"],
-[37,"Enrichir ou réduire un groupe nominal","etiq"],
-[38,"Genre et nombre du groupe nominal","etiq"],
-[39,"Pronominaliser","etiq"],
-[40,"Classer dans un tableau d'analyse","etiq"],
-[41,"Associer deux moitiés de phrase","relier"],
-[42,"Conjuguer un verbe à un temps donné","coche"],
-[43,"Compléter avec la bonne terminaison","coche"],
-[44,"Identifier le temps employé","etiq"],
-[45,"Donner l'infinitif et le groupe","etiq"],
-[46,"Relier pronom et forme verbale","relier"],
-[47,"Transposer un texte (personne ou temps)","etiq"],
-[48,"Classer des verbes","etiq"],
-[49,"Dictée de mots, de phrase ou de texte","etiq"],
-[50,"Accords dans le groupe nominal","etiq"],
-[51,"Accord sujet-verbe","etiq"],
-[52,"Homophones (a/à, et/est, son/sont)","etiq"],
-[53,"Écrire le féminin ou le pluriel","etiq"],
-[54,"Compléter la lettre ou le graphème manquant","etiq"],
-[55,"Repérer et corriger les erreurs","touch",["etiq"]],
-[56,"Mémoriser les mots invariables","etiq"],
-[57,"Graphisme et écriture cursive","trace"],
-[58,"Copie simple, différée ou sélective","etiq"],
-[59,"Écrire une phrase à partir d'une image","etiq",["scan"]],
-[60,"Compléter ou continuer une histoire","ordre"],
-[61,"Écrire un type de texte (portrait, lettre, recette)","etiq"],
-[62,"Écrire « à la manière de »","etiq"],
-[63,"Réécrire en changeant un élément","etiq"],
-[64,"Améliorer ou enrichir son texte","etiq"],
-[65,"Mémoriser et réciter une poésie","etiq"],
-[66,"Écrire en chiffres et en lettres","etiq"],
-[67,"Décomposer un nombre","etiq",["widget"]],
-[68,"Comparer, ranger, encadrer, intercaler","etiq"],
-[69,"Placer ou lire sur une droite graduée","etiq"],
-[70,"Compléter une suite numérique","etiq"],
-[71,"Dénombrer une collection illustrée","touch"],
-[72,"Constituer une collection","etiq"],
-[73,"Tableau de numération","etiq",["widget"]],
-[74,"Arrondir, ordre de grandeur","etiq"],
-[75,"Fractions : colorier, écrire, placer","touch"],
-[76,"Nombres décimaux : lire, comparer, convertir","etiq",["widget"]],
-[77,"Multiples, diviseurs, divisibilité","touch"],
-[78,"Calcul mental dicté","etiq"],
-[79,"Opérations posées","widget",["etiq"]],
-[80,"Calcul en ligne ou décomposé","etiq"],
-[81,"Égalités à trous","etiq"],
-[82,"Tables de multiplication","etiq"],
-[83,"Priorités et parenthèses","touch",["etiq"]],
-[84,"Utiliser la calculatrice","widget",["etiq"]],
-[85,"Problème à une étape","etiq"],
-[86,"Problème à plusieurs étapes","etiq"],
-[87,"Problème avec image, schéma ou tableau","scan",["etiq"]],
-[88,"Choisir la bonne opération","etiq"],
-[89,"Trouver ou choisir la question","etiq"],
-[90,"Trier les données utiles et inutiles","touch"],
-[91,"Rédiger la phrase-réponse","etiq"],
-[92,"Proportionnalité, échelles, pourcentages","etiq"],
-[93,"Lire l'heure, calculer une durée","widget"],
-[94,"Calendrier","widget",["touch"]],
-[95,"Convertir longueurs, masses, contenances","etiq",["widget"]],
-[96,"Mesurer avec la règle","widget"],
-[97,"Lire un instrument (balance, thermomètre, verre doseur)","widget"],
-[98,"Monnaie : composer une somme, rendre la monnaie","widget",["etiq"]],
-[99,"Périmètre","touch"],
-[100,"Aire","touch"],
-[101,"Volume et contenance","widget"],
-[102,"Reconnaître et nommer des figures","etiq"],
-[103,"Tracer avec les instruments","widget",["trace"]],
-[104,"Reproduire une figure sur quadrillage","widget",["touch"]],
-[105,"Suivre un programme de construction","widget",["trace"]],
-[106,"Décrire une figure","etiq"],
-[107,"Symétrie axiale","widget",["touch"]],
-[108,"Alignement, perpendiculaires, parallèles","touch"],
-[109,"Angles : comparer, mesurer, tracer","widget"],
-[110,"Se repérer sur un quadrillage, coordonnées","touch"],
-[111,"Coder un déplacement","etiq"],
-[112,"Solides et patrons","widget",["etiq"]],
-[113,"Lire un tableau à double entrée","scan",["etiq"]],
-[114,"Compléter un tableau","etiq"],
-[115,"Lire un graphique (bâtons, courbe, camembert)","scan",["etiq"]],
-[116,"Construire un graphique","widget",["etiq"]]
-];
-
-const BRIQUES_PRETES=['etiq','touch','coche','relier','ordre','trace'];
-const TYPE=Object.fromEntries(TYPES.map(t=>[t[0],{nom:t[1],brique:t[2],aussi:t[3]||[]}]));
-/* Un type non encore implémenté retombe sur la brique la plus proche :
-   mieux vaut un exercice à étiquettes qu'un écran vide. */
-const REPLI={scan:'trace',widget:'etiq',auto:'coche'};
-/* =====================================================================
-   MODE APPRENTISSAGE — le maître juge chaque adaptation. Deux effets :
-   immédiat (une correction devient une règle appliquée aux exercices
-   suivants du même type) et différé (le fichier exporté sert à corriger
-   la table des 116 types et l'instruction envoyée au modèle).
-   ===================================================================== */
-const CLE_OBS='adaptedl_observations', CLE_MODE='adaptedl_apprentissage';
-
-function lireObs(){
-  try{ return JSON.parse(localStorage.getItem(CLE_OBS)||'[]'); }catch(e){ return []; }
-}
-/* Les vignettes sont ce qui a le plus de valeur pour corriger l'application,
-   mais elles pèsent. Si la réserve du navigateur déborde, on sacrifie les
-   images les plus anciennes, jamais les observations elles-mêmes. */
-function sauverObs(liste){
-  const essais=[
-    l=>l,
-    l=>l.map((o,i)=>i<l.length-30?{...o,image:''}:o),
-    l=>l.map(o=>({...o,image:''})),
-    l=>l.slice(-200).map(o=>({...o,image:''}))
-  ];
-  for(const taille of essais){
-    try{ localStorage.setItem(CLE_OBS,JSON.stringify(taille(liste))); return true; }
-    catch(e){}
-  }
-  return false;
-}
-function corrections(){
-  const c={};
-  for(const o of lireObs()) if(!o.juste&&o.attendue) c[o.type]=o.attendue;   // la dernière gagne
-  return c;
-}
-let CORR=corrections();
-
-function apprentissageActif(){
-  try{ return localStorage.getItem(CLE_MODE)==='1'; }catch(e){ return !!E.apprentissage; }
-}
-function basculerApprentissage(){
-  const on=!apprentissageActif();
-  E.apprentissage=on;
-  try{ localStorage.setItem(CLE_MODE,on?'1':'0'); }catch(e){}
-  majApprentissage();
-}
-function majApprentissage(){
-  const on=apprentissageActif(), obs=lireObs();
-  const justes=obs.filter(o=>o.juste).length;
-  $('#b-apprentissage').textContent = on ? 'Mode apprentissage : activé' : 'Activer le mode apprentissage';
-  $('#b-apprentissage').className = on ? 'b large' : 'b pale large';
-  $('#etat-appr').textContent = obs.length
-    ? `${obs.length} observation(s) — ${justes} adaptation(s) jugée(s) bonnes, ${Object.keys(CORR).length} règle(s) appliquée(s) aux prochains exercices.`
-    : "Aucune observation pour l'instant.";
-  $('#outils-appr').classList.toggle('masque',!obs.length&&!on);
-}
-
-/* ---- la barre de jugement, sur l'écran de l'exercice ---- */
-function majJury(){
-  const on=apprentissageActif();
-  $('#jury').classList.toggle('masque',!on);
-  if(!on) return;
-  const e=E.exos[E.index];
-  $('#jury-titre').textContent=`Type ${e.type||'?'} · ${e.nom||'non identifié'} → ${e.brique}`
-    +(e.secours?`  (repli : ${e.secours})`:'');
-  $('#jury-choix').classList.add('masque');
-  $('#jury-note').textContent=e.juge===true?'Noté : adaptation correcte.'
-    :e.juge===false?`Noté : à remplacer par « ${e.attendue} ».`:'';
-}
-function noter(juste,attendue){
-  const e=E.exos[E.index];
-  e.juge=juste; e.attendue=attendue||'';
-  const obs=lireObs();
-  obs.push({date:new Date().toISOString(), type:e.type||0, nom:e.nom||'',
-            proposee:e.brique, juste:!!juste, attendue:attendue||'',
-            consigne:e.consigne.slice(0,240), image:e.vignette||''});
-  sauverObs(obs); CORR=corrections();
-  majApprentissage(); majJury();
-}
-function ouvrirJuryChoix(){
-  $('#jury-choix').innerHTML=MODES.map(([id,nom])=>
-    `<button class="b pale" data-juge="${id}" style="flex:1 1 140px">${nom}</button>`).join('');
-  $('#jury-choix').classList.remove('masque');
-}
-
-/* ---- export et import des observations ---- */
-function exporterObs(){
-  const obs=lireObs();
-  if(!obs.length) return;
-  telecharger(`adaptedl-observations-${new Date().toISOString().slice(0,10)}.json`,
-    new Blob([JSON.stringify({app:'adaptedl',observations:obs},null,1)],{type:'application/json'}));
-}
-async function importerObs(f){
-  if(!f) return;
-  try{
-    const d=JSON.parse(await f.text());
-    const venues=Array.isArray(d)?d:(d.observations||[]);
-    if(!venues.length) throw 0;
-    const obs=lireObs();
-    const vues=new Set(obs.map(o=>o.date+'|'+o.type));
-    let ajoutees=0;
-    for(const o of venues){
-      const k=(o.date||'')+'|'+(o.type||0);
-      if(vues.has(k)) continue;
-      vues.add(k); obs.push(o); ajoutees++;
-    }
-    sauverObs(obs); CORR=corrections(); majApprentissage();
-    $('#etat-appr').textContent=`${ajoutees} observation(s) ajoutée(s). ${Object.keys(CORR).length} règle(s) active(s).`;
-  }catch(e){ $('#etat-appr').textContent="Ce fichier n'est pas un relevé Adaptedl."; }
-}
-function effacerObs(){
-  try{ localStorage.removeItem(CLE_OBS); }catch(e){}
-  CORR={}; majApprentissage();
-}
-
-function briqueDe(id,propose){
-  if(CORR[id]&&BRIQUES_PRETES.includes(CORR[id])) return CORR[id];   // règle apprise
-  const t=TYPE[id];
-  let b = t ? t.brique : (propose||'etiq');
-  if(!BRIQUES_PRETES.includes(b)){
-    const secours=(t&&t.aussi.find(x=>BRIQUES_PRETES.includes(x)))||REPLI[b]||'etiq';
-    b=secours;
-  }
-  return b;
-}
-
-/* ---------------- appel au modèle, via le relais ---------------- */
-const MODELES=['mistralai/Mistral-Small-3.2-24B-Instruct-2506','openweight-medium'];
-const REGLE=`Tu assistes un maître E qui adapte des pages de manuels du primaire pour des élèves en difficulté.
-Tu n'inventes PAS l'adaptation : elle est déjà décidée. Ton travail est double.
-1. IDENTIFIER le type de l'exercice dans la liste numérotée fournie, et renvoyer son numéro.
-2. EXTRAIRE les données brutes de l'exercice dans le format correspondant à sa brique.
-RÈGLE ABSOLUE : ne modifie jamais le contenu. Consignes et phrases sont recopiées MOT POUR MOT depuis l'image : même orthographe, même ponctuation, même ordre. N'invente aucune phrase, n'en simplifie aucune, n'en ajoute aucune.
-Ton seul travail : changer la façon de répondre. Là où l'élève devrait écrire, tu places un trou, et la réponse attendue devient une étiquette à glisser. Les pointillés, les cases vides et les lignes à remplir du manuel sont des trous.
-FIDÉLITÉ DES TROUS : un mot déjà imprimé dans le manuel reste imprimé. Il ne devient jamais une étiquette ni un trou. Le trou se place uniquement là où la page laisse un espace vide, des pointillés ou une ligne à remplir — c'est-à-dire là où l'élève devait écrire.
-Une phrase par item : ne regroupe jamais deux phrases dans un même item.
+const REGLE=`Tu assistes un maître E qui adapte des pages de manuels du primaire.
+On te montre la photo d'UN exercice. Tu ne le résous pas, tu ne le modifies pas, tu ne l'adaptes pas.
+Ton seul travail : dire de quelle matière il relève, à quel niveau il s'adresse, et recopier
+mot pour mot la consigne et chaque ligne de l'exercice, avec leur position verticale dans l'image.
 Réponds uniquement par du JSON, sans texte autour ni balises de code.`;
-const SCHEMAS=`Champs communs à toute réponse :
-{"type": <numéro du type dans la liste>, "brique":"etiq|touch|coche|relier|ordre",
- "consigne":"la consigne mot pour mot", "consigne_dite":"la même consigne en une phrase très simple à lire à voix haute", ...}
 
-brique "etiq" — étiquettes à glisser. Deux dispositions :
- · phrases : "disposition":"phrases","items":[{"segments":[{"type":"texte","t":"Le chat "},{"type":"trou","reponse":"dort"},{"type":"texte","t":" ici."}]}]
- · colonnes : "disposition":"colonnes","colonnes":[{"nom":"Noms","reponses":["chat"]}]
-   Réservé aux exercices qui demandent EXPLICITEMENT de classer, trier ou ranger des mots
-   dans des groupes nommés. Un exercice où l'élève doit écrire quelque chose n'est jamais
-   en colonnes.
- Dans les deux cas : "etiquettes":["dort","mange"] — les réponses possibles SANS DOUBLON (trois phrases attendant « le », « le », « la » donnent ["le","la"]), plus deux intrus au maximum pris dans la page.
- BANQUE DE MOTS : les mots à placer sont souvent imprimés à l'écart des phrases — dans la
- consigne elle-même, sur une ligne au-dessus de l'exercice, dans un encadré ou en marge
- (« in- ou im-, en- ou em-, é- ou ex- ? », une colonne de mots à droite des phrases, une
- liste sur fond coloré : « seul, soleil, solitude, parasol, solaire, solitaire, soliste,
- ensoleillé »). Cette liste n'appartient à AUCUNE phrase : c'est la banque. Recopie-la TOUTE
- dans "etiquettes", sans en oublier et sans en inventer d'autres, et ne les compte pas comme
- du texte de la phrase.
- ESPACES : recopie les espaces tels quels dans "t". Un préfixe ou une terminaison se colle au
- mot voisin : {"type":"trou","reponse":"en"},{"type":"texte","t":"rhumée, je suis allée"}
- s'écrit sans espace entre le trou et « rhumée ».
- Si l'élève doit inventer ses mots (« de ton choix »), laisse "etiquettes":[] : il écrira au clavier.
- TRANSFORMER UNE PHRASE (positive ↔ négative, singulier ↔ pluriel, masculin ↔ féminin,
- changement de temps ou de personne) : la forme à écrire n'existe nulle part sur la page,
- donc elle ne peut pas être une étiquette. Recopie la phrase de départ en plaçant le trou
- sur la partie à transformer, et mets la forme d'origine en aide :
- "items":[{"segments":[{"type":"texte","t":"J'"},{"type":"trou","aide":"aime","reponse":"n'aime"},{"type":"texte","t":" pas les fraises."}]}]
- avec "etiquettes":[]. N'utilise JAMAIS les formes d'origine comme étiquettes dans ce cas :
- l'élève les recopierait sans rien transformer.
- MOT À TRANSFORMER : quand la page donne un mot que l'élève doit modifier avant de l'écrire
- (un infinitif à conjuguer, un adjectif à accorder, un nom à mettre au pluriel), ce mot n'est
- PAS une étiquette, car la forme à écrire n'est pas celle qui est imprimée. Mets-le dans le
- trou comme aide : {"type":"trou","aide":"être","reponse":"serons"}. "reponse" est la forme
- attendue si tu peux la déduire, sinon "". Dans ce cas envoie "etiquettes":[] : l'élève écrira
- au clavier, avec le mot donné affiché à côté du trou.
- N'abandonne JAMAIS un exercice dont les phrases comportent des trous : même sans étiquettes
- possible, renvoie la brique "etiq" avec ses items.
+const SCHEMA=`Format exact de ta réponse :
+{"matiere":"francais" ou "maths",
+ "niveau":"CP" ou "CE1" ou "CE2" ou "CM1" ou "CM2",
+ "consigne":"la consigne recopiée mot pour mot",
+ "consigne_y":0.09,
+ "lignes":[{"repere":"a","texte":"la ligne recopiée mot pour mot","y":0.34}],
+ "aides":["conjugaison","tables"]}
 
-brique "touch" — toucher des mots dans le texte.
- "cible":"les verbes conjugués","items":[{"texte":"Le vent souffle fort."}]
- Si la consigne demande de repérer PLUSIEURS sortes de choses à la fois (par exemple
- les CCT, les CCL et les CCC, ou les noms et les verbes), ajoute la liste de ces sortes :
- "categories":["CCT","CCL","CCC"] — telles qu'elles sont écrites dans la consigne,
- abrégées si la consigne les abrège. Une seule sorte demandée : n'envoie pas ce champ.
- EN DEUX TEMPS : si la consigne enchaîne deux tâches — d'abord trouver des mots, PUIS dire
- ce qu'ils sont (« trouve les homonymes, puis indique leur classe grammaticale : nom, verbe
- ou adjectif ») — ajoute "deux_etapes":true en plus de "categories". L'élève touchera d'abord
- les mots, puis leur posera une étiquette.
+"y" et "consigne_y" sont la hauteur du MILIEU de la ligne dans l'image : 0 tout en haut,
+1 tout en bas. Donne ta meilleure estimation, le maître pourra l'ajuster.
+"repere" est la lettre ou le numéro imprimé devant la ligne (a, b, c, 1, 2…). S'il n'y en a pas,
+mets "•". Une entrée par ligne de l'exercice, dans l'ordre, sans regrouper deux lignes.
+Si une ligne est trop longue pour tenir sur une ligne imprimée, elle reste UNE entrée.
+"aides" liste ce qui pourrait aider l'élève, parmi : "calculatrice", "regle", "compas",
+"tables", "conjugaison", "sons", "alphabet". Mets-en une à trois, ou [] si rien ne s'impose.
+N'invente aucun texte : si tu ne lis pas une ligne, ne la mets pas.`;
 
-NOMBRES (écrire en chiffres, écrire en lettres, décomposer, compléter un tableau de
- numération) : brique "etiq", disposition "phrases", UN SEUL nombre par item, jamais de
- colonnes. Recopie l'énoncé du nombre et place le trou là où l'élève écrit sa réponse :
- "items":[{"segments":[{"type":"texte","t":"32 dizaines et 16 unités  →  "},{"type":"trou","reponse":"336"}]}]
- · réponse à écrire en chiffres : ajoute "clavier":"nombre" et laisse "etiquettes":[] ;
-   l'application ouvrira le pavé numérique.
- · réponse à écrire en lettres : laisse "etiquettes":[] sans "clavier".
- · décomposition à compléter avec des mots de numération : mets-les en étiquettes,
-   "etiquettes":["unités","dizaines","centaines","milliers"].
- Ne donne JAMAIS la réponse dans les étiquettes d'un exercice d'écriture de nombres : les
- nombres attendus ne sont pas des étiquettes, l'élève les écrit.
-
-brique "coche" — choisir parmi deux ou trois propositions.
- "questions":[{"enonce":"Où entends-tu [a] ?","choix":["début","milieu","fin"],"bonne":0}]
- "bonne" est l'indice de la réponse juste, ou null si la page ne permet pas de la déduire.
-
-brique "relier" — relier deux colonnes par un trait.
- "gauche":["chat","table"],"droite":["animal","meuble"],"paires":[[0,0],[1,1]]
- "paires" donne les bons appariements par indices, ou [] si la page ne les donne pas.
-
-brique "ordre" — remettre dans l'ordre.
- "elements":["Il se lève.","Il déjeune.","Il part."] donnés DANS LE BON ORDRE ; l'application les mélangera.
-
-FIDÉLITÉ : un mot déjà imprimé dans le manuel reste imprimé ; il ne devient jamais une étiquette. Le trou se place là où la page laisse un vide, des pointillés ou une ligne à remplir.
-POINTILLÉS ET POPULARITÉ DU MOT « COMPLÈTE » : trois points de suspension (…), une ligne de
-pointillés, un blanc souligné ou une case vide sont TOUJOURS un trou, y compris en tête de
-phrase (« ... coûte ce porte-clés ? »). Un exercice qui dit « complète » se rend toujours en
-brique "etiq", une phrase par item, même si la réponse est libre (« un mot interrogatif de ton
-choix », « le mot que tu veux ») : dans ce cas "etiquettes":[] et l'élève écrit au clavier.
-Ne réponds {"ignore":"motif court"} QUE si l'exercice n'a aucune phrase à trou et demande
-uniquement de rédiger un texte, de recopier ou de dessiner.`;
-const LISTE_TYPES=TYPES.map(t=>`${t[0]}. ${t[1]}`).join('\n');
+let file=Promise.resolve();
+const enFile=f=>{ const p=file.then(()=>f()); file=p.then(()=>{},()=>{}); return p; };
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
 
 async function demander(dataUrl){
   const url=lireRelais();
-  if(!url) throw new Error("aucun relais enregistré");
   let derniere=null;
   for(const modele of MODELES){
     let r;
     try{
       r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:modele,max_tokens:8000,temperature:0.1,
+        body:JSON.stringify({model:modele,max_tokens:6000,temperature:0.1,
           messages:[{role:'system',content:REGLE},
                     {role:'user',content:[{type:'image_url',image_url:{url:dataUrl}},
-                      {type:'text',text:`Cette image montre UN exercice d'un manuel du primaire.\n\nLISTE DES TYPES :\n${LISTE_TYPES}\n\nIdentifie son type dans cette liste, puis renvoie ses données brutes.\n\n${SCHEMAS}`}]}]})});
-    }catch(e){ throw new Error("relais injoignable : vérifie son adresse et son déploiement"); }
+                      {type:'text',text:SCHEMA}]}]})});
+    }catch(e){ throw new Error("relais injoignable"); }
     if(r.status===403) throw new Error("le relais refuse cette origine");
-    if(r.status===405) throw new Error("adresse du relais fausse : la requête est partie ailleurs");
-    if(r.status===500){ const c=await r.json().catch(()=>({})); throw new Error(c.error||"secret CLE_ALBERT absent du relais"); }
     if(r.status===429) throw new Error("trop de demandes, patiente un instant");
+    if(r.status===500){ const c=await r.json().catch(()=>({})); throw new Error(c.error||"clé Albert absente du relais"); }
     if(!r.ok){ derniere=new Error("le service a répondu "+r.status); continue; }
     const d=await r.json();
     const t=String((((d.choices||[])[0]||{}).message||{}).content||'').replace(/```json|```/g,'').trim();
     const a=t.indexOf('{'), b=t.lastIndexOf('}');
     if(a<0||b<0){ derniere=new Error("réponse illisible"); continue; }
-    return JSON.parse(t.slice(a,b+1));
+    try{ return JSON.parse(t.slice(a,b+1)); }
+    catch(e){ derniere=new Error("réponse illisible"); }
   }
   throw derniere||new Error("aucun modèle n'a répondu");
 }
 
 /* =====================================================================
-   NORMALISATION — le modèle renvoie des données brutes, on les range
-   dans la forme qu'attend la brique. Tout ce qui manque est reconstruit
-   ici, jamais dans les fonctions d'affichage.
+   ACCUEIL — charger une image
    ===================================================================== */
-function normaliser(brut,i){
-  const numType = Number(brut.type)||0;
-  /* « force » vient du changement de mode fait par le maître : son choix
-     l'emporte sur la table des types. */
-  const brique  = (brut.force&&BRIQUES_PRETES.includes(brut.force))
-                  ? brut.force : briqueDe(numType, brut.brique);
-  const e={ numero:String(i+1), type:numType, brique, traces:[], image:'',
-            pas:0, lot:{},
-            nom:(TYPE[numType]&&TYPE[numType].nom)||'',
-            consigne:String(brut.consigne||'').trim(),
-            dite:String(brut.consigne_dite||''),
-            cible:String(brut.cible||''),
-            items:[], colonnes:[], etq:[], reutilisable:false, cats:[], catActive:'',
-            deux:false, phase:1, clavier:'',
-            questions:[], gauche:[], droite:[], paires:[], elements:[], bon:[],
-            rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}, ordre:[],
-            cle:false, total:0, bon_a_faire:0 };
+$('#b-photo').onclick=()=>$('#f-photo').click();
+$('#b-fichier').onclick=()=>$('#f-image').click();
+$('#f-photo').onchange=ev=>chargerFichier(ev.target.files[0]);
+$('#f-image').onchange=ev=>chargerFichier(ev.target.files[0]);
 
-  if(brique==='etiq'){
-    (brut.items||[]).forEach(it=>{
-      const seg=(it.segments||[]).map(g=> g.type==='trou'
-        ? {type:'trou',reponse:String(g.reponse||''),aide:String(g.aide||'')}
-        : {type:'texte',t:String(g.t||'')}).filter(g=>g.type==='trou'||g.t.trim());
-      if(seg.length){
-        /* Si le modèle a gardé les espaces dans ses segments de texte, on les
-           respecte : c'est ce qui permet à un préfixe de se coller au mot
-           suivant (« en » + « rhumée »). Sinon on sépare par une espace. */
-        const colle=seg.some(g=>g.type==='texte'&&/^\s|\s$/.test(g.t));
-        e.items.push({seg,colle});
-      }
-    });
-    (brut.colonnes||brut.categories||[]).forEach((c,k)=>
-      e.colonnes.push({id:'c'+k,nom:String(c.nom||''),rep:(c.reponses||[]).map(String)}));
-    e.disposition = e.colonnes.length ? 'colonnes' : 'phrases';
-    let n=0; e.items.forEach(it=>it.seg.forEach(g=>{ if(g.type==='trou') g.id='t'+(n++); }));
-    const attendues=e.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse));
-    const brute=((brut.etiquettes||[]).length?brut.etiquettes.map(String)
-                 :(e.disposition==='colonnes'?e.colonnes.flatMap(c=>c.rep):attendues)).filter(Boolean);
-    const vues=new Set(), uniques=[];
-    for(const t of brute){ const c=aplat(t); if(!c||vues.has(c)) continue; vues.add(c); uniques.push(t); }
-    e.etq=melanger(uniques).map((t,k)=>({id:'e'+k,texte:t}));
-    e.clavier=String(brut.clavier||'');
-    /* Une réponse faite de chiffres appelle le pavé numérique, même si le
-       modèle a oublié de le préciser. */
-    const attend=e.items.flatMap(it=>it.seg.filter(g=>g.type==='trou').map(g=>g.reponse)).filter(Boolean);
-    if(!e.clavier && attend.length && attend.every(x=>/^[\d\s.,]+$/.test(x))) e.clavier='nombre';
-    if(brut.sans_etiquettes) e.etq=[];        // mode « remplir au clavier »
-    /* Un mot donné à transformer (infinitif à conjuguer) ne peut pas devenir
-       une étiquette : la forme à écrire n'est pas celle qui est imprimée. */
-    if(e.items.some(it=>it.seg.some(g=>g.type==='trou'&&g.aide))) e.etq=[];
-    if(e.disposition==='colonnes'){
-      e.total=e.etq.length; e.cle=e.colonnes.some(c=>c.rep.length>0);
-      e.bon_a_faire=e.colonnes.length>0&&e.etq.length>0;
-    }else{
-      e.reutilisable = e.etq.length>0 && e.etq.length<n;
-      e.total=n; e.cle=attendues.some(x=>x); e.bon_a_faire=n>0;
-    }
-  }
+function chargerFichier(f){
+  if(!f) return;
+  const lec=new FileReader();
+  lec.onload=()=>reduire(lec.result,2000).then(src=>{
+    E.image=src; E.cadres=[]; E.actif=-1; E.exos=[]; E.i=0;
+    const im=$('#img-page');
+    im.onload=()=>{ E.iw=im.naturalWidth; E.ih=im.naturalHeight; dessinerCadres(); };
+    im.src=src;
+    ecran('e-cadrage');
+  });
+  lec.readAsDataURL(f);
+}
 
-  else if(brique==='touch'){
-    const noms=(brut.categories||[]).map(String).map(x=>x.trim()).filter(Boolean).slice(0,5);
-    e.cats=noms.map((nom,k)=>({id:'k'+k, nom, couleur:PALETTE[k%PALETTE.length]}));
-    e.deux=!!brut.deux_etapes && e.cats.length>0;   // trouver d'abord, qualifier ensuite
-    e.phase=1;
-    (brut.items||[]).forEach(it=>{
-      const t=String(it.texte!==undefined?it.texte
-              :(it.segments||[]).map(g=>g.t||'').join(' ')).replace(/\s+/g,' ').trim();
-      if(t) e.items.push({texte:t});
-    });
-    e.total=0; e.bon_a_faire=e.items.length>0;
-  }
-
-  else if(brique==='coche'){
-    (brut.questions||[]).forEach(q=>{
-      const choix=(q.choix||[]).map(String).filter(x=>x.trim());
-      if(choix.length<2) return;
-      const b=(q.bonne===0||q.bonne)?Number(q.bonne):null;
-      e.questions.push({enonce:String(q.enonce||''),choix,
-        bonne:(b!==null&&b>=0&&b<choix.length)?b:null});
-    });
-    e.total=e.questions.length;
-    e.cle=e.questions.some(q=>q.bonne!==null);
-    e.bon_a_faire=e.questions.length>0;
-  }
-
-  else if(brique==='relier'){
-    const g=(brut.gauche||[]).map(String).filter(x=>x.trim());
-    const d=(brut.droite||[]).map(String).filter(x=>x.trim());
-    e.gauche=g.map((t,k)=>({id:'g'+k,texte:t}));
-    e.droite=melanger(d.map((t,k)=>({id:'d'+k,texte:t})));
-    e.paires=(brut.paires||[]).filter(p=>Array.isArray(p)&&p.length===2
-      &&p[0]>=0&&p[0]<g.length&&p[1]>=0&&p[1]<d.length).map(p=>['g'+p[0],'d'+p[1]]);
-    e.total=e.gauche.length; e.cle=e.paires.length>0;
-    e.bon_a_faire=e.gauche.length>1&&e.droite.length>1;
-  }
-
-  else if(brique==='trace'){
-    e.image=String(brut.image||'');
-    e.traces=[];
-    e.total=0; e.bon_a_faire=true;      // l'image arrive juste après, au recadrage
-  }
-
-  else if(brique==='ordre'){
-    const l=(brut.elements||[]).map(String).filter(x=>x.trim());
-    e.elements=l.map((t,k)=>({id:'o'+k,texte:t}));
-    e.bon=e.elements.map(x=>x.id);
-    do{ e.ordre=melanger(e.bon); }while(l.length>1&&e.ordre.join()===e.bon.join());
-    e.total=l.length; e.cle=l.length>1; e.bon_a_faire=l.length>1;
-  }
-  return e;
+/* Réduit une image trop lourde : l'iPad produit des photos énormes, le relais
+   n'en a pas besoin et la mémoire du navigateur non plus. */
+function reduire(src,maxi){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>{
+      const e=Math.min(1,maxi/Math.max(im.naturalWidth,im.naturalHeight));
+      if(e>=1){ res(src); return; }
+      const c=document.createElement('canvas');
+      c.width=Math.round(im.naturalWidth*e); c.height=Math.round(im.naturalHeight*e);
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+      res(c.toDataURL('image/jpeg',0.9));
+    };
+    im.onerror=()=>res(src);
+    im.src=src;
+  });
 }
 
 /* =====================================================================
-   LES BRIQUES — chacune sait s'afficher, dire si l'exercice est
-   commencé, se relire à voix haute et s'imprimer. Ajouter une brique,
-   c'est ajouter une entrée ici ; aucun autre fichier ne change.
+   CADRAGE — tracer à la diagonale, puis ajuster les côtés
    ===================================================================== */
-const VERT_PDF=[0.11,0.45,0.30], ROUGE_PDF=[0.75,0.15,0.10];
-/* Couleurs des catégories à repérer (CCT, CCL, CCC…), à l'écran et à l'impression. */
-const PALETTE=['#1D4E89','#1D7A4F','#B3541E','#7A4F9E','#0E7490'];
-const PALETTE_PDF=[[0.11,0.31,0.54],[0.11,0.48,0.31],[0.70,0.33,0.12],[0.48,0.31,0.62],[0.05,0.45,0.56]];
-const catDe=(e,id)=>(e.cats||[]).find(c=>c.id===id)||null;
-const texteEtq=(e,id)=>{ const x=e.etq.find(t=>t.id===id); return x?x.texte:''; };
-const ligne=(i,dedans,cls)=>
-  `<div class="ligne ${cls||''}"><button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button><span class="phrase">${dedans}</span></div>`;
-/* e et idItem ne sont fournis que pour la brique « toucher » : c'est ce qui
-   rend chaque mot sélectionnable. Ailleurs, les mots sont seulement lisibles. */
-function mots(texte,e,idItem){
-  const marquable = !!e && idItem!=null;
-  let k=-1;
-  return String(texte).split(/(\s+)/).map(p=>{
-    if(/^\s*$/.test(p)) return p;
-    k++;
-    const nu=p.replace(/[«»""''.,;:!?()…]/g,'');
-    const id=marquable?`${idItem}-${k}`:'';
-    const v=marquable?e.marq[id]:null;
-    const c=v&&v!==true?catDe(e,v):null;
-    const on=v?(c?' pris cat':' pris'):'';
-    const style=c?` style="background:${c.couleur}"`:'';
-    return `<span class="mot${on}" data-mot="${esc(nu)}"${marquable?` data-m="${id}"`:''}${style}>${esc(p)}</span>`;
-  }).join('');
+const plan=$('#plan');
+let trace=null, bouge=null;
+
+const posPlan=ev=>{
+  const r=$('#img-page').getBoundingClientRect();
+  return { x:borne((ev.clientX-r.left)/r.width,0,1), y:borne((ev.clientY-r.top)/r.height,0,1) };
+};
+
+plan.addEventListener('pointerdown',ev=>{
+  if(ev.target.closest('.poignee,.croix')) return;
+  const sur=ev.target.closest('.cadre');
+  if(sur){ E.actif=Number(sur.dataset.i); dessinerCadres(); return; }
+  const p=posPlan(ev);
+  trace={x0:p.x,y0:p.y,x1:p.x,y1:p.y};
+  plan.setPointerCapture(ev.pointerId);
+  ev.preventDefault();
+});
+plan.addEventListener('pointermove',ev=>{
+  if(!trace) return;
+  const p=posPlan(ev); trace.x1=p.x; trace.y1=p.y; dessinerCadres(trace);
+});
+function finirTrace(){
+  if(!trace) return;
+  const c=rangerCadre(trace); trace=null;
+  if(c.x1-c.x0>0.04 && c.y1-c.y0>0.02){ E.cadres.push(c); E.actif=E.cadres.length-1; }
+  dessinerCadres();
 }
-function restantes(e){
-  if(e.reutilisable) return e.etq;
-  const pris={};
-  for(const k in e.rep){ const c=aplat(e.rep[k]); if(c) pris[c]=(pris[c]||0)+1; }
-  for(const k in e.tri){ const c=aplat(texteEtq(e,k)); if(c) pris[c]=(pris[c]||0)+1; }
-  return e.etq.filter(t=>{ const c=aplat(t.texte); if(pris[c]>0){ pris[c]--; return false; } return true; });
+plan.addEventListener('pointerup',finirTrace);
+plan.addEventListener('pointercancel',finirTrace);
+
+const rangerCadre=c=>({ x0:Math.min(c.x0,c.x1), y0:Math.min(c.y0,c.y1),
+                        x1:Math.max(c.x0,c.x1), y1:Math.max(c.y0,c.y1) });
+
+/* Les poignées : quatre coins et quatre côtés. Un côté ne déplace que son bord,
+   ce qui permet d'élargir un cadre sans le retracer entièrement. */
+const POIGNEES=[
+  {k:'no',x:0,y:0},{k:'ne',x:1,y:0},{k:'so',x:0,y:1},{k:'se',x:1,y:1},
+  {k:'n',x:.5,y:0,cote:1},{k:'s',x:.5,y:1,cote:1},{k:'o',x:0,y:.5,cote:1},{k:'e',x:1,y:.5,cote:1}
+];
+
+function dessinerCadres(provisoire){
+  $$('#plan .cadre').forEach(n=>n.remove());
+  const liste=E.cadres.map((c,i)=>({c,i}));
+  if(provisoire) liste.push({c:rangerCadre(provisoire),i:-1});
+  for(const {c,i} of liste){
+    const d=document.createElement('div');
+    d.className='cadre'+(i===E.actif?' actif':'');
+    d.dataset.i=i;
+    d.style.left=(c.x0*100)+'%'; d.style.top=(c.y0*100)+'%';
+    d.style.width=((c.x1-c.x0)*100)+'%'; d.style.height=((c.y1-c.y0)*100)+'%';
+    if(i>=0){
+      d.innerHTML=`<span class="num">${i+1}</span>`;
+      if(i===E.actif){
+        d.innerHTML+=`<button class="croix" data-sup="${i}">×</button>`
+          + POIGNEES.map(p=>`<span class="poignee${p.cote?' cote':''}" data-p="${p.k}" data-i="${i}"
+              style="left:${p.x*100}%;top:${p.y*100}%"></span>`).join('');
+      }
+    }
+    plan.appendChild(d);
+  }
+  $('#compte-cadres').textContent = E.cadres.length
+    ? `${E.cadres.length} exercice(s) encadré(s). Touche un cadre pour l'ajuster.`
+    : "Trace un rectangle en glissant le doigt sur un exercice.";
+  $('#b-commencer').disabled=!E.cadres.length;
+}
+
+plan.addEventListener('pointerdown',ev=>{
+  const sup=ev.target.closest('[data-sup]');
+  if(sup){ E.cadres.splice(Number(sup.dataset.sup),1); E.actif=-1; dessinerCadres(); ev.stopPropagation(); return; }
+  const po=ev.target.closest('.poignee');
+  if(!po) return;
+  bouge={k:po.dataset.p,i:Number(po.dataset.i)};
+  plan.setPointerCapture(ev.pointerId);
+  ev.stopPropagation(); ev.preventDefault();
+},true);
+
+plan.addEventListener('pointermove',ev=>{
+  if(!bouge) return;
+  const p=posPlan(ev), c=E.cadres[bouge.i]; if(!c) return;
+  const k=bouge.k;
+  if(k.includes('o')) c.x0=Math.min(p.x,c.x1-0.03);
+  if(k.includes('e')) c.x1=Math.max(p.x,c.x0+0.03);
+  if(k.includes('n')) c.y0=Math.min(p.y,c.y1-0.02);
+  if(k.includes('s')) c.y1=Math.max(p.y,c.y0+0.02);
+  dessinerCadres();
+},true);
+const finBouge=()=>{ bouge=null; };
+plan.addEventListener('pointerup',finBouge,true);
+plan.addEventListener('pointercancel',finBouge,true);
+
+$('#b-vider').onclick=()=>{ E.cadres=[]; E.actif=-1; dessinerCadres(); };
+$('#b-retour-accueil').onclick=()=>{ Voix.stop(); ecran('e-accueil'); };
+
+/* Découpe un cadre dans la page, en pixels d'origine. */
+function decouperCadre(c){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>{
+      const x=Math.round(c.x0*im.naturalWidth), y=Math.round(c.y0*im.naturalHeight);
+      const w=Math.max(8,Math.round((c.x1-c.x0)*im.naturalWidth));
+      const h=Math.max(8,Math.round((c.y1-c.y0)*im.naturalHeight));
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(im,x,y,w,h,0,0,w,h);
+      res(cv.toDataURL('image/jpeg',0.92));
+    };
+    im.src=E.image;
+  });
 }
 
 /* =====================================================================
-   PAGINATION INTERNE — un écran, un item. L'élève ne voit jamais qu'une
-   seule phrase, et les étiquettes qui la concernent sont juste dessous.
+   ANALYSE
    ===================================================================== */
-function nbPas(e){
-  if(e.brique==='etiq')  return e.disposition==='colonnes'?1:Math.max(1,e.items.length);
-  if(e.brique==='coche') return Math.max(1,e.questions.length);
-  if(e.brique==='touch') return Math.max(1,e.items.length);
-  return 1;
-}
-function etape(e){
-  const n=nbPas(e);
-  return n>1?`<div class="etape">${e.pas+1} sur ${n}</div>`:'';
-}
-/* Étiquettes de l'item courant : les réponses attendues, plus un leurre
-   pris ailleurs dans l'exercice. Le tirage est mémorisé pour que les
-   étiquettes ne changent pas de place à chaque dépôt. */
-function lotDe(e){
-  if(e.disposition==='colonnes') return restantes(e);
-  if(!e.etq.length) return [];
-  const it=e.items[e.pas];
-  if(!it) return restantes(e);
-  if(!e.lot[e.pas]){
-    const reps=it.seg.filter(s=>s.type==='trou').map(s=>s.reponse).filter(Boolean);
-    const pris=new Set(), choix=[];
-    for(const r of reps){
-      const t=e.etq.find(x=>!pris.has(x.id)&&memeMot(x.texte,r));
-      if(t){ pris.add(t.id); choix.push(t.id); }
+$('#b-commencer').onclick=async()=>{
+  ecran('e-analyse');
+  E.exos=[]; E.i=0;
+  for(let k=0;k<E.cadres.length;k++){
+    $('#txt-analyse').textContent=`Lecture de l'exercice ${k+1} sur ${E.cadres.length}…`;
+    const vignette=await decouperCadre(E.cadres[k]);
+    const ex=creerExo(vignette);
+    let d=null;
+    try{ d=await enFile(()=>demander(vignette)); }
+    catch(e1){
+      try{ d=await enFile(async()=>{ await pause(1200); return demander(vignette); }); }
+      catch(e2){ ex.motif=(e2&&e2.message)||'lecture impossible'; }
     }
-    if(!choix.length) e.lot[e.pas]=e.etq.map(t=>t.id);          // réponses inconnues : tout proposer
-    else{
-      const reste=e.etq.filter(x=>!pris.has(x.id));
-      if(reste.length) choix.push(reste[0|Math.random()*reste.length].id);
-      e.lot[e.pas]=melanger(choix);
-    }
+    if(d) remplir(ex,d);
+    E.exos.push(ex);
   }
-  const posees=new Set();
-  if(!e.reutilisable) for(const s of it.seg)
-    if(s.type==='trou'){ const v=aplat(e.rep[s.id]||''); if(v) posees.add(v); }
-  return e.lot[e.pas].map(id=>e.etq.find(t=>t.id===id))
-    .filter(t=>t && !posees.has(aplat(t.texte)));
-}
-
-const BRIQUES={
-
-/* ---- 1. étiquettes glissables ------------------------------------ */
-etiq:{
-  travail(e){
-    if(e.disposition==='colonnes')
-      return `<p class="but">Glisse chaque étiquette dans la bonne colonne.</p><div class="cols">`
-        + e.colonnes.map(c=>`<div class="col"><h3>${mots(c.nom)}</h3><div class="bac" data-cat="${c.id}"></div></div>`).join('')
-        + `</div>`;
-    const it=e.items[e.pas];
-    if(!it) return '';
-    const aide=it.seg.some(s=>s.type==='trou'&&s.aide);
-    return etape(e)
-      + `<p class="but">${e.etq.length
-        ? "Glisse une étiquette dans le trou, ou touche-le et écris au clavier."
-        : (aide ? "Écris le mot donné, transformé comme le demande la consigne."
-                : (e.clavier==='nombre' ? "Touche la case et écris le nombre."
-                                        : "Touche la ligne et écris ta réponse."))}</p>`
-      + ligne(e.pas, it.seg.map(s=> s.type==='trou'
-          ? (()=>{ const n=Math.min(22,Math.max(4,String(e.rep[s.id]||s.reponse||s.aide||'').length+3));
-              return `<input class="saisie" type="text" data-t="${s.id}" enterkeyhint="next"
-              inputmode="${e.clavier==='nombre'?'numeric':'text'}" size="${n}"
-              style="width:${n}ch;min-width:0;max-width:100%"
-              autocomplete="off" autocorrect="off" spellcheck="false" value="${esc(e.rep[s.id]||'')}">`; })()
-             + (s.aide?`<span class="aide">${esc(s.aide)}</span>`:'')
-          : mots(s.t)).join(it.colle?'':' '));
-  },
-  tiroir(e){
-    const libres=lotDe(e);
-    if(libres.length) return libres.map(t=>`<span class="etq" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
-    const it=e.items[e.pas];
-    const aide=it&&it.seg.some(s=>s.type==='trou'&&s.aide);
-    return `<span class="vide">${e.etq.length?"L'étiquette est posée."
-      :(aide?"Le mot donné est affiché à côté du trou. Écris-le transformé.":"Écris les mots de ton choix.")}</span>`;
-  },
-  apres(e){
-    $$('.bac').forEach(b=>{
-      b.innerHTML=e.etq.filter(t=>e.tri[t.id]===b.dataset.cat)
-        .map(t=>`<span class="etq posee" data-e="${t.id}">${esc(t.texte)}</span>`).join('');
-    });
-  },
-  commence(e){
-    if(e.disposition==='colonnes') return Object.keys(e.tri).length>0;
-    const it=e.items[e.pas]; if(!it) return false;
-    return it.seg.some(s=>s.type==='trou'&&String(e.rep[s.id]||'').trim());
-  },
-  lire(e,i){
-    const it=e.items[i]; if(!it) return '';
-    return it.seg.map(s=> s.type==='trou'?String(e.rep[s.id]||''):s.t)
-      .join(' ').replace(/\s+/g,' ').replace(/\s([.,;:!?])/g,'$1').trim();
-  },
-  pdf(e,juste){
-    const blocs=[];
-    if(e.disposition==='colonnes'){
-      const corrige=juste&&e.colonnes.some(c=>c.rep.length);
-      for(const c of e.colonnes){
-        const dedans=e.etq.filter(t=>e.tri[t.id]===c.id);
-        const j=[{t:c.nom+' : ',gras:true}];
-        if(!dedans.length) j.push({t:'—',gras:false});
-        dedans.forEach((t,k)=>{
-          if(k) j.push({t:', ',gras:false});
-          if(!corrige){ j.push({t:t.texte,gras:false}); return; }
-          if(c.rep.some(r=>memeMot(r,t.texte))) j.push({t:t.texte,gras:true,couleur:VERT_PDF});
-          else{
-            j.push({t:t.texte,gras:false,barre:true});
-            const vraie=e.colonnes.find(x=>x.rep.some(r=>memeMot(r,t.texte)));
-            if(vraie) j.push({t:' ('+vraie.nom+')',gras:true,couleur:ROUGE_PDF});
-          }
-        });
-        blocs.push({indent:4,jetons:j});
-      }
-      return blocs;
-    }
-    for(const it of e.items){
-      const j=[];
-      for(const g of it.seg){
-        if(g.type==='trou'){
-          const donnee=String(e.rep[g.id]||'').trim();
-          const attendue=String(g.reponse||'');
-          if(!juste||!attendue) j.push({t:donnee||'......',gras:true});
-          else if(donnee&&memeMot(donnee,attendue)) j.push({t:donnee,gras:true,couleur:VERT_PDF});
-          else{
-            j.push({t:donnee||'......',gras:true,barre:!!donnee});
-            j.push({t:' ',gras:false});
-            j.push({t:attendue,gras:true,couleur:ROUGE_PDF});
-          }
-          if(g.aide) j.push({t:' ('+g.aide+')',gras:false});
-        }else String(g.t).split(/(\s+)/).forEach(m=>{ if(m) j.push({t:m,gras:false}); });
-        j.push({t:' ',gras:false});
-      }
-      blocs.push({indent:4,jetons:j});
-    }
-    return blocs;
-  }
-},
-
-/* ---- 2. toucher des mots ----------------------------------------- */
-touch:{
-  travail(e){
-    const it=e.items[e.pas];
-    if(!it) return '';
-    const but=e.deux
-      ? (e.phase===1 ? `Première étape : touche ${esc(e.cible||'les mots demandés')}.`
-                     : "Deuxième étape : pose une étiquette sur chaque mot trouvé.")
-      : ((e.cats||[]).length
-        ? "Choisis une étiquette en bas, puis touche les mots qui vont avec."
-        : `Touche ${esc(e.cible||'les mots demandés')}.`);
-    return etape(e) + `<p class="but">${but}</p>` + ligne(e.pas, mots(it.texte,e,e.pas));
-  },
-  tiroir(e){
-    if(!(e.cats||[]).length)
-      return `<span class="vide">Touche un mot pour l'entendre et le souligner. Touche-le encore pour l'effacer.</span>`;
-    if(e.deux&&e.phase===1){
-      const trouves=Object.keys(e.marq).filter(k=>k.startsWith(e.pas+'-')).length;
-      return `<span class="vide">Touche les mots que tu as trouvés. ${trouves} trouvé(s).</span>`
-        + (trouves?`<button class="b" id="b-etape2" style="margin-left:10px">Étape 2 : les qualifier</button>`:'');
-    }
-    if(!e.catActive) e.catActive=e.cats[0].id;
-    const glissable=e.deux?' glissable':'';
-    return e.cats.map(c=>
-      `<span class="etq categorie${glissable}${e.catActive===c.id?' active':''}"
-             data-cat-etq="${c.id}" data-e="${c.id}"
-             style="background:${c.couleur};border-color:${c.couleur};color:#fff">${esc(c.nom)}</span>`
-      ).join('')
-      + `<span class="vide" style="flex-basis:100%;margin-top:6px">${e.deux
-          ? "Glisse une étiquette sur un mot trouvé, ou touche l'étiquette puis le mot."
-          : "Choisis une étiquette, puis touche les mots de la phrase."}</span>`;
-  },
-  commence(){ return true; },
-  lire(e,i){ return e.items[i]?e.items[i].texte:''; },
-  pdf(e){
-    return e.items.map((it,i)=>{
-      const j=[]; let k=-1;
-      for(const m of it.texte.split(/\s+/)){
-        k++;
-        const v=e.marq[`${i}-${k}`];
-        const c=(v&&v!==true)?catDe(e,v):null;
-        const rang=c?(e.cats||[]).findIndex(x=>x.id===c.id):-1;
-        const coul=rang>=0?PALETTE_PDF[rang%PALETTE_PDF.length]:null;
-        j.push({t:m,gras:!!v,souligne:!!v,couleur:coul||undefined});
-        if(c) j.push({t:' ('+c.nom+')',gras:true,couleur:coul});
-        j.push({t:' ',gras:false});
-      }
-      return {indent:4,jetons:j};
-    });
-  }
-},
-
-/* ---- 3. cocher ---------------------------------------------------- */
-coche:{
-  travail(e){
-    const i=e.pas, q=e.questions[i];
-    if(!q) return '';
-    return etape(e)
-      + `<div class="ligne bloc-q">
-         <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
-         <div class="phrase">
-           <div class="enonce">${mots(q.enonce)}</div>
-           <div class="choix">${q.choix.map((c,k)=>
-             `<button class="opt${e.choisi[i]===k?' opt-pris':''}" data-q="${i}" data-c="${k}">${esc(c)}</button>`).join('')}</div>
-         </div>
-       </div>`;
-  },
-  tiroir(e){ return `<span class="vide">Touche la bonne réponse. Tu peux changer d'avis.</span>`; },
-  commence(e){ return e.choisi[e.pas]!==undefined; },
-  lire(e,i){ const q=e.questions[i]; return q?`${q.enonce}. ${q.choix.join(', ')}`:''; },
-  pdf(e,juste){
-    return e.questions.flatMap((q,i)=>{
-      const choisi=e.choisi[i];
-      const j=[{t:q.enonce+' ',gras:false}];
-      if(choisi===undefined) j.push({t:'(sans réponse)',gras:true});
-      else if(!juste||q.bonne===null) j.push({t:q.choix[choisi],gras:true});
-      else if(choisi===q.bonne) j.push({t:q.choix[choisi],gras:true,couleur:VERT_PDF});
-      else{
-        j.push({t:q.choix[choisi],gras:true,barre:true});
-        j.push({t:' ',gras:false});
-        j.push({t:q.choix[q.bonne],gras:true,couleur:ROUGE_PDF});
-      }
-      return [{indent:4,jetons:j}];
-    });
-  }
-},
-
-/* ---- 4. relier ---------------------------------------------------- */
-relier:{
-  travail(e){
-    return `<p class="but">Touche un mot à gauche, puis celui qui va avec à droite.</p>
-      <div class="relier" id="relier">
-        <svg id="fils"></svg>
-        <div class="cote">${e.gauche.map(x=>
-          `<button class="borne" data-b="${x.id}">${esc(x.texte)}</button>`).join('')}</div>
-        <div class="cote">${e.droite.map(x=>
-          `<button class="borne" data-b="${x.id}">${esc(x.texte)}</button>`).join('')}</div>
-      </div>`;
-  },
-  tiroir(e){
-    const n=Object.keys(e.liens).length;
-    return `<span class="vide">${n} trait(s) tracé(s) sur ${e.gauche.length}. Touche un trait pour l'effacer.</span>`;
-  },
-  apres(e){ tracerFils(e); },
-  commence(e){ return Object.keys(e.liens).length>0; },
-  lire(e,i){ const x=e.gauche[i]; return x?x.texte:''; },
-  pdf(e,juste){
-    return e.gauche.map(g=>{
-      const did=e.liens[g.id];
-      const dt=did?(e.droite.find(x=>x.id===did)||{}).texte:'';
-      const attendu=(e.paires.find(p=>p[0]===g.id)||[])[1];
-      const j=[{t:g.texte+'  →  ',gras:false}];
-      if(!dt) j.push({t:'......',gras:true});
-      else if(!juste||!attendu) j.push({t:dt,gras:true});
-      else if(attendu===did) j.push({t:dt,gras:true,couleur:VERT_PDF});
-      else{
-        j.push({t:dt,gras:true,barre:true}); j.push({t:' ',gras:false});
-        const vrai=(e.droite.find(x=>x.id===attendu)||{}).texte||'';
-        j.push({t:vrai,gras:true,couleur:ROUGE_PDF});
-      }
-      return {indent:4,jetons:j};
-    });
-  }
-},
-
-/* ---- 5. remettre dans l'ordre ------------------------------------- */
-ordre:{
-  travail(e){
-    return `<p class="but">Glisse les étiquettes pour les remettre dans l'ordre. Tu peux aussi en toucher deux pour les échanger.</p>`
-      + `<div id="pile">`+e.ordre.map((id,i)=>{
-          const x=e.elements.find(v=>v.id===id)||{texte:''};
-          return `<div class="tuile" data-o="${id}">
-            <span class="rang">${i+1}</span>
-            <button class="lire" data-lire="${i}" aria-label="Écouter">🔊</button>
-            <span class="phrase">${esc(x.texte)}</span></div>`;
-        }).join('')+`</div>`;
-  },
-  tiroir(){ return `<span class="vide">Les lignes se déplacent par glissement.</span>`; },
-  commence(){ return true; },
-  lire(e,i){ const id=e.ordre[i]; const x=e.elements.find(v=>v.id===id); return x?x.texte:''; },
-  pdf(e,juste){
-    return e.ordre.map((id,i)=>{
-      const x=e.elements.find(v=>v.id===id)||{texte:''};
-      const bonne=e.bon[i]===id;
-      const j=[{t:(i+1)+'. ',gras:true}];
-      if(!juste||!e.cle) j.push({t:x.texte,gras:false});
-      else if(bonne) j.push({t:x.texte,gras:false,couleur:VERT_PDF});
-      else j.push({t:x.texte,gras:false,barre:true});
-      return {indent:4,jetons:j};
-    }).concat(juste&&e.cle&&e.ordre.join()!==e.bon.join()
-      ? [{indent:4,jetons:[{t:'Ordre attendu : ',gras:true,couleur:ROUGE_PDF},
-          {t:e.bon.map((id,k)=>k+1+'. '+((e.elements.find(v=>v.id===id)||{}).texte||'')).join('   '),
-           gras:false,couleur:ROUGE_PDF}]}]
-      : []);
-  }
-}
+  ouvrir();
 };
 
-/* ---- 6. tracé au doigt sur l'image du manuel ---------------------- */
-BRIQUES.trace={
-  travail(e){
-    return `<p class="but">Entoure directement sur l'exercice, avec ton doigt.</p>`
-      + (e.secours?`<p class="but" style="color:#B3541E">Adaptation impossible : ${esc(e.secours)}.</p>`:'')
-      + `
-      <div class="tracoir" id="tracoir">
-        <img id="fond-trace" src="${e.image||e.vignette||''}" alt="L'exercice">
-        <canvas id="crayon"></canvas>
-      </div>`;
-  },
-  tiroir(e){
-    return `<button class="b pale" id="b-annuler-trait" style="margin-right:8px">Effacer le dernier trait</button>`
-      +`<span class="vide">${(e.traces||[]).length} trait(s).</span>`;
-  },
-  apres(e){ dessinerTraces(e); },
-  commence(e){ return (e.traces||[]).length>0; },
-  lire(e){ return e.consigne; },
-  pdf(e){
-    return [{image:e.image||e.vignette||'', traces:e.traces||[]}];
-  }
-};
-
-/* Le tracé est mémorisé en coordonnées relatives : il résiste au changement
-   de taille de l'écran comme au passage à l'impression. */
-function dessinerTraces(e){
-  const img=$('#fond-trace'), cv=$('#crayon');
-  if(!img||!cv) return;
-  const pose=()=>{
-    const r=img.getBoundingClientRect();
-    if(!r.width) return setTimeout(pose,60);
-    cv.width=Math.round(r.width); cv.height=Math.round(r.height);
-    cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
-    const x=cv.getContext('2d');
-    x.clearRect(0,0,cv.width,cv.height);
-    x.strokeStyle='#D4351C'; x.lineWidth=Math.max(3,r.width/260);
-    x.lineCap='round'; x.lineJoin='round';
-    for(const t of (e.traces||[])){
-      if(t.length<2) continue;
-      x.beginPath();
-      t.forEach((p,i)=> i?x.lineTo(p[0]*cv.width,p[1]*cv.height):x.moveTo(p[0]*cv.width,p[1]*cv.height));
-      x.stroke();
-    }
-  };
-  if(img.complete) pose(); else img.onload=pose;
-}
-(function(){
-  let trait=null;
-  const relatif=ev=>{ const cv=$('#crayon'); const r=cv.getBoundingClientRect();
-    return [(ev.clientX-r.left)/r.width,(ev.clientY-r.top)/r.height]; };
-  addEventListener('pointerdown',ev=>{
-    if(!ev.target.closest('#crayon')) return;
-    ev.preventDefault();
-    const e=ex(); e.traces=e.traces||[];
-    trait=[relatif(ev)]; e.traces.push(trait);
-  });
-  addEventListener('pointermove',ev=>{
-    if(!trait) return;
-    ev.preventDefault();
-    trait.push(relatif(ev)); dessinerTraces(ex());
-  },{passive:false});
-  addEventListener('pointerup',()=>{
-    if(!trait) return;
-    if(trait.length<2) ex().traces.pop();      // simple appui : pas un trait
-    trait=null; peindre();
-  });
-  addEventListener('click',ev=>{
-    if(!ev.target.closest('#b-annuler-trait')) return;
-    const e=ex(); (e.traces||[]).pop(); peindre();
-  });
-})();
-
-/* ---- traits du « relier », recalculés à chaque changement ---------- */
-function tracerFils(e){
-  const boite=$('#relier'), svg=$('#fils');
-  if(!boite||!svg) return;
-  const r=boite.getBoundingClientRect();
-  svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);
-  svg.setAttribute('width',r.width); svg.setAttribute('height',r.height);
-  const point=(id,cote)=>{
-    const n=boite.querySelector(`.borne[data-b="${id}"]`);
-    if(!n) return null;
-    const b=n.getBoundingClientRect();
-    return {x:(cote==='g'?b.right:b.left)-r.left, y:b.top-r.top+b.height/2};
-  };
-  svg.innerHTML=Object.entries(e.liens).map(([g,d])=>{
-    const a=point(g,'g'), b=point(d,'d');
-    if(!a||!b) return '';
-    return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" data-fil="${g}"/>`;
-  }).join('');
+function remplir(ex,d){
+  const m=String(d.matiere||'').toLowerCase();
+  ex.matiere = m.startsWith('math') ? 'maths' : 'francais';
+  ex.niveau  = String(d.niveau||'').toUpperCase().replace(/[^A-Z0-9]/g,'') || 'CE2';
+  ex.consigne= String(d.consigne||'').trim();
+  ex.consigneY=borne(Number(d.consigne_y)||0.08,0.01,0.98);
+  ex.lignes=(Array.isArray(d.lignes)?d.lignes:[]).map(l=>({
+    repere:String(l.repere||'•').slice(0,3),
+    texte:String(l.texte||'').trim(),
+    y:borne(Number(l.y)||0.5,0.01,0.98)
+  })).filter(l=>l.texte);
+  ex.aides=(Array.isArray(d.aides)?d.aides:[]).map(x=>String(x).toLowerCase());
 }
 
-function decouper(r){
-  const c=document.createElement('canvas');
-  c.width=Math.round(r.x1-r.x0); c.height=Math.round(r.y1-r.y0);
-  c.getContext('2d').drawImage(E.canvas,r.x0,r.y0,c.width,c.height,0,0,c.width,c.height);
-  return c.toDataURL('image/jpeg',0.8);
-}
-function surLeManuel(vignette,brut,i,motif){
-  const t=normaliser({type:Number(brut&&brut.type)||0, force:'trace',
-    consigne:(brut&&brut.consigne)||"Fais cet exercice directement sur le manuel.",
-    consigne_dite:(brut&&brut.consigne_dite)||'', image:vignette}, i);
-  t.vignette=vignette; t.secours=motif||'';
-  return t;
-}
-/* Le relais ne supporte pas deux demandes simultanées : la préparation du
-   cadre suivant partait en même temps que la demande en cours et se faisait
-   refuser (429). Les demandes passent maintenant à la queue leu leu, et une
-   demande refusée est retentée une fois. */
-let file=Promise.resolve();
-function enFile(f){
-  const p=file.then(()=>f());
-  file=p.then(()=>{},()=>{});
-  return p;
-}
-const pause=ms=>new Promise(r=>setTimeout(r,ms));
-async function preparerRegion(i){
-  const vignette=decouper(E.regions[i]);
-  let brut=null, motif='';
-  try{ brut=await enFile(()=>demander(vignette)); }
-  catch(err1){
-    try{ brut=await enFile(async()=>{ await pause(1500); return demander(vignette); }); }
-    catch(err){ motif=(err&&err.message)||'lecture impossible'; }
-  }
-  if(brut&&!brut.ignore){
-    const ex=normaliser(brut,i);
-    if(ex.bon_a_faire){ ex.vignette=vignette; return {ex}; }
-    motif="exercice non manipulable";
-  }else if(brut&&brut.ignore) motif=String(brut.ignore);
-  /* Rien n'est jamais abandonné : ce qu'on ne sait pas adapter est proposé
-     tel quel, à faire sur le manuel avec le doigt. */
-  return {ex:surLeManuel(vignette,brut,i,motif)};
-}
-function lancer(i){
-  if(i<0||i>=E.regions.length) return null;
-  if(!E.cache.has(i)) E.cache.set(i, preparerRegion(i)
-    .catch(err=>({ex:surLeManuel(decouper(E.regions[i]),null,i,(err&&err.message)||'échec')})));
-  return E.cache.get(i);
-}
-async function suivant(){
-  while(E.curseur<E.regions.length){
-    const p=lancer(E.curseur); E.curseur++;
-    const r=await p;
-    lancer(E.curseur);                    // le suivant se prépare en fond
-    if(r&&r.ex) return r.ex;
-    if(r&&r.ex&&r.ex.secours) E.ecartes.push({n:E.curseur,raison:r.ex.secours});
-  }
-  return null;
-}
-async function avancer(){
-  let minuterie=null;
-  if(E.curseur<E.regions.length){
-    minuterie=setTimeout(()=>{
-      alerte('#err-attente',''); $('#b-retour-attente').classList.add('masque');
-      $('#a-titre').textContent = E.exos.length ? "L'exercice suivant arrive…" : "Lecture de l'exercice…";
-      $('#a-detail').textContent="Une dizaine de secondes.";
-      $('#a-barre').style.width='70%'; ecran('e-attente');
-    },300);
-  }
-  const ex=await suivant();
-  if(minuterie) clearTimeout(minuterie);
-  if(ex){ E.exos.push(ex); E.index=E.exos.length-1; ouvrir(); return; }
-  E.flux=false;
-  if(E.exos.length){ terminer(); return; }
-  ecran('e-attente');
-  $('#a-titre').textContent="Rien n'a pu être adapté"; $('#a-detail').textContent='';
-  $('#a-barre').style.width='100%';
-  alerte('#err-attente', "Aucun cadre n'a pu être lu. Vérifie le relais, puis reprends les cadres.");
-  $('#b-retour-attente').classList.remove('masque');
-}
-$('#b-retour-attente').onclick=()=>ecran('e-cadres');
-$('#b-adapter').onclick=()=>{
-  if(!lireRelais()){ alerte('#err-cadres',"Aucun relais enregistré : renseigne son adresse sur l'écran d'accueil."); return; }
-  E.regions=E.cadres.map(c=>({x0:c.x0*E.canvas.width, y0:c.y0*E.canvas.height,
-                              x1:c.x1*E.canvas.width, y1:c.y1*E.canvas.height}));
-  E.exos=[]; E.ecartes=[]; E.curseur=0; E.cache=new Map(); E.flux=true; E.index=0;
-  $('#a-barre').style.width='10%';
-  lancer(0); avancer();
-};
-
-/* ---------------- l'élève ---------------- */
-const ex=()=>E.exos[E.index];
-const brique=()=>BRIQUES[ex().brique]||BRIQUES.etiq;
+/* =====================================================================
+   TRAVAIL — la scène
+   ===================================================================== */
+const scene=$('#scene'), calque=$('#calque');
+const ctx=calque.getContext('2d');
 
 function ouvrir(){
-  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
-  const total=E.flux?Math.max(E.regions.length,E.exos.length):E.exos.length;
-  $('#pastilles').innerHTML=Array.from({length:total},(_,i)=>
-    `<span class="pt ${i<E.index?'fait':''} ${i===E.index?'ici':''}"></span>`).join('');
-  $('#consigne').innerHTML=mots(e.consigne);
-  $('#travail').innerHTML=B.travail(e);
-  const surManuel=e.brique==='trace';
-  /* Le scan reste accessible en permanence : si l'adaptation ne convient pas,
-     l'élève ouvre la page d'origine et écrit dessus au doigt. */
-  $('#b-manuel').classList.toggle('masque', !(e.vignette||e.image));
-  $('#b-manuel').textContent = surManuel ? '↩ Revenir à l\'exercice' : '✏️ Écrire sur le manuel';
-  majJury();
+  const ex=exo();
+  if(!ex){ terminer(); return; }
+  Voix.stop();
+  $('#titre-exo').textContent=`Exercice ${E.i+1} sur ${E.exos.length}`;
+  $('#etiq-matiere').textContent = ex.motif ? `Lecture incomplète : ${ex.motif}`
+    : (ex.matiere==='maths'?'Mathématiques':'Français')+(ex.niveau?` · ${ex.niveau}`:'');
+  $('#b-suivant').textContent = (E.i===E.exos.length-1)?'Terminer':'Exercice suivant';
+  const f=$('#fond');
+  f.onload=()=>{ ajusterCalque(); peindre(); };
+  f.src=ex.vignette;
+  if(f.complete) { ajusterCalque(); }
   peindre();
-  ecran('e-exo');
-  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); ouvrirClavier(e); });
-  Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));
+  construireAides();
+  ecran('e-travail');
 }
-/* Tirer une étiquette en devant faire défiler la page est impraticable pour
-   un élève en difficulté. Quand l'exercice comporte des étiquettes, on réduit
-   l'ensemble jusqu'à ce qu'il tienne d'un seul tenant — sans descendre sous
-   une taille lisible. Les briques sans glisser gardent leur défilement :
-   rapetisser un texte long à souligner ferait plus de mal que de bien. */
-const AJUSTABLE=['etiq','ordre'];
-function ajuster(){
-  const e=ex(), corps=document.querySelector('.corps'), t=$('#travail');
-  if(!corps||!t) return;
-  t.style.transform='none'; t.style.width='100%'; t.style.transformOrigin='top center';
-  if(!AJUSTABLE.includes(e.brique)) return;
-  t.style.columnCount='';
-  const dispo=corps.clientHeight-12;
-  if(dispo<80) return;
-  let z=1;
-  const caler=()=>{
-    z=1; t.style.transform='none'; t.style.width='100%';
-    for(let i=0;i<4;i++){
-      const entier=t.getBoundingClientRect().height/z;    // hauteur à l'échelle 1
-      const vise=Math.max(0.68, Math.min(1, dispo/entier));
-      if(Math.abs(vise-z)<0.015) break;
-      z=vise;
-      t.style.transform = z<1 ? `scale(${z})` : 'none';
-      t.style.width     = z<1 ? (100/z)+'%'   : '100%';
-    }
-    return t.getBoundingClientRect().height;
-  };
-  const uneColonne=caler();
-  if(uneColonne>dispo && corps.clientWidth>820){
-    // en paysage, deux colonnes valent mieux qu'un texte minuscule
-    t.style.columnCount='2'; t.style.columnGap='20px';
-    if(caler()>=uneColonne){ t.style.columnCount=''; caler(); }   // sans gain : on renonce
+
+function ajusterCalque(){
+  const f=$('#fond');
+  const l=f.clientWidth, h=f.clientHeight;
+  if(!l||!h) return;
+  calque.width=l; calque.height=h;
+  redessinerTraits();
+}
+window.addEventListener('resize',()=>{ if($('#e-travail').classList.contains('on')){ ajusterCalque(); peindre(); } });
+
+function redessinerTraits(){
+  const ex=exo(); if(!ex) return;
+  ctx.clearRect(0,0,calque.width,calque.height);
+  for(const t of ex.traits){
+    if(t.pts.length<2) continue;
+    ctx.strokeStyle=t.couleur||'#17232e';
+    ctx.lineWidth=(t.taille||3);
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.beginPath();
+    ctx.moveTo(t.pts[0][0]*calque.width,t.pts[0][1]*calque.height);
+    for(let k=1;k<t.pts.length;k++) ctx.lineTo(t.pts[k][0]*calque.width,t.pts[k][1]*calque.height);
+    ctx.stroke();
   }
 }
-/* Quand il n'y a rien à glisser, l'élève doit écrire : on place le curseur
-   dans le premier trou vide. Sur iPad, le clavier ne s'ouvre pas toujours sans
-   un appui, mais le trou est au moins désigné. */
-function ouvrirClavier(e){
-  if(e.brique!=='etiq'||e.disposition==='colonnes') return;
-  if((e.etq||[]).length) return;
-  const vide=$$('.saisie').find(n=>!n.value.trim());
-  if(vide){ try{ vide.focus({preventScroll:true}); }catch(err){ vide.focus(); } }
-}
-function rafraichir(){
-  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
-  $('#travail').innerHTML=B.travail(e);
-  peindre();
-  requestAnimationFrame(()=>{ if(B.apres) B.apres(e); ajuster(); });
-}
+
+/* Redessine les haut-parleurs, les zones de texte et les étiquettes découpées. */
 function peindre(){
-  const e=ex(), B=BRIQUES[e.brique]||BRIQUES.etiq;
-  $('#tiroir').innerHTML=B.tiroir(e);
-  $('#tiroir').classList.toggle('serre', (e.etq||[]).length>8);
-  if(B.apres) B.apres(e);
-  $('#b-fini').disabled=!B.commence(e);
-  $('#b-fini').textContent = (e.pas < nbPas(e)-1) ? 'Suivant'
-    : ((!E.flux&&E.index===E.exos.length-1)?'Terminer':"J'ai fini");
+  const ex=exo(); if(!ex) return;
+  $$('#scene .hp,#scene .zt,#scene .decoupe').forEach(n=>n.remove());
+
+  if(ex.consigne){
+    scene.appendChild(faireHP(ex.consigneY,'✦',ex.consigne,true,-1));
+  }
+  ex.lignes.forEach((l,k)=>scene.appendChild(faireHP(l.y,'🔊',l.texte,false,k,l.repere)));
+
+  ex.textes.forEach((t,k)=>{
+    const d=document.createElement('div');
+    d.className='zt'+(t.t?' pose':'');
+    d.contentEditable='true';
+    d.dataset.t=k;
+    d.style.left=(t.x*100)+'%'; d.style.top=(t.y*100)+'%';
+    d.style.fontSize=(t.taille||20)+'px';
+    d.textContent=t.t;
+    scene.appendChild(d);
+  });
+
+  ex.decoupes.forEach((e,k)=>{
+    const d=document.createElement('div');
+    d.className='decoupe'; d.dataset.d=k;
+    d.style.left=(e.x*100)+'%'; d.style.top=(e.y*100)+'%';
+    d.style.width=(e.w*100)+'%'; d.style.height=(e.h*100)+'%';
+    d.innerHTML=`<img src="${e.src}" alt="étiquette">`;
+    scene.appendChild(d);
+  });
+
+  redessinerTraits();
 }
 
-/* ---- glisser : étiquettes et cartes à réordonner ---- */
-let prise=null, vol=null, debut=null, glisse=false;
-function poser(id,cible){
-  const e=ex();
-  if(cible.classList.contains('mot')){
-    /* deuxième étape : qualifier un mot déjà trouvé */
-    const k=cible.dataset.m;
-    if(!k||!e.marq[k]){ prise=null; peindre(); return; }
-    const c=catDe(e,id);
-    if(c) e.marq[k]=(e.marq[k]===c.id)?true:c.id;
-    prise=null; rafraichir(); return;
-  }
-  if(cible.classList.contains('saisie')){
-    e.rep[cible.dataset.t]=texteEtq(e,id); cible.value=texteEtq(e,id);
-  }else if(cible.classList.contains('bac')){
-    delete e.tri[id]; e.tri[id]=cible.dataset.cat;
-  }
-  prise=null; peindre();
+function faireHP(y,icone,texte,consigne,k,repere){
+  const b=document.createElement('button');
+  b.className='hp'+(consigne?' consigne':'');
+  b.style.top=`calc(${y*100}% - 19px)`;
+  b.dataset.hp=k;
+  b.innerHTML=icone+(repere?`<span class="rep">${esc(repere)}</span>`:'');
+  b.dataset.texte=texte;
+  return b;
 }
-function deplacer(depuis,vers){
-  const e=ex(), l=e.ordre;
-  const a=l.indexOf(depuis), b=l.indexOf(vers);
-  if(a<0||b<0||a===b) return;
-  l.splice(a,1); l.splice(b,0,depuis);
-  ouvrir();
-}
-const sous=(x,y)=>{ const n=document.elementFromPoint(x,y); return n?n.closest('.saisie,.bac,.tuile,.mot'):null; };
 
-addEventListener('pointerdown',ev=>{
-  if(!$('#e-exo').classList.contains('actif')) return;
-  const champ=ev.target.closest('.saisie');
-  if(champ&&prise){ ev.preventDefault(); poser(prise,champ); return; }   // pose sans ouvrir le clavier
-  const n=ev.target.closest('.etq,.tuile');
-  if(!n||ev.target.closest('.lire')) return;
-  if(n.classList.contains('categorie')&&!n.classList.contains('glissable')) return;   // simple choix
-  debut={x:ev.clientX,y:ev.clientY,node:n,
-         genre:n.classList.contains('tuile')?'tuile':'etq',
-         id:n.dataset.e||n.dataset.o};
-  glisse=false;
-});
-addEventListener('pointermove',ev=>{
-  if(!debut) return;
-  if(!glisse&&Math.hypot(ev.clientX-debut.x,ev.clientY-debut.y)>10){
-    glisse=true;
-    vol=debut.node.cloneNode(true);
-    vol.className=(debut.genre==='tuile'?'tuile vol':'etq vol');
-    if(debut.genre==='tuile') vol.style.width=debut.node.getBoundingClientRect().width+'px';
-    document.body.appendChild(vol); debut.node.classList.add('cachee');
-  }
-  if(glisse){
-    ev.preventDefault();
-    vol.style.left=ev.clientX+'px'; vol.style.top=ev.clientY+'px';
-    const c=sous(ev.clientX,ev.clientY);
-    $$('.vise').forEach(x=>x.classList.remove('vise'));
-    if(c&&c!==debut.node) c.classList.add('vise');
-  }
-},{passive:false});
-addEventListener('pointerup',ev=>{
-  if(!debut) return;
-  const {id,node,genre}=debut;
-  if(glisse){
-    vol.remove(); vol=null; $$('.vise').forEach(x=>x.classList.remove('vise'));
-    node.classList.remove('cachee');
-    const c=sous(ev.clientX,ev.clientY);
-    if(genre==='tuile'){ if(c&&c.classList.contains('tuile')&&c!==node) deplacer(id,c.dataset.o); }
-    else if(c) poser(id,c);
-    else { delete ex().tri[id]; peindre(); }
-  }else if(genre==='tuile'){
-    const e=ex();
-    if(prise&&prise!==id&&e.ordre.includes(prise)){ deplacer(prise,id); prise=null; }
-    else{ prise=(prise===id)?null:id;
-      $$('.tuile').forEach(x=>x.classList.toggle('prise',x.dataset.o===prise)); }
-    Voix.dire(brique().lire(e,e.ordre.indexOf(id)),0.82);
-  }else{
-    Voix.dire(texteEtq(ex(),id),0.8);
-    if(node.classList.contains('posee')){
-      delete ex().tri[id]; prise=id; peindre();
-      $$('.etq').forEach(x=>x.classList.toggle('prise',x.dataset.e===id));
-    }else{
-      prise=(prise===id)?null:id;
-      $$('.etq').forEach(x=>x.classList.toggle('prise',x.dataset.e===prise));
-    }
-  }
-  debut=null; glisse=false;
+/* ---- haut-parleurs : lire, et glisser verticalement pour aligner ---- */
+let glisseHP=null;
+scene.addEventListener('pointerdown',ev=>{
+  const h=ev.target.closest('.hp'); if(!h) return;
+  glisseHP={n:h,k:Number(h.dataset.hp),y0:ev.clientY,bouge:false};
+  h.setPointerCapture(ev.pointerId);
+  ev.stopPropagation(); ev.preventDefault();
+},true);
+scene.addEventListener('pointermove',ev=>{
+  if(!glisseHP) return;
+  if(Math.abs(ev.clientY-glisseHP.y0)<7) return;
+  glisseHP.bouge=true;
+  const r=$('#fond').getBoundingClientRect();
+  const y=borne((ev.clientY-r.top)/r.height,0.01,0.98);
+  glisseHP.n.style.top=`calc(${y*100}% - 19px)`;
+  const ex=exo();
+  if(glisseHP.k<0) ex.consigneY=y; else if(ex.lignes[glisseHP.k]) ex.lignes[glisseHP.k].y=y;
+},true);
+scene.addEventListener('pointerup',ev=>{
+  if(!glisseHP) return;
+  if(!glisseHP.bouge) Voix.dire(glisseHP.n.dataset.texte,glisseHP.n);
+  glisseHP=null;
+},true);
+
+/* ---- outils ---- */
+$('#outils').addEventListener('click',ev=>{
+  const o=ev.target.closest('.outil'); if(!o) return;
+  E.outil=o.dataset.o;
+  $$('.outil').forEach(n=>n.classList.toggle('on',n===o));
+  if(E.outil==='texte') Voix.dire("Touche l'endroit où tu veux écrire.");
+  if(E.outil==='ciseaux') Voix.dire("Entoure le morceau que tu veux découper.");
 });
 
-addEventListener('click',ev=>{
-  if(!$('#e-exo').classList.contains('actif')) return;
-  const e=ex();
-
-  const cible=ev.target.closest('.saisie,.bac');
-  if(cible&&prise){ poser(prise,cible); return; }
-
-  const opt=ev.target.closest('.opt');                       // cocher
-  if(opt){
-    const q=+opt.dataset.q, c=+opt.dataset.c;
-    e.choisi[q]=c;
-    $$(`.opt[data-q="${q}"]`).forEach(b=>b.classList.toggle('opt-pris',+b.dataset.c===c));
-    Voix.dire(e.questions[q].choix[c],0.85);
-    peindre(); return;
-  }
-
-  const fil=ev.target.closest('line[data-fil]');             // effacer un trait
-  if(fil){ delete e.liens[fil.dataset.fil]; peindre(); return; }
-
-  const borne=ev.target.closest('.borne');                   // relier
-  if(borne){
-    const id=borne.dataset.b;
-    Voix.dire(borne.textContent,0.85);
-    if(id[0]==='g'){
-      prise=(prise===id)?null:id;
-      $$('.borne').forEach(b=>b.classList.toggle('vise',b.dataset.b===prise));
-    }else if(prise&&prise[0]==='g'){
-      for(const g in e.liens) if(e.liens[g]===id) delete e.liens[g];
-      e.liens[prise]=id; prise=null;
-      $$('.borne').forEach(b=>b.classList.remove('vise'));
-      peindre();
-    }
-    return;
-  }
-
-  if(ev.target.closest('#b-etape2')){
-    e.phase=2; rafraichir();
-    Voix.dire("Maintenant, pose une étiquette sur chaque mot que tu as trouvé.",0.85);
-    return;
-  }
-
-  const ce=ev.target.closest('[data-cat-etq]');              // choisir une sorte à repérer
-  if(ce){ e.catActive=ce.dataset.catEtq; peindre(); return; }
-
-  const hp=ev.target.closest('.lire');                       // écouter une ligne
-  if(hp){ const t=brique().lire(e,+hp.dataset.lire); if(t) Voix.dire(t,0.82,hp); return; }
-
-  const m=ev.target.closest('.mot');
-  if(!m) return;
-  Voix.dire(m.dataset.mot,0.8);
-  if(m.dataset.m){                                            // toucher-sélection
-    const k=m.dataset.m;
-    const cats=e.cats||[];
-    if(e.deux&&e.phase===1){ if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true; }
-    else if(e.deux){
-      /* deuxième étape : seuls les mots trouvés se qualifient */
-      if(!e.marq[k]){ Voix.dire("Ce mot n'a pas été trouvé à la première étape.",0.85); return; }
-      const actif=e.catActive||cats[0].id;
-      e.marq[k]=(e.marq[k]===actif)?true:actif;
-      rafraichir();
-    }
-    else if(!cats.length){ if(e.marq[k]) delete e.marq[k]; else e.marq[k]=true; }
-    else{
-      /* Le mot prend la couleur de l'étiquette choisie. Le toucher à nouveau
-         avec la même étiquette l'efface ; avec une autre, il change de sorte. */
-      const actif=e.catActive||cats[0].id;
-      if(e.marq[k]===actif) delete e.marq[k]; else e.marq[k]=actif;
-    }
-    const v=e.marq[k], c=(v&&v!==true)?catDe(e,v):null;
-    m.className='mot'+(v?(c?' pris cat':' pris'):'');
-    m.style.background=c?c.couleur:'';
-  }
-});
-
-document.addEventListener('input',ev=>{
-  const n=ev.target.closest('.saisie');
-  if(!n||!$('#e-exo').classList.contains('actif')) return;
-  ex().rep[n.dataset.t]=n.value;
-  peindre();
-});
-document.addEventListener('focusin',ev=>{
-  const n=ev.target.closest('.saisie');
-  if(n&&n.value) setTimeout(()=>n.select(),0);
-});
-addEventListener('resize',()=>{ if($('#e-exo').classList.contains('actif')){
-  const e=ex(); if(e.brique==='relier') tracerFils(e); ajuster(); } });
-
-$('#b-dire').onclick=()=>{const e=ex();Voix.dire(e.dite||e.consigne,0.85,$('#b-dire'));};
-/* Va-et-vient entre l'exercice adapté et le manuel : chacun garde son travail,
-   l'élève peut essayer l'un puis l'autre sans rien perdre. */
-function basculerManuel(){
-  const e=ex();
-  if(e.brique==='trace'&&e.origine){ const o=e.origine; o.trace_sauve=e; E.exos[E.index]=o; ouvrir(); return; }
-  if(e.trace_sauve){ e.trace_sauve.origine=e; E.exos[E.index]=e.trace_sauve; ouvrir(); return; }
-  changerMode('trace');
-}
-$('#b-manuel').onclick=()=>basculerManuel();
-$('#b-fermer').onclick=()=>$('#voile').classList.remove('on');
-// enveloppés : ces fonctions sont définies plus bas dans le fichier
-$('#b-mode').onclick=()=>ouvrirPanneau();
-$('#b-fermer-panneau').onclick=()=>fermerPanneau();
-$('#panneau').onclick=ev=>{
-  if(ev.target.id==='panneau'){ fermerPanneau(); return; }
-  const b=ev.target.closest('[data-mode]');
-  if(b&&!b.disabled) changerMode(b.dataset.mode);
+const posScene=ev=>{
+  const r=$('#fond').getBoundingClientRect();
+  return { x:borne((ev.clientX-r.left)/r.width,0,1), y:borne((ev.clientY-r.top)/r.height,0,1) };
 };
-$('#voile').onclick=ev=>{ if(ev.target.id==='voile') $('#voile').classList.remove('on'); };
-const remettreAZero=e=>{ e.rep={};e.tri={};e.marq={};e.choisi={};e.liens={};e.traces=[];
-  e.pas=0; e.lot={}; e.phase=1;
-  if(e.brique==='ordre'&&e.bon.length) e.ordre=melanger(e.bon); };
-$('#b-effacer').onclick=()=>{ remettreAZero(ex()); prise=null; ouvrir(); };
-$('#b-stop').onclick=()=>{Voix.stop(); E.flux=false; terminer();};
-$('#b-fini').onclick=()=>{Voix.stop();
-  const e=ex();
-  if(e && e.pas < nbPas(e)-1){ e.pas++; if(e.deux) e.phase=1; ouvrir(); return; }
-  if(E.index<E.exos.length-1){ E.index++; ouvrir(); }
-  else if(E.flux) avancer();
-  else terminer(); };
-$('#b-recommencer').onclick=()=>{E.exos.forEach(remettreAZero); E.index=0; ouvrir();};
-$('#b-accueil').onclick=()=>ecran('e-accueil');
 
-const memeMot=(a,b)=>aplat(a)===aplat(b);
-function faitsDe(e){
-  switch(e.brique){
-    case 'etiq':   return e.disposition==='colonnes'?Object.keys(e.tri).length
-                     :Object.values(e.rep).filter(v=>String(v).trim()).length;
-    case 'coche':  return Object.keys(e.choisi).length;
-    case 'relier': return Object.keys(e.liens).length;
-    case 'ordre':  return e.ordre.filter((id,i)=>e.bon[i]===id).length;
-    case 'trace':  return (e.traces||[]).length;
-    default:       return 0;
+let dessin=null, coupe=null, deplace=null;
+
+scene.addEventListener('pointerdown',ev=>{
+  if(ev.target.closest('.hp')) return;
+  const ex=exo(); if(!ex) return;
+  const p=posScene(ev);
+
+  /* déplacer une étiquette ou une zone de texte */
+  const cible=ev.target.closest('.decoupe,.zt');
+  if(cible && E.outil==='main'){
+    const r=$('#fond').getBoundingClientRect(), rc=cible.getBoundingClientRect();
+    deplace={ n:cible, dx:(ev.clientX-rc.left)/r.width, dy:(ev.clientY-rc.top)/r.height };
+    scene.setPointerCapture(ev.pointerId);
+    return;
+  }
+  if(cible && E.outil==='gomme'){
+    if(cible.dataset.d!==undefined) ex.decoupes.splice(Number(cible.dataset.d),1);
+    else ex.textes.splice(Number(cible.dataset.t),1);
+    peindre(); ev.preventDefault(); return;
+  }
+  if(cible) return;   // on laisse le clavier travailler dans une zone de texte
+
+  if(E.outil==='crayon'){
+    dessin={couleur:'#17232e',taille:3,pts:[[p.x,p.y]]};
+    ex.traits.push(dessin);
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  if(E.outil==='gomme'){
+    dessin={couleur:'#ffffff',taille:22,pts:[[p.x,p.y]]};
+    ex.traits.push(dessin);
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  if(E.outil==='texte'){
+    ex.textes.push({x:p.x,y:p.y,t:'',taille:20});
+    peindre();
+    const n=$$('#scene .zt').pop();
+    if(n){ n.focus(); }
+    ev.preventDefault(); return;
+  }
+  if(E.outil==='ciseaux'){
+    coupe={x0:p.x,y0:p.y,x1:p.x,y1:p.y,n:null};
+    const d=document.createElement('div'); d.className='selection'; scene.appendChild(d);
+    coupe.n=d;
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+});
+
+scene.addEventListener('pointermove',ev=>{
+  const ex=exo(); if(!ex) return;
+  const p=posScene(ev);
+  if(deplace){
+    const n=deplace.n;
+    const x=borne(p.x-deplace.dx,0,0.99), y=borne(p.y-deplace.dy,0,0.99);
+    n.style.left=(x*100)+'%'; n.style.top=(y*100)+'%';
+    if(n.dataset.d!==undefined){ ex.decoupes[n.dataset.d].x=x; ex.decoupes[n.dataset.d].y=y; }
+    else { ex.textes[n.dataset.t].x=x; ex.textes[n.dataset.t].y=y; }
+    return;
+  }
+  if(dessin){
+    dessin.pts.push([p.x,p.y]); redessinerTraits(); return;
+  }
+  if(coupe){
+    coupe.x1=p.x; coupe.y1=p.y;
+    const c=rangerCadre(coupe);
+    coupe.n.style.left=(c.x0*100)+'%'; coupe.n.style.top=(c.y0*100)+'%';
+    coupe.n.style.width=((c.x1-c.x0)*100)+'%'; coupe.n.style.height=((c.y1-c.y0)*100)+'%';
+  }
+});
+
+function finScene(){
+  const ex=exo();
+  deplace=null; dessin=null;
+  if(coupe){
+    const c=rangerCadre(coupe);
+    coupe.n.remove(); coupe=null;
+    if(c.x1-c.x0>0.02 && c.y1-c.y0>0.01 && ex) faireDecoupe(ex,c);
+  }
+}
+scene.addEventListener('pointerup',finScene);
+scene.addEventListener('pointercancel',finScene);
+
+/* L'élève découpe lui-même son étiquette dans la photo : on copie le morceau,
+   la photo d'origine reste intacte, et le morceau devient déplaçable. */
+function faireDecoupe(ex,c){
+  const im=new Image();
+  im.onload=()=>{
+    const x=Math.round(c.x0*im.naturalWidth), y=Math.round(c.y0*im.naturalHeight);
+    const w=Math.max(6,Math.round((c.x1-c.x0)*im.naturalWidth));
+    const h=Math.max(6,Math.round((c.y1-c.y0)*im.naturalHeight));
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(im,x,y,w,h,0,0,w,h);
+    ex.decoupes.push({ src:cv.toDataURL('image/png'),
+      x:borne(c.x0+0.02,0,0.95), y:borne(c.y0+0.03,0,0.95), w:c.x1-c.x0, h:c.y1-c.y0 });
+    peindre();
+    E.outil='main'; $$('.outil').forEach(n=>n.classList.toggle('on',n.dataset.o==='main'));
+  };
+  im.src=ex.vignette;
+}
+
+scene.addEventListener('input',ev=>{
+  const z=ev.target.closest('.zt'); if(!z) return;
+  const ex=exo(); if(!ex) return;
+  ex.textes[z.dataset.t].t=z.textContent;
+  z.classList.toggle('pose',!!z.textContent.trim());
+});
+
+$('#b-annuler').onclick=()=>{
+  const ex=exo(); if(!ex) return;
+  if(ex.traits.length) ex.traits.pop();
+  else if(ex.decoupes.length) ex.decoupes.pop();
+  else if(ex.textes.length) ex.textes.pop();
+  peindre();
+};
+
+$('#b-suivant').onclick=()=>{
+  Voix.stop();
+  if(E.i<E.exos.length-1){ E.i++; ouvrir(); }
+  else terminer();
+};
+$('#b-stop').onclick=()=>{ Voix.stop(); terminer(); };
+
+/* =====================================================================
+   AIDES — panneau de droite, à la demande de l'élève
+   ===================================================================== */
+$('#b-aides').onclick=()=>{
+  const a=$('#aides');
+  a.classList.toggle('on');
+  if(a.classList.contains('on')&&!E.aide) choisirAide(premiereAide());
+  setTimeout(()=>{ ajusterCalque(); peindre(); },220);
+};
+
+function listeAides(){
+  const ex=exo(); if(!ex) return [];
+  const base = ex.matiere==='maths'
+    ? [['calculatrice','🔢 Calculatrice'],['regle','📏 Règle'],['compas','⭕ Compas'],['tables','✖️ Tables']]
+    : [['sons','🔤 b p d q'],['conjugaison','📖 Conjugaison'],['alphabet','🔡 Alphabet']];
+  return base;
+}
+const premiereAide=()=>{
+  const ex=exo(), l=listeAides();
+  const suggere=(ex&&ex.aides||[]).find(a=>l.some(x=>x[0]===a));
+  return suggere||(l[0]&&l[0][0])||'';
+};
+
+function construireAides(){
+  const l=listeAides();
+  $('#onglets-aides').innerHTML=l.map(([k,n])=>
+    `<button class="onglet${E.aide===k?' on':''}" data-a="${k}">${n}</button>`).join('');
+  if(!l.some(x=>x[0]===E.aide)) E.aide='';
+  if(E.aide) rendreAide(E.aide); else $('#contenu-aide').innerHTML='';
+}
+$('#onglets-aides').addEventListener('click',ev=>{
+  const o=ev.target.closest('.onglet'); if(!o) return;
+  choisirAide(o.dataset.a);
+});
+function choisirAide(k){
+  E.aide=k;
+  $$('#onglets-aides .onglet').forEach(n=>n.classList.toggle('on',n.dataset.a===k));
+  rendreAide(k);
+}
+
+function rendreAide(k){
+  const ex=exo(), n=$('#contenu-aide');
+  const niv=(ex&&ex.niveau)||'CE2';
+  if(k==='calculatrice') n.innerHTML=htmlCalc();
+  else if(k==='tables')   n.innerHTML=htmlTables(niv);
+  else if(k==='conjugaison') n.innerHTML=htmlConjugaison(niv);
+  else if(k==='sons')     n.innerHTML=htmlSons();
+  else if(k==='alphabet') n.innerHTML=htmlAlphabet();
+  else if(k==='regle')    { n.innerHTML=`<h3>Règle</h3><p class="note">La règle apparaît sur l'exercice.
+      Glisse-la pour la placer, tourne-la avec la poignée bleue, puis trace au crayon le long du bord.</p>
+      <button class="b petit" id="b-poser-regle">Poser la règle</button>
+      <button class="b petit clair" id="b-ranger-regle">La ranger</button>
+      <label class="champ"><span>Ajuster l'échelle sur ta vraie règle</span>
+        <input type="range" id="echelle-regle" min="20" max="90" value="${REGLE_ETAT.px}"></label>
+      <p class="note">Place ta règle en plastique contre l'écran et bouge le curseur jusqu'à ce que
+      les centimètres se superposent.</p>`;
+      $('#b-poser-regle').onclick=()=>poserRegle();
+      $('#b-ranger-regle').onclick=()=>rangerRegle();
+      $('#echelle-regle').oninput=e=>{ REGLE_ETAT.px=Number(e.target.value); dessinerRegle(); };
+  }
+  else if(k==='compas')   { n.innerHTML=`<h3>Compas</h3><p class="note">Touche d'abord le centre
+      sur l'exercice, puis glisse pour ouvrir le compas. Le cercle se trace quand tu relâches.</p>
+      <button class="b petit" id="b-compas">Prendre le compas</button>
+      <p class="note" id="etat-compas"></p>`;
+      $('#b-compas').onclick=()=>{ COMPAS.actif=true; $('#etat-compas').textContent="Touche le centre sur l'exercice."; };
   }
 }
 
+/* ---- calculatrice ---- */
+let calcTexte='0';
+function htmlCalc(){
+  const t=['7','8','9','÷','4','5','6','×','1','2','3','−','0',',','=','+'];
+  return `<h3>Calculatrice</h3>
+    <div class="calc-ecran" id="calc-ecran">${esc(calcTexte)}</div>
+    <div class="calc-touches" id="calc-touches">
+      ${t.map(x=>`<button data-c="${x}" class="${'÷×−+='.includes(x)?'op':''}">${x}</button>`).join('')}
+      <button data-c="C" class="op" style="grid-column:span 2">Effacer</button>
+      <button data-c="⌫" class="op" style="grid-column:span 2">Corriger</button>
+    </div>`;
+}
+document.addEventListener('click',ev=>{
+  const b=ev.target.closest('#calc-touches button'); if(!b) return;
+  const c=b.dataset.c;
+  if(c==='C') calcTexte='0';
+  else if(c==='⌫') calcTexte=calcTexte.length>1?calcTexte.slice(0,-1):'0';
+  else if(c==='='){
+    try{
+      const f=calcTexte.replace(/÷/g,'/').replace(/×/g,'*').replace(/−/g,'-').replace(/,/g,'.');
+      if(!/^[\d+\-*/.() ]+$/.test(f)) throw 0;
+      const v=Function('"use strict";return ('+f+')')();
+      calcTexte=(Math.round(v*1e6)/1e6).toString().replace('.',',');
+    }catch(e){ calcTexte='Erreur'; }
+  }
+  else{
+    if(calcTexte==='0'&&!'÷×−+,'.includes(c)) calcTexte=c;
+    else if(calcTexte==='Erreur') calcTexte=c;
+    else calcTexte+=c;
+  }
+  const n=$('#calc-ecran'); if(n) n.textContent=calcTexte;
+});
+
+/* ---- tables de multiplication ---- */
+function htmlTables(niv){
+  const jusqu = (niv==='CP'||niv==='CE1')?5:10;
+  let h=`<h3>Tables de multiplication</h3><div class="tables">`;
+  for(let t=2;t<=jusqu;t++){
+    h+=`<div class="table-bloc"><b>Table de ${t}</b>`;
+    for(let k=1;k<=10;k++) h+=`${t} × ${k} = <b style="display:inline;color:var(--encre)">${t*k}</b><br>`;
+    h+=`</div>`;
+  }
+  return h+`</div>`;
+}
+
+/* ---- conjugaison ---- */
+const VERBES={
+  'être':{present:['je suis','tu es','il est','nous sommes','vous êtes','ils sont'],
+          imparfait:['j\'étais','tu étais','il était','nous étions','vous étiez','ils étaient'],
+          futur:['je serai','tu seras','il sera','nous serons','vous serez','ils seront'],
+          passe:['j\'ai été','tu as été','il a été','nous avons été','vous avez été','ils ont été']},
+  'avoir':{present:['j\'ai','tu as','il a','nous avons','vous avez','ils ont'],
+          imparfait:['j\'avais','tu avais','il avait','nous avions','vous aviez','ils avaient'],
+          futur:['j\'aurai','tu auras','il aura','nous aurons','vous aurez','ils auront'],
+          passe:['j\'ai eu','tu as eu','il a eu','nous avons eu','vous avez eu','ils ont eu']},
+  'chanter':{present:['je chante','tu chantes','il chante','nous chantons','vous chantez','ils chantent'],
+          imparfait:['je chantais','tu chantais','il chantait','nous chantions','vous chantiez','ils chantaient'],
+          futur:['je chanterai','tu chanteras','il chantera','nous chanterons','vous chanterez','ils chanteront'],
+          passe:['j\'ai chanté','tu as chanté','il a chanté','nous avons chanté','vous avez chanté','ils ont chanté']},
+  'finir':{present:['je finis','tu finis','il finit','nous finissons','vous finissez','ils finissent'],
+          imparfait:['je finissais','tu finissais','il finissait','nous finissions','vous finissiez','ils finissaient'],
+          futur:['je finirai','tu finiras','il finira','nous finirons','vous finirez','ils finiront'],
+          passe:['j\'ai fini','tu as fini','il a fini','nous avons fini','vous avez fini','ils ont fini']},
+  'aller':{present:['je vais','tu vas','il va','nous allons','vous allez','ils vont'],
+          imparfait:['j\'allais','tu allais','il allait','nous allions','vous alliez','ils allaient'],
+          futur:['j\'irai','tu iras','il ira','nous irons','vous irez','ils iront'],
+          passe:['je suis allé','tu es allé','il est allé','nous sommes allés','vous êtes allés','ils sont allés']},
+  'prendre':{present:['je prends','tu prends','il prend','nous prenons','vous prenez','ils prennent'],
+          imparfait:['je prenais','tu prenais','il prenait','nous prenions','vous preniez','ils prenaient'],
+          futur:['je prendrai','tu prendras','il prendra','nous prendrons','vous prendrez','ils prendront'],
+          passe:['j\'ai pris','tu as pris','il a pris','nous avons pris','vous avez pris','ils ont pris']}
+};
+let verbeChoisi='être';
+function htmlConjugaison(niv){
+  const temps = (niv==='CP'||niv==='CE1') ? [['present','Présent']]
+    : (niv==='CE2') ? [['present','Présent'],['imparfait','Imparfait'],['futur','Futur']]
+    : [['present','Présent'],['imparfait','Imparfait'],['futur','Futur'],['passe','Passé composé']];
+  const v=VERBES[verbeChoisi];
+  let h=`<h3>Conjugaison</h3>
+    <label class="champ"><span>Verbe</span><select id="choix-verbe">
+      ${Object.keys(VERBES).map(k=>`<option${k===verbeChoisi?' selected':''}>${k}</option>`).join('')}
+    </select></label><div class="conj"><table><tr>${temps.map(t=>`<th>${t[1]}</th>`).join('')}</tr>`;
+  for(let p=0;p<6;p++){
+    h+=`<tr>`+temps.map(t=>`<td>${esc(v[t[0]][p])}</td>`).join('')+`</tr>`;
+  }
+  return h+`</table></div>
+    <p class="note">Les temps proposés suivent le niveau de l'exercice.</p>`;
+}
+document.addEventListener('change',ev=>{
+  if(ev.target.id!=='choix-verbe') return;
+  verbeChoisi=ev.target.value;
+  rendreAide('conjugaison');
+});
+
+/* ---- sons b p d q ---- */
+function htmlSons(){
+  const c=[
+    ['b','La barre est à GAUCHE, le ventre à DROITE. Comme dans <b>bateau</b>.'],
+    ['d','Le ventre est à GAUCHE, la barre à DROITE. Comme dans <b>dame</b>.'],
+    ['p','La barre descend, le ventre est en HAUT à droite. Comme dans <b>papa</b>.'],
+    ['q','Le ventre est en HAUT à gauche, la barre descend. Comme dans <b>quatre</b>.']
+  ];
+  return `<h3>Reconnaître b, p, d, q</h3>`
+    + c.map(([l,t])=>`<div class="lettre-carte"><span class="gros-l">${l}</span><span>${t}</span></div>`).join('')
+    + `<div class="lettre-carte" style="background:var(--accent-pale)">
+         <span class="gros-l">👍</span>
+         <span>Avec tes deux poings fermés, pouces levés : la main gauche fait le <b>b</b>,
+         la main droite fait le <b>d</b>.</span></div>`;
+}
+
+/* ---- alphabet ---- */
+function htmlAlphabet(){
+  const a='abcdefghijklmnopqrstuvwxyz'.split('');
+  return `<h3>Alphabet</h3><div class="tables">`
+    + a.map(l=>`<div class="table-bloc" style="text-align:center;font-size:21px">
+        <b style="display:inline">${l}</b> &nbsp; ${l.toUpperCase()}</div>`).join('')
+    + `</div>`;
+}
+
+/* ---- règle ---- */
+const REGLE_ETAT={pose:false,x:0.1,y:0.5,angle:0,px:38,long:16};
+let bulleRegle=null;
+function poserRegle(){
+  REGLE_ETAT.pose=true;
+  if(!bulleRegle){
+    bulleRegle=document.createElement('div');
+    bulleRegle.className='regle-bulle';
+    bulleRegle.innerHTML=`<canvas id="cv-regle"></canvas><div class="poignee-regle" id="tourner">⟳</div>`;
+    scene.appendChild(bulleRegle);
+    installerRegle();
+  }
+  bulleRegle.classList.remove('masque');
+  dessinerRegle();
+}
+function rangerRegle(){ REGLE_ETAT.pose=false; if(bulleRegle) bulleRegle.classList.add('masque'); }
+function dessinerRegle(){
+  if(!bulleRegle) return;
+  const cv=bulleRegle.querySelector('canvas');
+  const L=REGLE_ETAT.px*REGLE_ETAT.long, H=58;
+  cv.width=L; cv.height=H; cv.style.width=L+'px'; cv.style.height=H+'px';
+  const c=cv.getContext('2d');
+  c.clearRect(0,0,L,H); c.fillStyle='rgba(255,255,255,.92)'; c.fillRect(0,0,L,H);
+  c.strokeStyle='#1D4E89'; c.fillStyle='#17232e'; c.font='11px sans-serif';
+  for(let k=0;k<=REGLE_ETAT.long;k++){
+    const x=k*REGLE_ETAT.px;
+    c.beginPath(); c.moveTo(x,0); c.lineTo(x,k%5===0?22:14); c.stroke();
+    if(k%1===0) c.fillText(String(k),x+2,34);
+    for(let m=1;m<10;m++){
+      const xm=x+m*REGLE_ETAT.px/10;
+      c.beginPath(); c.moveTo(xm,0); c.lineTo(xm,m===5?10:6); c.stroke();
+    }
+  }
+  bulleRegle.style.left=(REGLE_ETAT.x*100)+'%';
+  bulleRegle.style.top=(REGLE_ETAT.y*100)+'%';
+  bulleRegle.style.transform=`rotate(${REGLE_ETAT.angle}deg)`;
+  bulleRegle.style.transformOrigin='0 50%';
+}
+function installerRegle(){
+  let mode=null,depart=null;
+  bulleRegle.addEventListener('pointerdown',ev=>{
+    const r=$('#fond').getBoundingClientRect();
+    mode=ev.target.id==='tourner'?'tourne':'glisse';
+    depart={x:ev.clientX,y:ev.clientY,rx:REGLE_ETAT.x,ry:REGLE_ETAT.y,ra:REGLE_ETAT.angle,r};
+    bulleRegle.setPointerCapture(ev.pointerId);
+    ev.stopPropagation(); ev.preventDefault();
+  });
+  bulleRegle.addEventListener('pointermove',ev=>{
+    if(!mode) return;
+    const r=depart.r;
+    if(mode==='glisse'){
+      REGLE_ETAT.x=borne(depart.rx+(ev.clientX-depart.x)/r.width,-0.1,0.98);
+      REGLE_ETAT.y=borne(depart.ry+(ev.clientY-depart.y)/r.height,0,0.98);
+    }else{
+      const cx=r.left+REGLE_ETAT.x*r.width, cy=r.top+REGLE_ETAT.y*r.height;
+      REGLE_ETAT.angle=Math.atan2(ev.clientY-cy,ev.clientX-cx)*180/Math.PI;
+    }
+    dessinerRegle();
+    ev.stopPropagation();
+  });
+  const fin=()=>{ mode=null; };
+  bulleRegle.addEventListener('pointerup',fin);
+  bulleRegle.addEventListener('pointercancel',fin);
+}
+
+/* ---- compas ---- */
+const COMPAS={actif:false,centre:null};
+scene.addEventListener('pointerdown',ev=>{
+  if(!COMPAS.actif||ev.target.closest('.hp,.regle-bulle')) return;
+  COMPAS.centre=posScene(ev);
+  scene.setPointerCapture(ev.pointerId);
+  ev.stopPropagation(); ev.preventDefault();
+},true);
+scene.addEventListener('pointermove',ev=>{
+  if(!COMPAS.actif||!COMPAS.centre) return;
+  const p=posScene(ev);
+  redessinerTraits();
+  const r=$('#fond').getBoundingClientRect();
+  const rayon=Math.hypot((p.x-COMPAS.centre.x)*r.width,(p.y-COMPAS.centre.y)*r.height);
+  ctx.strokeStyle='#1D4E89'; ctx.lineWidth=2; ctx.beginPath();
+  ctx.arc(COMPAS.centre.x*calque.width,COMPAS.centre.y*calque.height,rayon,0,2*Math.PI);
+  ctx.stroke();
+  ev.stopPropagation();
+},true);
+scene.addEventListener('pointerup',ev=>{
+  if(!COMPAS.actif||!COMPAS.centre) return;
+  const p=posScene(ev), ex=exo();
+  const dx=p.x-COMPAS.centre.x, dy=p.y-COMPAS.centre.y;
+  const rx=Math.hypot(dx,dy);
+  if(rx>0.01&&ex){
+    const pts=[];
+    for(let a=0;a<=360;a+=4){
+      const t=a*Math.PI/180;
+      pts.push([COMPAS.centre.x+rx*Math.cos(t), COMPAS.centre.y+rx*Math.sin(t)*(calque.width/calque.height)]);
+    }
+    ex.traits.push({couleur:'#17232e',taille:2,pts});
+  }
+  COMPAS.centre=null; COMPAS.actif=false;
+  const n=$('#etat-compas'); if(n) n.textContent='Cercle tracé.';
+  redessinerTraits();
+},true);
+
+/* =====================================================================
+   FIN — aplatir, enregistrer, imprimer
+   ===================================================================== */
 function terminer(){
-  let faits=0,total=0;
-  E.exos.forEach(e=>{ total+=e.total; faits+=faitsDe(e); });
-  const attendus=(E.cache&&E.cache.size)?((E.regions||[]).length):0;
-  $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} réponse(s) sur ${total}.`
-    +(attendus&&attendus!==E.exos.length
-      ? ` ${attendus} cadre(s) avaient été tracés : ${attendus-E.exos.length} n'a pas été proposé.`
-      : '');
-  $('#opt-juste').parentElement.classList.toggle('masque',!E.exos.some(e=>e.cle));
-  alerte('#err-fin','');
+  Voix.stop();
+  const faits=E.exos.filter(e=>e.traits.length||e.textes.length||e.decoupes.length).length;
+  $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} avec du travail de l'élève.`;
+  $('#nom-fiche').value=new Date().toLocaleDateString('fr-FR');
+  $('#etat-sauvegarde').textContent='';
   ecran('e-fin');
 }
 
-/* =====================================================================
-   CHANGER DE MODE — quand l'adaptation proposée ne convient pas, le
-   maître bascule l'exercice vers une autre brique. On ne peut pas passer
-   de l'une à l'autre directement : on extrait d'abord une matière neutre
-   (phrases, réponses attendues, paires, banque de mots), dont chaque
-   brique sait repartir. Les réponses déjà données sont perdues.
-   ===================================================================== */
-const MODES=[
-  ['etiq',    'Étiquettes à glisser'],
-  ['clavier', 'Remplir au clavier'],
-  ['touch',   'Toucher les mots'],
-  ['coche',   'Cocher parmi trois'],
-  ['relier',  'Relier deux colonnes'],
-  ['ordre',   'Remettre dans l\'ordre'],
-  ['trace',  "Entourer sur l'image"]
-];
+/* Fabrique une image unique : la photo, les traits, les étiquettes, les textes. */
+function aplatir(ex){
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=async()=>{
+      const W=im.naturalWidth, H=im.naturalHeight;
+      const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+      const c=cv.getContext('2d');
+      c.fillStyle='#fff'; c.fillRect(0,0,W,H);
+      c.drawImage(im,0,0,W,H);
 
-function matiere(e){
-  const phrases=[], paires=[], banque=new Set();
-  const ajoute=t=>{ t=String(t||'').replace(/\s+/g,' ').trim(); if(t) banque.add(t); };
-  if(e.brique==='etiq'&&e.disposition!=='colonnes'){
-    e.items.forEach(it=>{
-      phrases.push(it.seg.map(g=>g.type==='trou'?{trou:true,rep:g.reponse}:{t:g.t}));
-      const texte=it.seg.filter(g=>g.type==='texte').map(g=>g.t).join(' ').replace(/\s+/g,' ').trim();
-      it.seg.forEach(g=>{ if(g.type==='trou'&&g.reponse) paires.push([texte,g.reponse]); });
-    });
-    e.etq.forEach(t=>ajoute(t.texte));
-  }
-  else if(e.brique==='etiq'){
-    e.colonnes.forEach(c=>c.rep.forEach(m=>{ paires.push([m,c.nom]); phrases.push([{t:m}]); ajoute(m); }));
-    e.colonnes.forEach(c=>ajoute(c.nom));
-    e.etq.forEach(t=>{ ajoute(t.texte); if(!phrases.some(p=>p[0]&&p[0].t===t.texte)) phrases.push([{t:t.texte}]); });
-  }
-  else if(e.brique==='touch') e.items.forEach(it=>phrases.push([{t:it.texte}]));
-  else if(e.brique==='coche') e.questions.forEach(q=>{
-    phrases.push([{t:q.enonce}]); q.choix.forEach(ajoute);
-    if(q.bonne!==null) paires.push([q.enonce,q.choix[q.bonne]]);
-  });
-  else if(e.brique==='relier') e.gauche.forEach(g=>{
-    phrases.push([{t:g.texte}]);
-    const d=(e.paires.find(x=>x[0]===g.id)||[])[1];
-    const dt=(e.droite.find(x=>x.id===d)||{}).texte;
-    if(dt) paires.push([g.texte,dt]);
-    });
-  else if(e.brique==='ordre') e.bon.forEach(id=>{
-    const x=e.elements.find(v=>v.id===id); if(x) phrases.push([{t:x.texte}]);
-  });
-  if(e.brique==='relier') e.droite.forEach(d=>ajoute(d.texte));
-  return {phrases, paires, banque:[...banque]};
-}
-
-const texteDe=p=>p.map(x=>x.trou?(x.rep||'…'):x.t).join(' ').replace(/\s+/g,' ')
-                  .replace(/\s([.,;:!?])/g,'$1').trim();
-const aDesTrous=m=>m.phrases.some(p=>p.some(x=>x.trou));
-
-function possible(e,cible){
-  const m=matiere(e);
-  switch(cible){
-    case 'etiq':
-    case 'clavier': return aDesTrous(m)||m.paires.length>0;
-    case 'touch':   return m.phrases.length>0;
-    case 'coche':   return m.paires.length>0&&m.banque.length>=2;
-    case 'relier':  return m.paires.length>1;
-    case 'ordre':   return m.phrases.length>1;
-    case 'trace':   return !!(e.vignette||e.image);
-  }
-  return false;
-}
-
-/* Reconstruit des données brutes au format attendu par la brique visée,
-   puis les repasse dans la normalisation habituelle. */
-function versBrut(e,cible){
-  const m=matiere(e);
-  const socle={type:e.type, consigne:e.consigne, consigne_dite:e.dite, cible:e.cible};
-  if(cible==='etiq'||cible==='clavier'){
-    let items;
-    if(aDesTrous(m))
-      items=m.phrases.map(p=>({segments:p.map(x=>x.trou?{type:'trou',reponse:x.rep}:{type:'texte',t:x.t})}));
-    else
-      items=m.paires.map(([g,d])=>({segments:[{type:'texte',t:g+' '},{type:'trou',reponse:d}]}));
-    const etq=cible==='clavier'?[]:(m.banque.length?m.banque:m.paires.map(p=>p[1]));
-    return {...socle, force:'etiq', brique:'etiq', items, etiquettes:etq,
-            sans_etiquettes:cible==='clavier'};
-  }
-  if(cible==='touch')
-    return {...socle, force:'touch', brique:'touch', cible:e.cible||'les mots qui conviennent',
-            items:m.phrases.map(p=>({texte:texteDe(p)}))};
-  if(cible==='coche'){
-    const questions=m.paires.map(([g,d])=>{
-      const autres=melanger(m.banque.filter(x=>aplat(x)!==aplat(d))).slice(0,2);
-      const choix=melanger([d,...autres]);
-      return {enonce:g, choix, bonne:choix.findIndex(c=>aplat(c)===aplat(d))};
-    });
-    return {...socle, force:'coche', brique:'coche', questions};
-  }
-  if(cible==='relier')
-    return {...socle, force:'relier', brique:'relier',
-            gauche:m.paires.map(p=>p[0]), droite:m.paires.map(p=>p[1]),
-            paires:m.paires.map((_,i)=>[i,i])};
-  if(cible==='ordre')
-    return {...socle, force:'ordre', brique:'ordre', elements:m.phrases.map(texteDe)};
-  if(cible==='trace')
-    return {...socle, force:'trace', brique:'trace', image:e.vignette||e.image||''};
-  return null;
-}
-
-function changerMode(cible){
-  const avant=E.exos[E.index];
-  const brut=versBrut(avant,cible);
-  if(!brut) return;
-  const neuf=normaliser(brut,E.index);
-  if(!neuf.bon_a_faire) return;
-  neuf.vignette=avant.vignette;
-  neuf.numero=avant.numero;
-  neuf.nom=avant.nom;
-  neuf.repli=cible;              // mémorisé pour la fiche et pour « refaire »
-  neuf.juge=avant.juge; neuf.attendue=avant.attendue;
-  if(cible==='trace') neuf.origine=avant.origine||avant;   // pour pouvoir revenir
-  E.exos[E.index]=neuf;
-  fermerPanneau();
-  ouvrir();
-}
-
-function ouvrirPanneau(){
-  const e=E.exos[E.index];
-  const actuel=e.repli||(e.brique==='etiq'&&!e.etq.length?'clavier':e.brique);
-  $('#liste-modes').innerHTML=MODES.map(([id,nom])=>{
-    const ok=possible(e,id), ici=id===actuel;
-    return `<button class="b ${ici?'':'pale'} large" data-mode="${id}" ${ok||ici?'':'disabled'}
-      style="margin-bottom:8px">${nom}${ici?' · en cours':''}</button>`;
-  }).join('')
-   +`<p class="note">Type reconnu : ${esc(e.nom||'inconnu')}${e.type?` (n° ${e.type})`:''}. Changer de mode efface les réponses déjà données.</p>`;
-  $('#panneau').classList.add('on');
-}
-const fermerPanneau=()=>$('#panneau').classList.remove('on');
-
-/* ---------------- fiches enregistrées ---------------- */
-function telecharger(nom,blob){
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom;
-  document.body.appendChild(a); a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);
-}
-$('#b-enregistrer').onclick=()=>{
-  const propre=E.exos.map(e=>({...e, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}}));
-  telecharger((($('#prenom').value.trim()||'fiche').toLowerCase().replace(/\s+/g,'-'))+'.json',
-    new Blob([JSON.stringify({app:'adaptedl',version:2,titre:E.titre,exercices:propre})],{type:'application/json'}));
-};
-$('#b-ouvrir-fiche').onclick=()=>$('#f-fiche').click();
-$('#f-fiche').onchange=async e=>{
-  const f=e.target.files[0]; if(!f) return;
-  try{
-    const d=JSON.parse(await f.text());
-    if(!Array.isArray(d.exercices)||!d.exercices.length) throw 0;
-    E.exos=d.exercices.map(x=>{const e={...x, rep:{}, tri:{}, marq:{}, choisi:{}, liens:{}, pas:0, lot:{}};
-      if(e.brique==='ordre'&&(e.bon||[]).length) e.ordre=melanger(e.bon);
-      return e;});
-    E.titre=d.titre||'Exercices'; E.flux=false; E.index=0; E.ecartes=[];
-    E.regions=[]; E.cache=new Map();
-    ouvrir();
-  }catch(err){ majRelais("Ce fichier n'est pas une fiche Adaptedl."); }
-  e.target.value='';
-};
-
-/* ---------------- fiche imprimable, compacte ---------------- */
-const MM=2.834645, L=210, H=297;
-const large=(()=>{const c=document.createElement('canvas').getContext('2d');
-  return (t,taille,gras)=>{c.font=`${gras?'bold ':''}${taille}px Helvetica, Arial, sans-serif`;
-    return c.measureText(t).width/MM*1.02;};})();
-/* dimensions d'un JPEG : on lit l'en-tête SOF, sans bibliothèque */
-function tailleJpeg(bin){
-  for(let i=2;i<bin.length-9;){
-    if(bin.charCodeAt(i)!==0xFF){ i++; continue; }
-    const m=bin.charCodeAt(i+1);
-    if(m>=0xC0&&m<=0xCF&&m!==0xC4&&m!==0xC8&&m!==0xCC)
-      return {h:(bin.charCodeAt(i+5)<<8)|bin.charCodeAt(i+6),
-              l:(bin.charCodeAt(i+7)<<8)|bin.charCodeAt(i+8)};
-    i+=2+((bin.charCodeAt(i+2)<<8)|bin.charCodeAt(i+3));
-  }
-  return {l:1000,h:700};
-}
-function encoder(s){
-  // le jeu de caractères du PDF ignore les flèches : on les écrit en signes
-  s=String(s).replace(/[→⟶]/g,'->').replace(/[←⟵]/g,'<-').replace(/[×✕]/g,'x');
-  /* Les consignes de phonologie sont truffées d'alphabet phonétique, absent
-     du PDF. On l'écrit à la française : [ɛ̃] devient [in], ce qui reste juste
-     pour l'élève comme pour le maître. */
-  s=s.replace(/ɑ̃|ã/g,'an').replace(/ɔ̃|õ/g,'on').replace(/ɛ̃/g,'in').replace(/œ̃/g,'un')
-     .replace(/ʃ/g,'ch').replace(/ʒ/g,'j').replace(/ɲ/g,'gn').replace(/ø|œ/g,'eu')
-     .replace(/ɛ/g,'è').replace(/ɔ/g,'o').replace(/ə/g,'e').replace(/ɑ/g,'a')
-     .replace(/[ʁʀ]/g,'r').replace(/ɥ/g,'u').replace(/ɡ/g,'g').replace(/\u0303/g,'');
-  const T={'œ':'\x9C','Œ':'\x8C','…':'\x85','–':'\x96','—':'\x97','’':'\x92','‘':'\x91','“':'\x93','”':'\x94','€':'\x80','✓':'V','✗':'X'};
-  let o=''; for(const ch of String(s)){ const c=T[ch]??ch; o+=c.charCodeAt(0)<256?c:'?'; }
-  return o.replace(/[\\()]/g,m=>'\\'+m);
-}
-function Pdf(){
-  const pages=[[]]; const images=[]; let p=0;
-  return {
-    page(){ pages.push([]); p=pages.length-1; },
-    /* une image JPEG s'incruste telle quelle : le PDF sait la décoder */
-    image(b64,x,y,lg,ht){
-      const k=images.push(atob(b64))-1;
-      pages[p].push(`q ${(lg*MM).toFixed(2)} 0 0 ${(ht*MM).toFixed(2)} `
-        +`${(x*MM).toFixed(2)} ${((H-y-ht)*MM).toFixed(2)} cm /Im${k} Do Q`);
-      return k;
-    },
-    txt(t,x,y,taille,gras,couleur){
-      const c=couleur||[0,0,0];
-      pages[p].push(`BT ${c.join(' ')} rg /F${gras?2:1} ${taille} Tf 1 0 0 1 ${(x*MM).toFixed(2)} ${((H-y)*MM).toFixed(2)} Tm (${encoder(t)}) Tj ET`); },
-    trait(x1,y1,x2,y2,ep,couleur){
-      const c=couleur||[0.4,0.4,0.4];
-      pages[p].push(`${ep||0.4} w ${c.join(' ')} RG ${(x1*MM).toFixed(2)} ${((H-y1)*MM).toFixed(2)} m ${(x2*MM).toFixed(2)} ${((H-y2)*MM).toFixed(2)} l S`); },
-    octets(){
-      const o=[], n=pages.length;
-      o.push(`<</Type/Catalog/Pages 2 0 R>>`);
-      o.push(`<</Type/Pages/Kids[${pages.map((_,i)=>`${3+i*2} 0 R`).join(' ')}]/Count ${n}>>`);
-      const f1=3+n*2, f2=f1+1, im0=f2+1;
-      const res=`<</Font<</F1 ${f1} 0 R/F2 ${f2} 0 R>>`
-        +(images.length?`/XObject<<${images.map((_,k)=>`/Im${k} ${im0+k} 0 R`).join('')}>>`:'')+`>>`;
-      pages.forEach((ops,i)=>{
-        o.push(`<</Type/Page/Parent 2 0 R/MediaBox[0 0 ${(L*MM).toFixed(2)} ${(H*MM).toFixed(2)}]/Resources${res}/Contents ${4+i*2} 0 R>>`);
-        const flux=ops.join('\n');
-        o.push(`<</Length ${flux.length}>>\nstream\n${flux}\nendstream`);
-      });
-      o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica/Encoding/WinAnsiEncoding>>`);
-      o.push(`<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold/Encoding/WinAnsiEncoding>>`);
-      images.forEach(bin=>{
-        const d=tailleJpeg(bin);
-        o.push(`<</Type/XObject/Subtype/Image/Width ${d.l}/Height ${d.h}/ColorSpace/DeviceRGB`
-          +`/BitsPerComponent 8/Filter/DCTDecode/Length ${bin.length}>>\nstream\n${bin}\nendstream`);
-      });
-      let out='%PDF-1.4\n', dec=[];
-      o.forEach((x,i)=>{ dec.push(out.length); out+=`${i+1} 0 obj\n${x}\nendobj\n`; });
-      const xref=out.length;
-      out+=`xref\n0 ${o.length+1}\n0000000000 65535 f \n`
-        + dec.map(d=>String(d).padStart(10,'0')+' 00000 n \n').join('')
-        + `trailer\n<</Size ${o.length+1}/Root 1 0 R>>\nstartxref\n${xref}\n%%EOF`;
-      return Uint8Array.from(out,c=>c.charCodeAt(0)&0xFF);
-    }};
-}
-$('#b-fiche').onclick=()=>{
-  alerte('#err-fin','');
-  const juste=$('#opt-juste').checked;
-  // on cherche la plus grande taille qui tienne sur une seule page
-  for(const t of [9.5,9,8.5,8,7.5,7,6.5,6]){
-    const doc=Pdf();
-    if(composer(doc,t,juste,1)){ sortir(doc); return; }
-  }
-  for(const t of [9,8.5,8,7.5,7]){
-    const doc=Pdf();
-    if(composer(doc,t,juste,2)){ sortir(doc); return; }
-  }
-  alerte('#err-fin',"Trop de contenu pour deux pages.");
-};
-function sortir(doc){
-  telecharger((($('#prenom').value.trim()||'fiche').toLowerCase().replace(/\s+/g,'-'))+'.pdf',
-    new Blob([doc.octets()],{type:'application/pdf'}));
-}
-function couper(texte,largeur,taille,gras){
-  const out=[]; let l='';
-  for(const m of String(texte).split(/\s+/)){
-    const essai=l?l+' '+m:m;
-    if(large(essai,taille,gras)>largeur&&l){ out.push(l); l=m; } else l=essai;
-  }
-  if(l) out.push(l);
-  return out;
-}
-const VERT=[0.11,0.45,0.30], ROUGE=[0.75,0.15,0.10];
-/* Pose une suite de jetons avec retour à la ligne. Un jeton peut être
-   coloré, souligné, ou barré : c'est ainsi que la correction s'écrit. */
-function poserJetons(doc,jetons,gauche,droite,taille,pas,place,lireY,ecrireY){
-  let x=gauche;
-  if(!place(pas)) return false;
-  for(const j of jetons){
-    const w=large(j.t,taille,j.gras);
-    if(x+w>droite&&j.t.trim()){ if(!place(pas)) return false; ecrireY(lireY()+pas); x=gauche+3; }
-    if(x===gauche+3&&!j.t.trim()) continue;
-    const y=lireY();
-    doc.txt(j.t,x,y,taille,j.gras,j.couleur);
-    if(j.souligne) doc.trait(x,y+0.9,x+w,y+0.9,0.5,j.couleur);
-    if(j.barre)    doc.trait(x,y-taille*0.352*0.32,x+w,y-taille*0.352*0.32,0.5,ROUGE);
-    x+=w;
-  }
-  ecrireY(lireY()+pas);
-  return true;
-}
-function composer(doc,taille,juste,maxPages){
-  const G=12, D=198, HAUT=12, BAS=288;
-  const pas=taille*0.352*1.42+0.9;          // interligne serré : la fiche doit tenir
-  let y=HAUT, page=1;
-  const place=h=>{ if(y+h<=BAS) return true;
-    if(page>=maxPages) return false;
-    doc.page(); page++; y=HAUT; return true; };
-
-  const entete=`${$('#prenom').value.trim()||''}${$('#prenom').value.trim()?'   ':''}${new Date().toLocaleDateString('fr-FR')}`;
-  doc.txt(E.titre.slice(0,58),G,y,taille+1.5,true);
-  doc.txt(entete,D-large(entete,taille-1,false),y,taille-1,false);
-  y+=1.8; doc.trait(G,y,D,y); y+=pas;
-
-  for(const e of E.exos){
-    if(!place(pas*2)) return false;
-    for(const l of couper(`${e.numero}. ${e.consigne}`,D-G,taille,true)){
-      if(!place(pas)) return false; doc.txt(l,G,y,taille,true); y+=pas;
-    }
-    const B=BRIQUES[e.brique]||BRIQUES.etiq;
-    for(const bloc of B.pdf(e,juste)){
-      if(bloc.image){                      // l'exercice lui-même, avec les traits de l'élève
-        const b64=String(bloc.image).split(',')[1]||'';
-        if(!b64) continue;
-        const bin=atob(b64), d=tailleJpeg(bin);
-        let lg=D-G-4, ht=lg*d.h/d.l;
-        const dispo=BAS-HAUT;
-        if(ht>dispo){ ht=dispo; lg=ht*d.l/d.h; }
-        if(!place(ht+1.5)) return false;
-        doc.image(b64,G+4,y,lg,ht);
-        for(const t of (bloc.traces||[])){
-          for(let k=1;k<t.length;k++)
-            doc.trait(G+4+t[k-1][0]*lg, y+t[k-1][1]*ht,
-                      G+4+t[k][0]*lg,   y+t[k][1]*ht, 0.7, ROUGE_PDF);
-        }
-        y+=ht+1.5;
-        continue;
+      const ech=W/Math.max(1,calque.width||W);
+      for(const t of ex.traits){
+        if(t.pts.length<2) continue;
+        c.strokeStyle=t.couleur; c.lineWidth=(t.taille||3)*ech;
+        c.lineCap='round'; c.lineJoin='round';
+        c.beginPath(); c.moveTo(t.pts[0][0]*W,t.pts[0][1]*H);
+        for(let k=1;k<t.pts.length;k++) c.lineTo(t.pts[k][0]*W,t.pts[k][1]*H);
+        c.stroke();
       }
-      if(!poserJetons(doc,bloc.jetons,G+(bloc.indent||4),D,taille,pas,place,()=>y,v=>y=v)) return false;
-    }
-    y+=pas*0.5;
+      for(const e of ex.decoupes){
+        const img=await charger(e.src);
+        c.drawImage(img,e.x*W,e.y*H,e.w*W,e.h*H);
+      }
+      c.fillStyle='#17232e';
+      for(const t of ex.textes){
+        if(!t.t.trim()) continue;
+        const taille=(t.taille||20)*ech;
+        c.font=`${taille}px "Segoe UI",sans-serif`;
+        t.t.split('\n').forEach((lg,k)=>c.fillText(lg,t.x*W+4,t.y*H+taille*(k+1)));
+      }
+      res(cv.toDataURL('image/jpeg',0.92));
+    };
+    im.src=ex.vignette;
+  });
+}
+const charger=src=>new Promise(r=>{ const i=new Image(); i.onload=()=>r(i); i.src=src; });
+
+$('#b-enregistrer').onclick=async()=>{
+  $('#etat-sauvegarde').textContent='Enregistrement…';
+  try{
+    const images=[];
+    for(const ex of E.exos) images.push(await aplatir(ex));
+    const fiche={ nom:$('#nom-fiche').value.trim()||'Fiche', date:Date.now(), images };
+    const cle='adaptedl_fiche_'+fiche.date;
+    localStorage.setItem(cle,JSON.stringify(fiche));
+    $('#etat-sauvegarde').textContent='Travail enregistré sur cet appareil.';
+    listerFiches();
+  }catch(e){
+    $('#etat-sauvegarde').textContent="Mémoire pleine : supprime d'anciennes fiches, ou imprime directement.";
   }
-  return true;
+};
+
+$('#b-imprimer').onclick=()=>imprimer(E.exos,Number($('#par-page').value));
+
+async function imprimer(exos,parPage){
+  const images=[];
+  for(const ex of exos) images.push(await aplatir(ex));
+  lancerImpression(images,parPage);
+}
+function lancerImpression(images,parPage){
+  const haut = parPage===1?'92vh':parPage===2?'45vh':'45vh';
+  const large= parPage===4?'48%':'100%';
+  const w=window.open('','_blank');
+  if(!w){ alert("Autorise les fenêtres surgissantes pour imprimer."); return; }
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+    <title>Fiche</title><style>
+      @page{margin:10mm}
+      body{margin:0;font-family:sans-serif;display:flex;flex-wrap:wrap;gap:8mm;align-content:flex-start}
+      figure{margin:0;width:${large};break-inside:avoid}
+      img{width:100%;height:auto;max-height:${haut};object-fit:contain;border:1px solid #ccc;border-radius:4px}
+    </style></head><body>
+    ${images.map(s=>`<figure><img src="${s}"></figure>`).join('')}
+    </body></html>`);
+  w.document.close();
+  w.onload=()=>setTimeout(()=>{ w.focus(); w.print(); },350);
 }
 
-/* ---------------- démarrage ---------------- */
-$('#b-apprentissage').onclick=()=>basculerApprentissage();
-$('#b-exporter-obs').onclick=()=>exporterObs();
-$('#b-importer-obs').onclick=()=>$('#f-obs').click();
-$('#f-obs').onchange=ev=>{ importerObs(ev.target.files[0]); ev.target.value=''; };
-$('#b-effacer-obs').onclick=()=>effacerObs();
-$('#b-oui').onclick=()=>noter(true);
-$('#b-non').onclick=()=>ouvrirJuryChoix();
-$('#jury-choix').onclick=ev=>{
-  const b=ev.target.closest('[data-juge]'); if(!b) return;
-  noter(false,b.dataset.juge);
-  if(b.dataset.juge!==E.exos[E.index].brique) changerMode(b.dataset.juge); else majJury();
-};
-majApprentissage();
+$('#b-fin-accueil').onclick=()=>{ listerFiches(); ecran('e-accueil'); };
 
+/* =====================================================================
+   FICHES ENREGISTRÉES
+   ===================================================================== */
+function listerFiches(){
+  const n=$('#liste-fiches'); n.innerHTML='';
+  let cles=[];
+  try{ cles=Object.keys(localStorage).filter(k=>k.startsWith('adaptedl_fiche_')).sort().reverse(); }catch(e){}
+  if(!cles.length){ n.innerHTML='<p class="note">Aucune fiche enregistrée pour le moment.</p>'; return; }
+  for(const k of cles){
+    let f=null; try{ f=JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+    if(!f) continue;
+    const d=document.createElement('div');
+    d.className='fiche';
+    d.innerHTML=`<span class="nom">${esc(f.nom)} — ${new Date(f.date).toLocaleDateString('fr-FR')}
+      <span class="note">(${(f.images||[]).length} exercice(s))</span></span>
+      <button class="b petit clair" data-imp="${k}">🖨️</button>
+      <button class="b petit danger" data-sup-f="${k}">×</button>`;
+    n.appendChild(d);
+  }
+}
+$('#liste-fiches').addEventListener('click',ev=>{
+  const i=ev.target.closest('[data-imp]'), s=ev.target.closest('[data-sup-f]');
+  if(i){ try{ const f=JSON.parse(localStorage.getItem(i.dataset.imp)); lancerImpression(f.images,2); }catch(e){} }
+  if(s){ try{ localStorage.removeItem(s.dataset.supF); }catch(e){} listerFiches(); }
+});
+
+/* =====================================================================
+   DÉPART
+   ===================================================================== */
 $('#relais').value=lireRelais();
 majRelais();
+listerFiches();
 </script>
 </body>
 </html>
