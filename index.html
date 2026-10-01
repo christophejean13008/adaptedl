@@ -79,12 +79,21 @@ button,input,select,textarea{font:inherit;color:inherit}
   border:1px solid var(--bord);border-radius:10px;overflow:visible}
 .scene>img.fond{display:block;width:100%;height:auto;border-radius:9px;pointer-events:none}
 #calque{position:absolute;inset:0;width:100%;height:100%}
-.zt{position:absolute;min-width:60px;min-height:34px;padding:3px 7px;background:#FFFDF2;
-  border:2px dashed var(--etq-bord);border-radius:8px;font-size:20px;outline:none;white-space:pre-wrap}
+.zt{position:absolute;min-width:90px;background:#FFFDF2;
+  border:2px dashed var(--etq-bord);border-radius:8px}
 .zt.pose{border-style:solid}
+/* Le texte s'écrit dans son propre bloc : des poignées non modifiables placées
+   à l'intérieur d'une zone éditable empêchaient iOS d'y poser le curseur. */
+.zt-txt{display:block;min-width:80px;min-height:34px;padding:4px 8px;outline:none;
+  white-space:pre-wrap;line-height:1.3;cursor:text}
 .decoupe{position:absolute;border:2px solid var(--etq-bord);border-radius:6px;background:#fff;
   box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .decoupe img{display:block;width:100%;height:100%;border-radius:4px;pointer-events:none}
+/* Un cercle reste un objet : on le déplace et on le règle tant qu'on veut. */
+.cercle{position:absolute;border:3px solid #17232e;border-radius:50%;background:transparent;
+  touch-action:none}
+.rayon{position:absolute;right:-15px;top:50%;margin-top:-15px;width:30px;height:30px;
+  border-radius:50%;background:var(--accent);border:2px solid #fff;touch-action:none}
 .selection{position:absolute;border:2px dashed var(--orange);background:rgba(224,138,30,.14)}
 .hp{position:absolute;left:-46px;width:38px;height:38px;border-radius:50%;background:var(--accent);
   color:#fff;border:none;font-size:17px;display:flex;align-items:center;justify-content:center;
@@ -318,7 +327,7 @@ const exo=()=>E.exos[E.i]||null;
 
 function creerExo(vignette){
   return { vignette, consigne:'', dite:'', consigneY:0.08, motif:'',
-           traits:[], textes:[], decoupes:[] };
+           traits:[], textes:[], decoupes:[], cercles:[] };
 }
 
 /* =====================================================================
@@ -656,22 +665,36 @@ function redessinerTraits(){
 /* Redessine les haut-parleurs, les zones de texte et les étiquettes découpées. */
 function peindre(){
   const ex=exo(); if(!ex) return;
-  $$('#scene .hp,#scene .zt,#scene .decoupe').forEach(n=>n.remove());
+  $$('#scene .hp,#scene .zt,#scene .decoupe,#scene .cercle').forEach(n=>n.remove());
 
   if(ex.consigne) scene.appendChild(faireHP(ex.consigneY,'🔊',ex.dite||ex.consigne,true,-1));
 
   ex.textes.forEach((t,k)=>{
     const d=document.createElement('div');
     d.className='zt'+(t.t?' pose':'');
-    d.contentEditable='true';
     d.dataset.t=k;
     d.style.left=(t.x*100)+'%'; d.style.top=(t.y*100)+'%';
     d.style.fontSize=(t.taille||20)+'px';
     if(t.l) d.style.width=(t.l*100)+'%';
-    d.textContent=t.t;
-    const an=document.createElement('span'); an.className='anse'; an.contentEditable='false';
-    const pz=document.createElement('span'); pz.className='prise'; pz.contentEditable='false';
-    d.appendChild(an); d.appendChild(pz);
+    const z=document.createElement('div');
+    z.className='zt-txt';
+    z.contentEditable='true';
+    z.setAttribute('inputmode','text');
+    z.textContent=t.t;
+    const an=document.createElement('span'); an.className='anse';
+    const pz=document.createElement('span'); pz.className='prise';
+    d.appendChild(z); d.appendChild(an); d.appendChild(pz);
+    scene.appendChild(d);
+  });
+
+  ex.cercles.forEach((o,k)=>{
+    const d=document.createElement('div');
+    d.className='cercle'; d.dataset.o=k;
+    const taille=o.r*2*(calque.width||$('#fond').clientWidth||300);
+    d.style.width=taille+'px'; d.style.height=taille+'px';
+    d.style.left=`calc(${o.x*100}% - ${taille/2}px)`;
+    d.style.top=`calc(${o.y*100}% - ${taille/2}px)`;
+    d.innerHTML=`<span class="rayon"></span>`;
     scene.appendChild(d);
   });
 
@@ -758,7 +781,7 @@ const posScene=ev=>{
   return { x:borne((ev.clientX-r.left)/r.width,0,1), y:borne((ev.clientY-r.top)/r.height,0,1) };
 };
 
-let dessin=null, coupe=null, deplace=null, taille=null;
+let dessin=null, coupe=null, deplace=null, taille=null, rayon=null;
 
 /* La gomme n'efface que le travail de l'élève : elle retire les traits
    qu'elle touche, jamais un morceau de la photo du manuel. */
@@ -776,6 +799,20 @@ scene.addEventListener('pointerdown',ev=>{
   if(ev.target.closest('.hp,.regle-bulle')) return;
   const ex=exo(); if(!ex) return;
   const p=posScene(ev);
+
+  /* poignée de rayon du cercle */
+  const ra=ev.target.closest('.rayon');
+  if(ra){
+    rayon={ k:Number(ra.parentElement.dataset.o) };
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  const ce=ev.target.closest('.cercle');
+  if(ce){
+    const k=Number(ce.dataset.o);
+    if(E.outil==='gomme'){ ex.cercles.splice(k,1); peindre(); ev.preventDefault(); return; }
+    deplace={ n:ce, cercle:k, dx:p.x-ex.cercles[k].x, dy:p.y-ex.cercles[k].y };
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
 
   /* poignée de redimensionnement */
   const pr=ev.target.closest('.prise');
@@ -823,9 +860,9 @@ scene.addEventListener('pointerdown',ev=>{
   if(E.outil==='texte'){
     ex.textes.push({x:p.x,y:p.y,t:'',taille:20});
     peindre();
-    const n=$$('#scene .zt').pop();
-    if(n){ n.focus(); }
-    ev.preventDefault(); return;
+    const n=$$('#scene .zt-txt').pop();
+    if(n) setTimeout(()=>{ n.focus(); placerCurseur(n); },30);
+    return;
   }
   if(E.outil==='ciseaux'){
     coupe={x0:p.x,y0:p.y,x1:p.x,y1:p.y,n:null};
@@ -853,6 +890,17 @@ scene.addEventListener('pointermove',ev=>{
     }
     return;
   }
+  if(rayon!==null&&rayon){
+    const o=ex.cercles[rayon.k]; if(!o) return;
+    const L=calque.width||1, H=calque.height||1;
+    o.r=borne(Math.hypot((p.x-o.x)*L,(p.y-o.y)*H)/L,0.02,0.9);
+    peindre(); return;
+  }
+  if(deplace&&deplace.cercle!==undefined){
+    const o=ex.cercles[deplace.cercle]; if(!o) return;
+    o.x=borne(p.x-deplace.dx,0.02,0.98); o.y=borne(p.y-deplace.dy,0.02,0.98);
+    peindre(); return;
+  }
   if(deplace){
     const n=deplace.n;
     const x=borne(p.x-deplace.dx,0,0.99), y=borne(p.y-deplace.dy,0,0.99);
@@ -879,7 +927,7 @@ function finScene(){
   const ex=exo();
   if(dessin&&dessin.gomme) dessin=null;
   if(dessin&&dessin.pts.length<2&&!dessin.droit&&ex) ex.traits.pop();
-  deplace=null; dessin=null; taille=null;
+  deplace=null; dessin=null; taille=null; rayon=null;
   if(coupe){
     const c=rangerCadre(coupe);
     coupe.n.remove(); coupe=null;
@@ -888,6 +936,14 @@ function finScene(){
 }
 scene.addEventListener('pointerup',finScene);
 scene.addEventListener('pointercancel',finScene);
+
+/* Place le curseur dans la zone, sans quoi iOS ouvre le clavier sans point d'insertion. */
+function placerCurseur(n){
+  try{
+    const r=document.createRange(); r.selectNodeContents(n); r.collapse(false);
+    const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  }catch(e){}
+}
 
 /* L'élève découpe lui-même son étiquette dans la photo : on copie le morceau,
    la photo d'origine reste intacte, et le morceau devient déplaçable. */
@@ -908,16 +964,17 @@ function faireDecoupe(ex,c){
 }
 
 scene.addEventListener('input',ev=>{
-  const z=ev.target.closest('.zt'); if(!z) return;
-  const ex=exo(); if(!ex) return;
-  const brut=[...z.childNodes].filter(n=>n.nodeType===3).map(n=>n.nodeValue).join('');
-  ex.textes[z.dataset.t].t=brut;
-  z.classList.toggle('pose',!!brut.trim());
+  const z=ev.target.closest('.zt-txt'); if(!z) return;
+  const d=z.parentElement, ex=exo(); if(!ex||!d) return;
+  const t=z.innerText.replace(/\u00a0/g,' ');
+  ex.textes[d.dataset.t].t=t;
+  d.classList.toggle('pose',!!t.trim());
 });
 
 $('#b-annuler').onclick=()=>{
   const ex=exo(); if(!ex) return;
   if(ex.traits.length) ex.traits.pop();
+  else if(ex.cercles.length) ex.cercles.pop();
   else if(ex.decoupes.length) ex.decoupes.pop();
   else if(ex.textes.length) ex.textes.pop();
   peindre();
@@ -944,7 +1001,7 @@ $('#b-aides').onclick=()=>{
    sait ce dont il a besoin. */
 function listeAides(){
   return [['calculatrice','🔢 Calculatrice'],['regle','📏 Règle'],
-          ['compas','⭕ Compas'],['tables','✖️ Tables'],['lettres','✍️ Lettres']];
+          ['cercle','⭕ Cercle'],['tables','✖️ Tables'],['lettres','✍️ Lettres']];
 }
 const premiereAide=()=>(listeAides()[0]||[''])[0];
 
@@ -984,11 +1041,12 @@ function rendreAide(k){
       $('#b-ranger-regle').onclick=()=>rangerRegle();
       $('#echelle-regle').oninput=e=>{ REGLE_ETAT.px=Number(e.target.value); dessinerRegle(); };
   }
-  else if(k==='compas')   { n.innerHTML=`<h3>Compas</h3><p class="note">Touche d'abord le centre
-      sur l'exercice, puis glisse pour ouvrir le compas. Le cercle se trace quand tu relâches.</p>
-      <button class="b petit" id="b-compas">Prendre le compas</button>
-      <p class="note" id="etat-compas"></p>`;
-      $('#b-compas').onclick=()=>{ COMPAS.actif=true; $('#etat-compas').textContent="Touche le centre sur l'exercice."; };
+  else if(k==='cercle')   { n.innerHTML=`<h3>Tracer un cercle</h3>
+      <p class="note">Le cercle apparaît au milieu de l'exercice. Glisse-le pour le placer,
+      et tire la poignée bleue sur son bord pour l'agrandir ou le rétrécir. Tu peux le régler
+      autant de fois que tu veux.</p>
+      <button class="b petit" id="b-cercle">Poser un cercle</button>`;
+      $('#b-cercle').onclick=()=>poserCercle();
   }
 }
 
@@ -1057,6 +1115,12 @@ function htmlLettres(){
 /* ---- règle ---- */
 const REGLE_ETAT={pose:false,x:0.1,y:0.5,angle:0,px:38,long:16};
 let bulleRegle=null;
+function poserCercle(){
+  const ex=exo(); if(!ex) return;
+  ex.cercles.push({x:0.5,y:0.5,r:0.14});
+  peindre();
+}
+
 function poserRegle(){
   REGLE_ETAT.pose=true;
   if(!bulleRegle){
@@ -1119,49 +1183,12 @@ function installerRegle(){
   bulleRegle.addEventListener('pointercancel',fin);
 }
 
-/* ---- compas ---- */
-const COMPAS={actif:false,centre:null};
-scene.addEventListener('pointerdown',ev=>{
-  if(!COMPAS.actif||ev.target.closest('.hp,.regle-bulle')) return;
-  COMPAS.centre=posScene(ev);
-  scene.setPointerCapture(ev.pointerId);
-  ev.stopPropagation(); ev.preventDefault();
-},true);
-scene.addEventListener('pointermove',ev=>{
-  if(!COMPAS.actif||!COMPAS.centre) return;
-  const p=posScene(ev);
-  redessinerTraits();
-  const r=$('#fond').getBoundingClientRect();
-  const rayon=Math.hypot((p.x-COMPAS.centre.x)*r.width,(p.y-COMPAS.centre.y)*r.height);
-  ctx.strokeStyle='#1D4E89'; ctx.lineWidth=2; ctx.beginPath();
-  ctx.arc(COMPAS.centre.x*calque.width,COMPAS.centre.y*calque.height,rayon,0,2*Math.PI);
-  ctx.stroke();
-  ev.stopPropagation();
-},true);
-scene.addEventListener('pointerup',ev=>{
-  if(!COMPAS.actif||!COMPAS.centre) return;
-  const p=posScene(ev), ex=exo();
-  const dx=p.x-COMPAS.centre.x, dy=p.y-COMPAS.centre.y;
-  const rx=Math.hypot(dx,dy);
-  if(rx>0.01&&ex){
-    const pts=[];
-    for(let a=0;a<=360;a+=4){
-      const t=a*Math.PI/180;
-      pts.push([COMPAS.centre.x+rx*Math.cos(t), COMPAS.centre.y+rx*Math.sin(t)*(calque.width/calque.height)]);
-    }
-    ex.traits.push({couleur:'#17232e',taille:2,pts});
-  }
-  COMPAS.centre=null; COMPAS.actif=false;
-  const n=$('#etat-compas'); if(n) n.textContent='Cercle tracé.';
-  redessinerTraits();
-},true);
-
 /* =====================================================================
    FIN — aplatir, enregistrer, imprimer
    ===================================================================== */
 function terminer(){
   Voix.stop();
-  const faits=E.exos.filter(e=>e.traits.length||e.textes.length||e.decoupes.length).length;
+  const faits=E.exos.filter(e=>e.traits.length||e.textes.length||e.decoupes.length||e.cercles.length).length;
   $('#bilan').textContent=`${E.exos.length} exercice(s), ${faits} avec du travail de l'élève.`;
   $('#nom-fiche').value=new Date().toLocaleDateString('fr-FR');
   $('#etat-sauvegarde').textContent='';
@@ -1181,6 +1208,10 @@ function aplatir(ex){
 
       const ech=W/Math.max(1,calque.width||W);
       for(const t of ex.traits) tracerUn(c,t,W,H,ech);
+      for(const o of ex.cercles){
+        c.strokeStyle='#17232e'; c.lineWidth=3*ech;
+        c.beginPath(); c.arc(o.x*W,o.y*H,o.r*W,0,2*Math.PI); c.stroke();
+      }
       for(const e of ex.decoupes){
         const img=await charger(e.src);
         c.drawImage(img,e.x*W,e.y*H,e.w*W,e.h*H);
