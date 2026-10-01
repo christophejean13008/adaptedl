@@ -112,6 +112,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pastille.on{box-shadow:0 0 0 4px var(--encre)}
 /* Étiquettes et zones de texte : toujours déplaçables, toujours
    redimensionnables, quel que soit l'outil choisi. */
+.fermer{position:absolute;right:-14px;top:-14px;width:30px;height:30px;border-radius:50%;
+  background:#fff;border:2px solid var(--rouge);color:var(--rouge);font-size:19px;line-height:25px;
+  text-align:center;font-weight:700;touch-action:none}
 .anse{position:absolute;left:-13px;top:-13px;width:28px;height:28px;border-radius:50%;
   background:var(--etq-bord);border:2px solid #fff;touch-action:none}
 .anse::after{content:'✥';color:#fff;font-size:14px;display:block;text-align:center;line-height:24px}
@@ -683,7 +686,8 @@ function peindre(){
     z.textContent=t.t;
     const an=document.createElement('span'); an.className='anse';
     const pz=document.createElement('span'); pz.className='prise';
-    d.appendChild(z); d.appendChild(an); d.appendChild(pz);
+    const fx=document.createElement('span'); fx.className='fermer'; fx.textContent='×';
+    d.appendChild(z); d.appendChild(an); d.appendChild(pz); d.appendChild(fx);
     scene.appendChild(d);
   });
 
@@ -703,7 +707,8 @@ function peindre(){
     d.className='decoupe'; d.dataset.d=k;
     d.style.left=(e.x*100)+'%'; d.style.top=(e.y*100)+'%';
     d.style.width=(e.w*100)+'%'; d.style.height=(e.h*100)+'%';
-    d.innerHTML=`<img src="${e.src}" alt="étiquette"><span class="prise"></span>`;
+    d.innerHTML=`<img src="${e.src}" alt="étiquette"><span class="prise"></span>`
+      + `<span class="fermer">×</span>`;
     scene.appendChild(d);
   });
 
@@ -799,6 +804,15 @@ scene.addEventListener('pointerdown',ev=>{
   if(ev.target.closest('.hp,.regle-bulle')) return;
   const ex=exo(); if(!ex) return;
   const p=posScene(ev);
+
+  /* croix rouge : supprimer une étiquette ou une zone de texte */
+  const fx=ev.target.closest('.fermer');
+  if(fx){
+    const h=fx.parentElement;
+    if(h.dataset.d!==undefined) ex.decoupes.splice(Number(h.dataset.d),1);
+    else if(h.dataset.t!==undefined) ex.textes.splice(Number(h.dataset.t),1);
+    peindre(); ev.preventDefault(); return;
+  }
 
   /* poignée de rayon du cercle */
   const ra=ev.target.closest('.rayon');
