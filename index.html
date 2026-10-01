@@ -55,9 +55,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .fiche .nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* ---------- cadrage ---------- */
-.zone{flex:1;overflow:auto;padding:14px;display:flex;justify-content:center;align-items:flex-start}
-.plan{position:relative;max-width:100%;touch-action:none;user-select:none}
-.plan img{display:block;max-width:100%;height:auto;border-radius:10px}
+.zone{flex:1;min-height:0;overflow:hidden;padding:10px;display:flex;justify-content:center;align-items:center}
+/* La photo est mise à l'échelle pour tenir entièrement dans la hauteur
+   disponible : plus d'ascenseur au moment d'encadrer les exercices. */
+.plan{position:relative;touch-action:none;user-select:none;max-width:100%;max-height:100%}
+.plan img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;border-radius:10px}
 .cadre{position:absolute;border:3px solid var(--accent);background:rgba(29,78,137,.10);border-radius:4px}
 .cadre .num{position:absolute;top:-14px;left:-14px;width:30px;height:30px;border-radius:50%;
   background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700}
@@ -95,6 +97,18 @@ button,input,select,textarea{font:inherit;color:inherit}
 .outils{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .outil{background:var(--papier);border:2px solid var(--bord);border-radius:12px;padding:9px 14px;font-size:16px}
 .outil.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.couleurs{display:inline-flex;gap:6px;align-items:center}
+.pastille{width:34px;height:34px;border-radius:50%;border:3px solid #fff;
+  box-shadow:0 0 0 2px var(--bord);padding:0}
+.pastille.on{box-shadow:0 0 0 4px var(--encre)}
+/* Étiquettes et zones de texte : toujours déplaçables, toujours
+   redimensionnables, quel que soit l'outil choisi. */
+.anse{position:absolute;left:-13px;top:-13px;width:28px;height:28px;border-radius:50%;
+  background:var(--etq-bord);border:2px solid #fff;touch-action:none}
+.anse::after{content:'✥';color:#fff;font-size:14px;display:block;text-align:center;line-height:24px}
+.prise{position:absolute;right:-13px;bottom:-13px;width:28px;height:28px;border-radius:50%;
+  background:var(--accent);border:2px solid #fff;touch-action:none}
+.prise::after{content:'⤡';color:#fff;font-size:14px;display:block;text-align:center;line-height:24px}
 
 /* ---------- aides ---------- */
 .aides{width:0;overflow:hidden;background:var(--papier);border-left:1px solid var(--bord);transition:width .18s}
@@ -117,6 +131,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 .lettre-carte{display:flex;gap:12px;align-items:center;border:1px solid var(--bord);border-radius:12px;
   padding:10px;margin-bottom:9px;background:var(--fond)}
 .lettre-carte .gros-l{font-size:46px;font-weight:700;color:var(--accent);width:52px;text-align:center}
+.lettres-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.lettre-trio{border:1px solid var(--bord);border-radius:10px;background:var(--fond);
+  padding:8px 4px;text-align:center;display:flex;flex-direction:column;gap:2px}
+.lettre-trio .script{font-size:30px;line-height:1.1}
+.lettre-trio .cursive{font-size:34px;line-height:1.1;color:var(--accent);
+  font-family:'Snell Roundhand','Apple Chancery','Segoe Script','Bradley Hand',cursive}
+.lettre-trio .capitale{font-size:28px;line-height:1.1;font-weight:700;color:var(--rouge)}
 .regle-bulle{position:absolute;background:rgba(255,255,255,.95);border:2px solid var(--accent);
   border-radius:6px;touch-action:none;box-shadow:0 3px 12px rgba(0,0,0,.25)}
 .regle-bulle canvas{display:block}
@@ -130,7 +151,23 @@ button,input,select,textarea{font:inherit;color:inherit}
 .roue{width:46px;height:46px;border:5px solid var(--bord);border-top-color:var(--accent);
   border-radius:50%;animation:tourne .9s linear infinite}
 @keyframes tourne{to{transform:rotate(360deg)}}
-@media print{body{background:#fff}}
+/* L'impression se fait dans la page elle-même : iOS bloque les fenêtres
+   surgissantes, et une fenêtre bloquée empêchait toute impression. */
+#impression{display:none}
+@media print{
+  @page{margin:10mm}
+  body{background:#fff}
+  body>.ecran,body>script{display:none!important}
+  #impression{display:flex!important;flex-wrap:wrap;gap:8mm;align-content:flex-start;margin:0}
+  #impression figure{margin:0;break-inside:avoid;page-break-inside:avoid}
+  #impression img{width:100%;height:auto;object-fit:contain;border:1px solid #ccc;border-radius:3px}
+  #impression.p1 figure{width:100%}
+  #impression.p1 img{max-height:250mm}
+  #impression.p2 figure{width:100%}
+  #impression.p2 img{max-height:122mm}
+  #impression.p4 figure{width:48%}
+  #impression.p4 img{max-height:122mm}
+}
 </style>
 </head>
 <body>
@@ -214,16 +251,20 @@ button,input,select,textarea{font:inherit;color:inherit}
 
   <div class="barre bas">
     <div class="outils" id="outils">
-      <button class="outil on" data-o="main">✋ Déplacer</button>
-      <button class="outil" data-o="crayon">✏️ Écrire à la main</button>
-      <button class="outil" data-o="texte">⌨️ Zone de texte</button>
-      <button class="outil" data-o="ciseaux">✂️ Découper une étiquette</button>
+      <button class="outil on" data-o="crayon">✏️ Écrire</button>
+      <button class="outil" data-o="surligne">🖍️ Surligner</button>
+      <button class="outil" data-o="ligne">➖ Relier</button>
+      <button class="outil" data-o="texte">⌨️ Clavier</button>
+      <button class="outil" data-o="ciseaux">✂️ Étiquette</button>
       <button class="outil" data-o="gomme">🧽 Gomme</button>
+      <span class="couleurs masque" id="couleurs"></span>
       <button class="b petit clair" id="b-annuler">↶ Annuler</button>
       <button class="b petit" id="b-suivant">Exercice suivant</button>
     </div>
   </div>
 </section>
+
+<div id="impression"></div>
 
 <!-- ======================= FIN ======================= -->
 <section class="ecran" id="e-fin">
@@ -270,14 +311,13 @@ const E={
   actif:-1,
   exos:[],            // voir creerExo()
   i:0,
-  outil:'main',
+  outil:'crayon',
   aide:''
 };
 const exo=()=>E.exos[E.i]||null;
 
 function creerExo(vignette){
-  return { vignette, matiere:'', niveau:'', consigne:'', consigneY:0.08,
-           lignes:[], motif:'',
+  return { vignette, consigne:'', dite:'', consigneY:0.08, motif:'',
            traits:[], textes:[], decoupes:[] };
 }
 
@@ -328,21 +368,13 @@ mot pour mot la consigne et chaque ligne de l'exercice, avec leur position verti
 Réponds uniquement par du JSON, sans texte autour ni balises de code.`;
 
 const SCHEMA=`Format exact de ta réponse :
-{"matiere":"francais" ou "maths",
- "niveau":"CP" ou "CE1" ou "CE2" ou "CM1" ou "CM2",
- "consigne":"la consigne recopiée mot pour mot",
- "consigne_y":0.09,
- "lignes":[{"repere":"a","texte":"la ligne recopiée mot pour mot","y":0.34}],
- "aides":["conjugaison","tables"]}
+{"consigne":"la consigne recopiée mot pour mot",
+ "consigne_dite":"la même consigne redite simplement, pour être lue à voix haute",
+ "consigne_y":0.09}
 
-"y" et "consigne_y" sont la hauteur du MILIEU de la ligne dans l'image : 0 tout en haut,
-1 tout en bas. Donne ta meilleure estimation, le maître pourra l'ajuster.
-"repere" est la lettre ou le numéro imprimé devant la ligne (a, b, c, 1, 2…). S'il n'y en a pas,
-mets "•". Une entrée par ligne de l'exercice, dans l'ordre, sans regrouper deux lignes.
-Si une ligne est trop longue pour tenir sur une ligne imprimée, elle reste UNE entrée.
-"aides" liste ce qui pourrait aider l'élève, parmi : "calculatrice", "regle", "compas",
-"tables", "conjugaison", "sons", "alphabet". Mets-en une à trois, ou [] si rien ne s'impose.
-N'invente aucun texte : si tu ne lis pas une ligne, ne la mets pas.`;
+"consigne_y" est la hauteur du MILIEU de la consigne dans l'image : 0 tout en haut,
+1 tout en bas. Donne ta meilleure estimation, le maître pourra l'ajuster au doigt.
+N'invente rien : recopie la consigne telle qu'elle est imprimée.`;
 
 let file=Promise.resolve();
 const enFile=f=>{ const p=file.then(()=>f()); file=p.then(()=>{},()=>{}); return p; };
@@ -548,17 +580,9 @@ $('#b-commencer').onclick=async()=>{
 };
 
 function remplir(ex,d){
-  const m=String(d.matiere||'').toLowerCase();
-  ex.matiere = m.startsWith('math') ? 'maths' : 'francais';
-  ex.niveau  = String(d.niveau||'').toUpperCase().replace(/[^A-Z0-9]/g,'') || 'CE2';
   ex.consigne= String(d.consigne||'').trim();
+  ex.dite    = String(d.consigne_dite||'').trim()||ex.consigne;
   ex.consigneY=borne(Number(d.consigne_y)||0.08,0.01,0.98);
-  ex.lignes=(Array.isArray(d.lignes)?d.lignes:[]).map(l=>({
-    repere:String(l.repere||'•').slice(0,3),
-    texte:String(l.texte||'').trim(),
-    y:borne(Number(l.y)||0.5,0.01,0.98)
-  })).filter(l=>l.texte);
-  ex.aides=(Array.isArray(d.aides)?d.aides:[]).map(x=>String(x).toLowerCase());
 }
 
 /* =====================================================================
@@ -572,8 +596,7 @@ function ouvrir(){
   if(!ex){ terminer(); return; }
   Voix.stop();
   $('#titre-exo').textContent=`Exercice ${E.i+1} sur ${E.exos.length}`;
-  $('#etiq-matiere').textContent = ex.motif ? `Lecture incomplète : ${ex.motif}`
-    : (ex.matiere==='maths'?'Mathématiques':'Français')+(ex.niveau?` · ${ex.niveau}`:'');
+  $('#etiq-matiere').textContent = ex.motif ? `Lecture incomplète : ${ex.motif}` : '';
   $('#b-suivant').textContent = (E.i===E.exos.length-1)?'Terminer':'Exercice suivant';
   const f=$('#fond');
   f.onload=()=>{ ajusterCalque(); peindre(); };
@@ -582,6 +605,8 @@ function ouvrir(){
   peindre();
   construireAides();
   ecran('e-travail');
+  /* La consigne est lue d'elle-même : l'élève n'a pas à y penser. */
+  if(ex.consigne) setTimeout(()=>Voix.dire(ex.dite||ex.consigne,$('#scene .hp')),400);
 }
 
 function ajusterCalque(){
@@ -593,19 +618,24 @@ function ajusterCalque(){
 }
 window.addEventListener('resize',()=>{ if($('#e-travail').classList.contains('on')){ ajusterCalque(); peindre(); } });
 
+function tracerUn(c,t,L,H,ech){
+  if(t.pts.length<2) return;
+  c.save();
+  c.strokeStyle=t.couleur||'#17232e';
+  c.lineWidth=(t.taille||3)*ech;
+  c.lineCap=t.type==='surligne'?'butt':'round';
+  c.lineJoin='round';
+  if(t.type==='surligne') c.globalAlpha=0.35;
+  c.beginPath();
+  c.moveTo(t.pts[0][0]*L,t.pts[0][1]*H);
+  for(let k=1;k<t.pts.length;k++) c.lineTo(t.pts[k][0]*L,t.pts[k][1]*H);
+  c.stroke();
+  c.restore();
+}
 function redessinerTraits(){
   const ex=exo(); if(!ex) return;
   ctx.clearRect(0,0,calque.width,calque.height);
-  for(const t of ex.traits){
-    if(t.pts.length<2) continue;
-    ctx.strokeStyle=t.couleur||'#17232e';
-    ctx.lineWidth=(t.taille||3);
-    ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.beginPath();
-    ctx.moveTo(t.pts[0][0]*calque.width,t.pts[0][1]*calque.height);
-    for(let k=1;k<t.pts.length;k++) ctx.lineTo(t.pts[k][0]*calque.width,t.pts[k][1]*calque.height);
-    ctx.stroke();
-  }
+  for(const t of ex.traits) tracerUn(ctx,t,calque.width,calque.height,1);
 }
 
 /* Redessine les haut-parleurs, les zones de texte et les étiquettes découpées. */
@@ -613,10 +643,7 @@ function peindre(){
   const ex=exo(); if(!ex) return;
   $$('#scene .hp,#scene .zt,#scene .decoupe').forEach(n=>n.remove());
 
-  if(ex.consigne){
-    scene.appendChild(faireHP(ex.consigneY,'✦',ex.consigne,true,-1));
-  }
-  ex.lignes.forEach((l,k)=>scene.appendChild(faireHP(l.y,'🔊',l.texte,false,k,l.repere)));
+  if(ex.consigne) scene.appendChild(faireHP(ex.consigneY,'🔊',ex.dite||ex.consigne,true,-1));
 
   ex.textes.forEach((t,k)=>{
     const d=document.createElement('div');
@@ -625,7 +652,11 @@ function peindre(){
     d.dataset.t=k;
     d.style.left=(t.x*100)+'%'; d.style.top=(t.y*100)+'%';
     d.style.fontSize=(t.taille||20)+'px';
+    if(t.l) d.style.width=(t.l*100)+'%';
     d.textContent=t.t;
+    const an=document.createElement('span'); an.className='anse'; an.contentEditable='false';
+    const pz=document.createElement('span'); pz.className='prise'; pz.contentEditable='false';
+    d.appendChild(an); d.appendChild(pz);
     scene.appendChild(d);
   });
 
@@ -634,19 +665,19 @@ function peindre(){
     d.className='decoupe'; d.dataset.d=k;
     d.style.left=(e.x*100)+'%'; d.style.top=(e.y*100)+'%';
     d.style.width=(e.w*100)+'%'; d.style.height=(e.h*100)+'%';
-    d.innerHTML=`<img src="${e.src}" alt="étiquette">`;
+    d.innerHTML=`<img src="${e.src}" alt="étiquette"><span class="prise"></span>`;
     scene.appendChild(d);
   });
 
   redessinerTraits();
 }
 
-function faireHP(y,icone,texte,consigne,k,repere){
+function faireHP(y,icone,texte,consigne,k){
   const b=document.createElement('button');
   b.className='hp'+(consigne?' consigne':'');
   b.style.top=`calc(${y*100}% - 19px)`;
   b.dataset.hp=k;
-  b.innerHTML=icone+(repere?`<span class="rep">${esc(repere)}</span>`:'');
+  b.innerHTML=icone;
   b.dataset.texte=texte;
   return b;
 }
@@ -676,12 +707,35 @@ scene.addEventListener('pointerup',ev=>{
 },true);
 
 /* ---- outils ---- */
+const SURLIGNEURS=[['#FFE14D','jaune'],['#8CE0A6','vert'],['#FFB3C6','rose'],['#9ED4F5','bleu']];
+const CRAYONS=[['#17232e','noir'],['#1D4E89','bleu'],['#C0392B','rouge'],['#1E7A4C','vert']];
+E.couleur=SURLIGNEURS[0][0];
+E.crayon=CRAYONS[0][0];
+
+/* Les pastilles changent selon l'outil : encre pour écrire, fluo pour surligner. */
+function montrerCouleurs(){
+  const surligne=E.outil==='surligne';
+  const liste=surligne?SURLIGNEURS:CRAYONS;
+  const choisie=surligne?E.couleur:E.crayon;
+  $('#couleurs').innerHTML=liste.map(([c,n])=>
+    `<button class="pastille${c===choisie?' on':''}" data-c="${c}"
+       style="background:${c}" aria-label="${n}"></button>`).join('');
+  $('#couleurs').classList.toggle('masque',!(surligne||E.outil==='crayon'||E.outil==='ligne'));
+}
+$('#couleurs').addEventListener('click',ev=>{
+  const p=ev.target.closest('.pastille'); if(!p) return;
+  if(E.outil==='surligne') E.couleur=p.dataset.c; else E.crayon=p.dataset.c;
+  $$('#couleurs .pastille').forEach(n=>n.classList.toggle('on',n===p));
+});
+
 $('#outils').addEventListener('click',ev=>{
   const o=ev.target.closest('.outil'); if(!o) return;
   E.outil=o.dataset.o;
   $$('.outil').forEach(n=>n.classList.toggle('on',n===o));
-  if(E.outil==='texte') Voix.dire("Touche l'endroit où tu veux écrire.");
+  montrerCouleurs();
+  if(E.outil==='texte')   Voix.dire("Touche l'endroit où tu veux écrire.");
   if(E.outil==='ciseaux') Voix.dire("Entoure le morceau que tu veux découper.");
+  if(E.outil==='ligne')   Voix.dire("Pose ton doigt d'un côté et relâche de l'autre.");
 });
 
 const posScene=ev=>{
@@ -689,36 +743,66 @@ const posScene=ev=>{
   return { x:borne((ev.clientX-r.left)/r.width,0,1), y:borne((ev.clientY-r.top)/r.height,0,1) };
 };
 
-let dessin=null, coupe=null, deplace=null;
+let dessin=null, coupe=null, deplace=null, taille=null;
+
+/* La gomme n'efface que le travail de l'élève : elle retire les traits
+   qu'elle touche, jamais un morceau de la photo du manuel. */
+function gommer(p){
+  const ex=exo(); if(!ex) return false;
+  const seuil=0.022, rapport=calque.width/Math.max(1,calque.height);
+  const avant=ex.traits.length;
+  ex.traits=ex.traits.filter(t=>!t.pts.some(q=>
+    Math.hypot((q[0]-p.x)*rapport,(q[1]-p.y))<seuil*Math.max(1,rapport)));
+  if(ex.traits.length!==avant){ redessinerTraits(); return true; }
+  return false;
+}
 
 scene.addEventListener('pointerdown',ev=>{
-  if(ev.target.closest('.hp')) return;
+  if(ev.target.closest('.hp,.regle-bulle')) return;
   const ex=exo(); if(!ex) return;
   const p=posScene(ev);
 
-  /* déplacer une étiquette ou une zone de texte */
-  const cible=ev.target.closest('.decoupe,.zt');
-  if(cible && E.outil==='main'){
-    const r=$('#fond').getBoundingClientRect(), rc=cible.getBoundingClientRect();
-    deplace={ n:cible, dx:(ev.clientX-rc.left)/r.width, dy:(ev.clientY-rc.top)/r.height };
-    scene.setPointerCapture(ev.pointerId);
-    return;
+  /* poignée de redimensionnement */
+  const pr=ev.target.closest('.prise');
+  if(pr){
+    const h=pr.parentElement, r=$('#fond').getBoundingClientRect(), rc=h.getBoundingClientRect();
+    taille={ n:h, x0:ev.clientX, y0:ev.clientY, w:rc.width/r.width, h:rc.height/r.height, r };
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
+
+  const cible=ev.target.closest('.decoupe,.zt');
   if(cible && E.outil==='gomme'){
     if(cible.dataset.d!==undefined) ex.decoupes.splice(Number(cible.dataset.d),1);
     else ex.textes.splice(Number(cible.dataset.t),1);
     peindre(); ev.preventDefault(); return;
   }
-  if(cible) return;   // on laisse le clavier travailler dans une zone de texte
+  /* une étiquette se déplace partout ; une zone de texte par son anse, pour que
+     son intérieur reste disponible au clavier */
+  if(cible && (cible.classList.contains('decoupe')||ev.target.closest('.anse'))){
+    const r=$('#fond').getBoundingClientRect(), rc=cible.getBoundingClientRect();
+    deplace={ n:cible, dx:(ev.clientX-rc.left)/r.width, dy:(ev.clientY-rc.top)/r.height };
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  if(cible) return;
 
   if(E.outil==='crayon'){
-    dessin={couleur:'#17232e',taille:3,pts:[[p.x,p.y]]};
+    dessin={type:'main',couleur:E.crayon,taille:3,pts:[[p.x,p.y]]};
+    ex.traits.push(dessin);
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  if(E.outil==='surligne'){
+    dessin={type:'surligne',couleur:E.couleur,taille:22,pts:[[p.x,p.y]]};
+    ex.traits.push(dessin);
+    scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
+  }
+  if(E.outil==='ligne'){
+    dessin={type:'ligne',couleur:E.crayon,taille:3,pts:[[p.x,p.y],[p.x,p.y]],droit:true};
     ex.traits.push(dessin);
     scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
   if(E.outil==='gomme'){
-    dessin={couleur:'#ffffff',taille:22,pts:[[p.x,p.y]]};
-    ex.traits.push(dessin);
+    dessin={gomme:true,pts:[]};
+    gommer(p);
     scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
   if(E.outil==='texte'){
@@ -739,6 +823,21 @@ scene.addEventListener('pointerdown',ev=>{
 scene.addEventListener('pointermove',ev=>{
   const ex=exo(); if(!ex) return;
   const p=posScene(ev);
+  if(taille){
+    const n=taille.n;
+    const w=borne(taille.w+(ev.clientX-taille.x0)/taille.r.width,0.05,1);
+    const h=borne(taille.h+(ev.clientY-taille.y0)/taille.r.height,0.03,1);
+    n.style.width=(w*100)+'%';
+    if(n.classList.contains('decoupe')){
+      n.style.height=(h*100)+'%';
+      ex.decoupes[n.dataset.d].w=w; ex.decoupes[n.dataset.d].h=h;
+    }else{
+      ex.textes[n.dataset.t].l=w;
+      ex.textes[n.dataset.t].taille=borne(Math.round(h*calque.height/1.6),13,48);
+      n.style.fontSize=ex.textes[n.dataset.t].taille+'px';
+    }
+    return;
+  }
   if(deplace){
     const n=deplace.n;
     const x=borne(p.x-deplace.dx,0,0.99), y=borne(p.y-deplace.dy,0,0.99);
@@ -748,7 +847,10 @@ scene.addEventListener('pointermove',ev=>{
     return;
   }
   if(dessin){
-    dessin.pts.push([p.x,p.y]); redessinerTraits(); return;
+    if(dessin.gomme){ gommer(p); return; }
+    if(dessin.droit) dessin.pts[1]=[p.x,p.y];
+    else dessin.pts.push([p.x,p.y]);
+    redessinerTraits(); return;
   }
   if(coupe){
     coupe.x1=p.x; coupe.y1=p.y;
@@ -760,7 +862,9 @@ scene.addEventListener('pointermove',ev=>{
 
 function finScene(){
   const ex=exo();
-  deplace=null; dessin=null;
+  if(dessin&&dessin.gomme) dessin=null;
+  if(dessin&&dessin.pts.length<2&&!dessin.droit&&ex) ex.traits.pop();
+  deplace=null; dessin=null; taille=null;
   if(coupe){
     const c=rangerCadre(coupe);
     coupe.n.remove(); coupe=null;
@@ -791,8 +895,9 @@ function faireDecoupe(ex,c){
 scene.addEventListener('input',ev=>{
   const z=ev.target.closest('.zt'); if(!z) return;
   const ex=exo(); if(!ex) return;
-  ex.textes[z.dataset.t].t=z.textContent;
-  z.classList.toggle('pose',!!z.textContent.trim());
+  const brut=[...z.childNodes].filter(n=>n.nodeType===3).map(n=>n.nodeValue).join('');
+  ex.textes[z.dataset.t].t=brut;
+  z.classList.toggle('pose',!!brut.trim());
 });
 
 $('#b-annuler').onclick=()=>{
@@ -820,21 +925,18 @@ $('#b-aides').onclick=()=>{
   setTimeout(()=>{ ajusterCalque(); peindre(); },220);
 };
 
+/* Les mêmes aides sont proposées sur tous les exercices : c'est l'élève qui
+   sait ce dont il a besoin. */
 function listeAides(){
-  const ex=exo(); if(!ex) return [];
-  const base = ex.matiere==='maths'
-    ? [['calculatrice','🔢 Calculatrice'],['regle','📏 Règle'],['compas','⭕ Compas'],['tables','✖️ Tables']]
-    : [['sons','🔤 b p d q'],['conjugaison','📖 Conjugaison'],['alphabet','🔡 Alphabet']];
-  return base;
+  return [['calculatrice','🔢 Calculatrice'],['regle','📏 Règle'],
+          ['compas','⭕ Compas'],['tables','✖️ Tables'],['lettres','✍️ Lettres']];
 }
-const premiereAide=()=>{
-  const ex=exo(), l=listeAides();
-  const suggere=(ex&&ex.aides||[]).find(a=>l.some(x=>x[0]===a));
-  return suggere||(l[0]&&l[0][0])||'';
-};
+const premiereAide=()=>(listeAides()[0]||[''])[0];
 
 function construireAides(){
   const l=listeAides();
+  $('#b-aides').classList.toggle('masque',!l.length);
+  if(!l.length){ $('#aides').classList.remove('on'); }
   $('#onglets-aides').innerHTML=l.map(([k,n])=>
     `<button class="onglet${E.aide===k?' on':''}" data-a="${k}">${n}</button>`).join('');
   if(!l.some(x=>x[0]===E.aide)) E.aide='';
@@ -851,13 +953,10 @@ function choisirAide(k){
 }
 
 function rendreAide(k){
-  const ex=exo(), n=$('#contenu-aide');
-  const niv=(ex&&ex.niveau)||'CE2';
+  const n=$('#contenu-aide');
   if(k==='calculatrice') n.innerHTML=htmlCalc();
-  else if(k==='tables')   n.innerHTML=htmlTables(niv);
-  else if(k==='conjugaison') n.innerHTML=htmlConjugaison(niv);
-  else if(k==='sons')     n.innerHTML=htmlSons();
-  else if(k==='alphabet') n.innerHTML=htmlAlphabet();
+  else if(k==='tables')   n.innerHTML=htmlTables();
+  else if(k==='lettres')  n.innerHTML=htmlLettres();
   else if(k==='regle')    { n.innerHTML=`<h3>Règle</h3><p class="note">La règle apparaît sur l'exercice.
       Glisse-la pour la placer, tourne-la avec la poignée bleue, puis trace au crayon le long du bord.</p>
       <button class="b petit" id="b-poser-regle">Poser la règle</button>
@@ -912,10 +1011,9 @@ document.addEventListener('click',ev=>{
 });
 
 /* ---- tables de multiplication ---- */
-function htmlTables(niv){
-  const jusqu = (niv==='CP'||niv==='CE1')?5:10;
+function htmlTables(){
   let h=`<h3>Tables de multiplication</h3><div class="tables">`;
-  for(let t=2;t<=jusqu;t++){
+  for(let t=2;t<=10;t++){
     h+=`<div class="table-bloc"><b>Table de ${t}</b>`;
     for(let k=1;k<=10;k++) h+=`${t} × ${k} = <b style="display:inline;color:var(--encre)">${t*k}</b><br>`;
     h+=`</div>`;
@@ -923,78 +1021,22 @@ function htmlTables(niv){
   return h+`</div>`;
 }
 
-/* ---- conjugaison ---- */
-const VERBES={
-  'être':{present:['je suis','tu es','il est','nous sommes','vous êtes','ils sont'],
-          imparfait:['j\'étais','tu étais','il était','nous étions','vous étiez','ils étaient'],
-          futur:['je serai','tu seras','il sera','nous serons','vous serez','ils seront'],
-          passe:['j\'ai été','tu as été','il a été','nous avons été','vous avez été','ils ont été']},
-  'avoir':{present:['j\'ai','tu as','il a','nous avons','vous avez','ils ont'],
-          imparfait:['j\'avais','tu avais','il avait','nous avions','vous aviez','ils avaient'],
-          futur:['j\'aurai','tu auras','il aura','nous aurons','vous aurez','ils auront'],
-          passe:['j\'ai eu','tu as eu','il a eu','nous avons eu','vous avez eu','ils ont eu']},
-  'chanter':{present:['je chante','tu chantes','il chante','nous chantons','vous chantez','ils chantent'],
-          imparfait:['je chantais','tu chantais','il chantait','nous chantions','vous chantiez','ils chantaient'],
-          futur:['je chanterai','tu chanteras','il chantera','nous chanterons','vous chanterez','ils chanteront'],
-          passe:['j\'ai chanté','tu as chanté','il a chanté','nous avons chanté','vous avez chanté','ils ont chanté']},
-  'finir':{present:['je finis','tu finis','il finit','nous finissons','vous finissez','ils finissent'],
-          imparfait:['je finissais','tu finissais','il finissait','nous finissions','vous finissiez','ils finissaient'],
-          futur:['je finirai','tu finiras','il finira','nous finirons','vous finirez','ils finiront'],
-          passe:['j\'ai fini','tu as fini','il a fini','nous avons fini','vous avez fini','ils ont fini']},
-  'aller':{present:['je vais','tu vas','il va','nous allons','vous allez','ils vont'],
-          imparfait:['j\'allais','tu allais','il allait','nous allions','vous alliez','ils allaient'],
-          futur:['j\'irai','tu iras','il ira','nous irons','vous irez','ils iront'],
-          passe:['je suis allé','tu es allé','il est allé','nous sommes allés','vous êtes allés','ils sont allés']},
-  'prendre':{present:['je prends','tu prends','il prend','nous prenons','vous prenez','ils prennent'],
-          imparfait:['je prenais','tu prenais','il prenait','nous prenions','vous preniez','ils prenaient'],
-          futur:['je prendrai','tu prendras','il prendra','nous prendrons','vous prendrez','ils prendront'],
-          passe:['j\'ai pris','tu as pris','il a pris','nous avons pris','vous avez pris','ils ont pris']}
-};
-let verbeChoisi='être';
-function htmlConjugaison(niv){
-  const temps = (niv==='CP'||niv==='CE1') ? [['present','Présent']]
-    : (niv==='CE2') ? [['present','Présent'],['imparfait','Imparfait'],['futur','Futur']]
-    : [['present','Présent'],['imparfait','Imparfait'],['futur','Futur'],['passe','Passé composé']];
-  const v=VERBES[verbeChoisi];
-  let h=`<h3>Conjugaison</h3>
-    <label class="champ"><span>Verbe</span><select id="choix-verbe">
-      ${Object.keys(VERBES).map(k=>`<option${k===verbeChoisi?' selected':''}>${k}</option>`).join('')}
-    </select></label><div class="conj"><table><tr>${temps.map(t=>`<th>${t[1]}</th>`).join('')}</tr>`;
-  for(let p=0;p<6;p++){
-    h+=`<tr>`+temps.map(t=>`<td>${esc(v[t[0]][p])}</td>`).join('')+`</tr>`;
-  }
-  return h+`</table></div>
-    <p class="note">Les temps proposés suivent le niveau de l'exercice.</p>`;
-}
-document.addEventListener('change',ev=>{
-  if(ev.target.id!=='choix-verbe') return;
-  verbeChoisi=ev.target.value;
-  rendreAide('conjugaison');
-});
-
-/* ---- sons b p d q ---- */
-function htmlSons(){
-  const c=[
-    ['b','La barre est à GAUCHE, le ventre à DROITE. Comme dans <b>bateau</b>.'],
-    ['d','Le ventre est à GAUCHE, la barre à DROITE. Comme dans <b>dame</b>.'],
-    ['p','La barre descend, le ventre est en HAUT à droite. Comme dans <b>papa</b>.'],
-    ['q','Le ventre est en HAUT à gauche, la barre descend. Comme dans <b>quatre</b>.']
-  ];
-  return `<h3>Reconnaître b, p, d, q</h3>`
-    + c.map(([l,t])=>`<div class="lettre-carte"><span class="gros-l">${l}</span><span>${t}</span></div>`).join('')
-    + `<div class="lettre-carte" style="background:var(--accent-pale)">
-         <span class="gros-l">👍</span>
-         <span>Avec tes deux poings fermés, pouces levés : la main gauche fait le <b>b</b>,
-         la main droite fait le <b>d</b>.</span></div>`;
-}
-
-/* ---- alphabet ---- */
-function htmlAlphabet(){
+/* ---- aide à l'écriture des lettres ---- */
+let lettreVue='abcdefghijklmnopqrstuvwxyz';
+function htmlLettres(){
   const a='abcdefghijklmnopqrstuvwxyz'.split('');
-  return `<h3>Alphabet</h3><div class="tables">`
-    + a.map(l=>`<div class="table-bloc" style="text-align:center;font-size:21px">
-        <b style="display:inline">${l}</b> &nbsp; ${l.toUpperCase()}</div>`).join('')
-    + `</div>`;
+  return `<h3>Comment s'écrivent les lettres</h3>
+    <p class="note">Chaque lettre est montrée dans les trois écritures : en script comme dans
+    les livres, en attaché, et en majuscule.</p>
+    <div class="lettres-grille">
+      ${a.map(l=>`<div class="lettre-trio">
+          <span class="script">${l}</span>
+          <span class="cursive">${l}</span>
+          <span class="capitale">${l.toUpperCase()}</span>
+        </div>`).join('')}
+    </div>
+    <p class="note">L'attaché utilise l'écriture anglaise de l'iPad : les boucles ne sont pas
+    exactement celles du modèle scolaire, mais le tracé général est le bon.</p>`;
 }
 
 /* ---- règle ---- */
@@ -1123,14 +1165,7 @@ function aplatir(ex){
       c.drawImage(im,0,0,W,H);
 
       const ech=W/Math.max(1,calque.width||W);
-      for(const t of ex.traits){
-        if(t.pts.length<2) continue;
-        c.strokeStyle=t.couleur; c.lineWidth=(t.taille||3)*ech;
-        c.lineCap='round'; c.lineJoin='round';
-        c.beginPath(); c.moveTo(t.pts[0][0]*W,t.pts[0][1]*H);
-        for(let k=1;k<t.pts.length;k++) c.lineTo(t.pts[k][0]*W,t.pts[k][1]*H);
-        c.stroke();
-      }
+      for(const t of ex.traits) tracerUn(c,t,W,H,ech);
       for(const e of ex.decoupes){
         const img=await charger(e.src);
         c.drawImage(img,e.x*W,e.y*H,e.w*W,e.h*H);
@@ -1164,29 +1199,23 @@ $('#b-enregistrer').onclick=async()=>{
   }
 };
 
-$('#b-imprimer').onclick=()=>imprimer(E.exos,Number($('#par-page').value));
+$('#b-imprimer').onclick=async()=>{
+  const b=$('#b-imprimer'); b.disabled=true; b.textContent='Préparation…';
+  try{
+    const images=[];
+    for(const ex of E.exos) images.push(await aplatir(ex));
+    lancerImpression(images,Number($('#par-page').value));
+  }finally{ b.disabled=false; b.textContent='🖨️ Imprimer'; }
+};
 
-async function imprimer(exos,parPage){
-  const images=[];
-  for(const ex of exos) images.push(await aplatir(ex));
-  lancerImpression(images,parPage);
-}
 function lancerImpression(images,parPage){
-  const haut = parPage===1?'92vh':parPage===2?'45vh':'45vh';
-  const large= parPage===4?'48%':'100%';
-  const w=window.open('','_blank');
-  if(!w){ alert("Autorise les fenêtres surgissantes pour imprimer."); return; }
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
-    <title>Fiche</title><style>
-      @page{margin:10mm}
-      body{margin:0;font-family:sans-serif;display:flex;flex-wrap:wrap;gap:8mm;align-content:flex-start}
-      figure{margin:0;width:${large};break-inside:avoid}
-      img{width:100%;height:auto;max-height:${haut};object-fit:contain;border:1px solid #ccc;border-radius:4px}
-    </style></head><body>
-    ${images.map(s=>`<figure><img src="${s}"></figure>`).join('')}
-    </body></html>`);
-  w.document.close();
-  w.onload=()=>setTimeout(()=>{ w.focus(); w.print(); },350);
+  const n=$('#impression');
+  n.className='p'+(parPage||2);
+  n.innerHTML=images.map(s=>`<figure><img src="${s}"></figure>`).join('');
+  const prets=[...n.querySelectorAll('img')].map(i=>i.complete
+    ? Promise.resolve()
+    : new Promise(r=>{ i.onload=i.onerror=r; }));
+  Promise.all(prets).then(()=>setTimeout(()=>window.print(),200));
 }
 
 $('#b-fin-accueil').onclick=()=>{ listerFiches(); ecran('e-accueil'); };
@@ -1220,6 +1249,7 @@ $('#liste-fiches').addEventListener('click',ev=>{
 /* =====================================================================
    DÉPART
    ===================================================================== */
+montrerCouleurs();
 $('#relais').value=lireRelais();
 majRelais();
 listerFiches();
