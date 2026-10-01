@@ -75,9 +75,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* ---------- travail ---------- */
 .scene-enveloppe{flex:1;display:flex;min-height:0}
 .scene-zone{flex:1;overflow:auto;padding:12px 12px 12px 54px;position:relative}
+/* L'exercice est réduit aux deux tiers et posé sur une feuille blanche :
+   la place laissée autour sert à l'élève pour répondre. */
 .scene{position:relative;margin:0 auto;touch-action:none;user-select:none;background:#fff;
-  border:1px solid var(--bord);border-radius:10px;overflow:visible}
-.scene>img.fond{display:block;width:100%;height:auto;border-radius:9px;pointer-events:none}
+  border:1px solid var(--bord);border-radius:10px;overflow:visible;
+  box-shadow:0 1px 6px rgba(0,0,0,.07)}
+.scene>img.fond{position:absolute;display:block;border-radius:4px;pointer-events:none;
+  box-shadow:0 0 0 1px var(--bord)}
 #calque{position:absolute;inset:0;width:100%;height:100%}
 .zt{position:absolute;min-width:90px;background:#FFFDF2;
   border:2px dashed var(--etq-bord);border-radius:8px}
@@ -626,9 +630,9 @@ function ouvrir(){
   $('#etiq-matiere').textContent = ex.motif ? `Lecture incomplète : ${ex.motif}` : '';
   $('#b-suivant').textContent = (E.i===E.exos.length-1)?'Terminer':'Exercice suivant';
   const f=$('#fond');
-  f.onload=()=>{ ajusterCalque(); peindre(); };
+  f.onload=()=>{ ex.iw=f.naturalWidth; ex.ih=f.naturalHeight; placerConsigne(ex); ajusterCalque(); peindre(); };
   f.src=ex.vignette;
-  if(f.complete) { ajusterCalque(); }
+  if(f.complete&&f.naturalWidth){ ex.iw=f.naturalWidth; ex.ih=f.naturalHeight; placerConsigne(ex); ajusterCalque(); }
   peindre();
   construireAides();
   ecran('e-travail');
@@ -636,11 +640,28 @@ function ouvrir(){
   if(ex.consigne) setTimeout(()=>Voix.dire(ex.dite||ex.consigne,$('#scene .hp')),400);
 }
 
+/* Proportions de la feuille : l'image occupe 66 % de la largeur, le reste est
+   du blanc à droite et en dessous, où l'élève écrit. */
+const MISE={ gauche:0.03, haut:0.03, large:0.66, basExtra:0.12 };
+function geometrie(ex){
+  const r=(ex&&ex.ih&&ex.iw)?ex.ih/ex.iw:1.3;          // hauteur / largeur de l'image
+  const hImg=MISE.large*r;                              // en fractions de la LARGEUR de la feuille
+  const hFeuille=MISE.haut+hImg+MISE.basExtra;          // idem
+  return { l:MISE.gauche, t:MISE.haut/hFeuille, w:MISE.large,
+           h:hImg/hFeuille, ratio:hFeuille };           // ratio = hauteur/largeur de la feuille
+}
+
 function ajusterCalque(){
+  const ex=exo(); if(!ex) return;
+  const zone=$('#scene-zone');
+  const dispoL=Math.min(zone.clientWidth-28, 980);
+  const g=geometrie(ex);
+  const L=Math.max(240,dispoL), H=Math.round(L*g.ratio);
+  scene.style.width=L+'px'; scene.style.height=H+'px';
   const f=$('#fond');
-  const l=f.clientWidth, h=f.clientHeight;
-  if(!l||!h) return;
-  calque.width=l; calque.height=h;
+  f.style.left=(g.l*100)+'%'; f.style.top=(g.t*100)+'%';
+  f.style.width=(g.w*100)+'%'; f.style.height=(g.h*100)+'%';
+  calque.width=L; calque.height=H;
   redessinerTraits();
 }
 window.addEventListener('resize',()=>{ if($('#e-travail').classList.contains('on')){ ajusterCalque(); peindre(); } });
@@ -665,12 +686,20 @@ function redessinerTraits(){
   for(const t of ex.traits) tracerUn(ctx,t,calque.width,calque.height,1);
 }
 
+/* Albert situe la consigne dans l'image ; on la reporte sur la feuille, après
+   quoi le maître peut la déplacer librement. */
+function placerConsigne(ex){
+  if(ex.cy!=null) return;
+  const g=geometrie(ex);
+  ex.cy=borne(g.t+ex.consigneY*g.h,0.01,0.98);
+}
+
 /* Redessine les haut-parleurs, les zones de texte et les étiquettes découpées. */
 function peindre(){
   const ex=exo(); if(!ex) return;
   $$('#scene .hp,#scene .zt,#scene .decoupe,#scene .cercle').forEach(n=>n.remove());
 
-  if(ex.consigne) scene.appendChild(faireHP(ex.consigneY,'🔊',ex.dite||ex.consigne,true,-1));
+  if(ex.consigne) scene.appendChild(faireHP(ex.cy!=null?ex.cy:0.08,'🔊',ex.dite||ex.consigne,true,-1));
 
   ex.textes.forEach((t,k)=>{
     const d=document.createElement('div');
@@ -737,11 +766,10 @@ scene.addEventListener('pointermove',ev=>{
   if(!glisseHP) return;
   if(Math.abs(ev.clientY-glisseHP.y0)<7) return;
   glisseHP.bouge=true;
-  const r=$('#fond').getBoundingClientRect();
+  const r=calque.getBoundingClientRect();
   const y=borne((ev.clientY-r.top)/r.height,0.01,0.98);
   glisseHP.n.style.top=`calc(${y*100}% - 19px)`;
-  const ex=exo();
-  if(glisseHP.k<0) ex.consigneY=y; else if(ex.lignes[glisseHP.k]) ex.lignes[glisseHP.k].y=y;
+  exo().cy=y;
 },true);
 scene.addEventListener('pointerup',ev=>{
   if(!glisseHP) return;
@@ -782,7 +810,7 @@ $('#outils').addEventListener('click',ev=>{
 });
 
 const posScene=ev=>{
-  const r=$('#fond').getBoundingClientRect();
+  const r=calque.getBoundingClientRect();
   return { x:borne((ev.clientX-r.left)/r.width,0,1), y:borne((ev.clientY-r.top)/r.height,0,1) };
 };
 
@@ -831,7 +859,7 @@ scene.addEventListener('pointerdown',ev=>{
   /* poignée de redimensionnement */
   const pr=ev.target.closest('.prise');
   if(pr){
-    const h=pr.parentElement, r=$('#fond').getBoundingClientRect(), rc=h.getBoundingClientRect();
+    const h=pr.parentElement, r=calque.getBoundingClientRect(), rc=h.getBoundingClientRect();
     taille={ n:h, x0:ev.clientX, y0:ev.clientY, w:rc.width/r.width, h:rc.height/r.height, r };
     scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
@@ -845,7 +873,7 @@ scene.addEventListener('pointerdown',ev=>{
   /* une étiquette se déplace partout ; une zone de texte par son anse, pour que
      son intérieur reste disponible au clavier */
   if(cible && (cible.classList.contains('decoupe')||ev.target.closest('.anse'))){
-    const r=$('#fond').getBoundingClientRect(), rc=cible.getBoundingClientRect();
+    const r=calque.getBoundingClientRect(), rc=cible.getBoundingClientRect();
     deplace={ n:cible, dx:(ev.clientX-rc.left)/r.width, dy:(ev.clientY-rc.top)/r.height };
     scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
@@ -962,15 +990,21 @@ function placerCurseur(n){
 /* L'élève découpe lui-même son étiquette dans la photo : on copie le morceau,
    la photo d'origine reste intacte, et le morceau devient déplaçable. */
 function faireDecoupe(ex,c){
+  const g=geometrie(ex);
+  /* La sélection est tracée sur la feuille : on la ramène dans l'image. */
+  const u0=borne((c.x0-g.l)/g.w,0,1), u1=borne((c.x1-g.l)/g.w,0,1);
+  const v0=borne((c.y0-g.t)/g.h,0,1), v1=borne((c.y1-g.t)/g.h,0,1);
+  if(u1-u0<0.005||v1-v0<0.005) return;     // sélection faite hors de l'image
   const im=new Image();
   im.onload=()=>{
-    const x=Math.round(c.x0*im.naturalWidth), y=Math.round(c.y0*im.naturalHeight);
-    const w=Math.max(6,Math.round((c.x1-c.x0)*im.naturalWidth));
-    const h=Math.max(6,Math.round((c.y1-c.y0)*im.naturalHeight));
+    const x=Math.round(u0*im.naturalWidth), y=Math.round(v0*im.naturalHeight);
+    const w=Math.max(6,Math.round((u1-u0)*im.naturalWidth));
+    const h=Math.max(6,Math.round((v1-v0)*im.naturalHeight));
     const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
     cv.getContext('2d').drawImage(im,x,y,w,h,0,0,w,h);
     ex.decoupes.push({ src:cv.toDataURL('image/png'),
-      x:borne(c.x0+0.02,0,0.95), y:borne(c.y0+0.03,0,0.95), w:c.x1-c.x0, h:c.y1-c.y0 });
+      x:borne(c.x0+0.02,0,0.95), y:borne(c.y0+0.02,0,0.95),
+      w:(u1-u0)*g.w, h:(v1-v0)*g.h });
     peindre();
     E.outil='main'; $$('.outil').forEach(n=>n.classList.toggle('on',n.dataset.o==='main'));
   };
@@ -1173,7 +1207,7 @@ function dessinerRegle(){
 function installerRegle(){
   let mode=null,depart=null;
   bulleRegle.addEventListener('pointerdown',ev=>{
-    const r=$('#fond').getBoundingClientRect();
+    const r=calque.getBoundingClientRect();
     mode=ev.target.id==='tourner'?'tourne':'glisse';
     depart={x:ev.clientX,y:ev.clientY,rx:REGLE_ETAT.x,ry:REGLE_ETAT.y,ra:REGLE_ETAT.angle,r};
     bulleRegle.setPointerCapture(ev.pointerId);
@@ -1214,11 +1248,14 @@ function aplatir(ex){
   return new Promise(res=>{
     const im=new Image();
     im.onload=async()=>{
-      const W=im.naturalWidth, H=im.naturalHeight;
+      if(!ex.iw){ ex.iw=im.naturalWidth; ex.ih=im.naturalHeight; }
+      const g=geometrie(ex);
+      const W=Math.round(Math.max(1100,im.naturalWidth/g.w));
+      const H=Math.round(W*g.ratio);
       const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
       const c=cv.getContext('2d');
       c.fillStyle='#fff'; c.fillRect(0,0,W,H);
-      c.drawImage(im,0,0,W,H);
+      c.drawImage(im, g.l*W, g.t*H, g.w*W, g.h*H);
 
       const ech=W/Math.max(1,calque.width||W);
       for(const t of ex.traits) tracerUn(c,t,W,H,ech);
