@@ -88,8 +88,14 @@ button,input,select,textarea{font:inherit;color:inherit}
 .zt.pose{border-style:solid}
 /* Le texte s'écrit dans son propre bloc : des poignées non modifiables placées
    à l'intérieur d'une zone éditable empêchaient iOS d'y poser le curseur. */
+/* La scène interdit la sélection pour que le doigt dessine sans surligner le
+   décor. Il faut la rendre à la zone de texte, sinon Android Chrome refuse d'y
+   poser le curseur et referme le clavier aussitôt ouvert. */
 .zt-txt{display:block;min-width:80px;min-height:34px;padding:4px 8px;outline:none;
-  white-space:pre-wrap;line-height:1.3;cursor:text}
+  white-space:pre-wrap;line-height:1.3;cursor:text;
+  user-select:text;-webkit-user-select:text;-webkit-touch-callout:default;
+  touch-action:manipulation}
+.zt-txt:focus{background:#FFF8D6}
 .decoupe{position:absolute;border:2px solid var(--etq-bord);border-radius:6px;background:#fff;
   box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .decoupe img{display:block;width:100%;height:100%;border-radius:4px;pointer-events:none}
@@ -230,6 +236,7 @@ button,input,select,textarea{font:inherit;color:inherit}
   <div class="barre bas">
     <span class="note" id="compte-cadres">Trace un rectangle en glissant le doigt sur un exercice.</span>
     <button class="b petit danger" id="b-vider">Tout effacer</button>
+    <button class="b petit" id="b-commencer-bas">C'est parti</button>
   </div>
 </section>
 
@@ -542,7 +549,7 @@ function dessinerCadres(provisoire){
   $('#compte-cadres').textContent = E.cadres.length
     ? `${E.cadres.length} exercice(s) encadré(s). Touche un cadre pour l'ajuster.`
     : "Trace un rectangle en glissant le doigt sur un exercice.";
-  $('#b-commencer').disabled=!E.cadres.length;
+  $('#b-commencer').disabled=$('#b-commencer-bas').disabled=!E.cadres.length;
 }
 
 plan.addEventListener('pointerdown',ev=>{
@@ -570,6 +577,7 @@ plan.addEventListener('pointerup',finBouge,true);
 plan.addEventListener('pointercancel',finBouge,true);
 
 $('#b-vider').onclick=()=>{ E.cadres=[]; E.actif=-1; dessinerCadres(); };
+$('#b-commencer-bas').onclick=()=>$('#b-commencer').click();
 $('#b-retour-accueil').onclick=()=>{ Voix.stop(); ecran('e-accueil'); };
 
 /* Découpe un cadre dans la page, en pixels d'origine. */
@@ -697,6 +705,11 @@ function placerConsigne(ex){
 /* Redessine les haut-parleurs, les zones de texte et les étiquettes découpées. */
 function peindre(){
   const ex=exo(); if(!ex) return;
+  /* Si l'élève est en train d'écrire, la scène se redessine sous ses doigts :
+     on note la zone active pour la lui rendre aussitôt. */
+  const actif=document.activeElement;
+  const enCours=(actif&&actif.classList&&actif.classList.contains('zt-txt')&&actif.parentElement)
+    ? actif.parentElement.dataset.t : null;
   $$('#scene .hp,#scene .zt,#scene .decoupe,#scene .cercle').forEach(n=>n.remove());
 
   if(ex.consigne) scene.appendChild(faireHP(ex.cy!=null?ex.cy:0.08,'🔊',ex.dite||ex.consigne,true,-1));
@@ -719,6 +732,11 @@ function peindre(){
     d.appendChild(z); d.appendChild(an); d.appendChild(pz); d.appendChild(fx);
     scene.appendChild(d);
   });
+
+  if(enCours!==null){
+    const r=scene.querySelector(`.zt[data-t="${enCours}"] .zt-txt`);
+    if(r) ouvrirClavier(r);
+  }
 
   ex.cercles.forEach((o,k)=>{
     const d=document.createElement('div');
@@ -877,6 +895,8 @@ scene.addEventListener('pointerdown',ev=>{
     deplace={ n:cible, dx:(ev.clientX-rc.left)/r.width, dy:(ev.clientY-rc.top)/r.height };
     scene.setPointerCapture(ev.pointerId); ev.preventDefault(); return;
   }
+  const zt=ev.target.closest('.zt-txt');
+  if(zt && E.outil!=='gomme'){ zt.focus({preventScroll:true}); return; }
   if(cible) return;
 
   if(E.outil==='crayon'){
@@ -903,7 +923,14 @@ scene.addEventListener('pointerdown',ev=>{
     ex.textes.push({x:p.x,y:p.y,t:'',taille:20});
     peindre();
     const n=$$('#scene .zt-txt').pop();
-    if(n) setTimeout(()=>{ n.focus(); placerCurseur(n); },30);
+    if(n){
+      /* Le clavier d'Android ne s'ouvre que si la mise au point a lieu pendant
+         le geste : pas de minuterie ici. On la redemande ensuite au cas où
+         le navigateur l'aurait reprise. */
+      ouvrirClavier(n);
+      setTimeout(()=>{ if(document.activeElement!==n) ouvrirClavier(n); },50);
+    }
+    ev.preventDefault();
     return;
   }
   if(E.outil==='ciseaux'){
@@ -979,6 +1006,10 @@ function finScene(){
 scene.addEventListener('pointerup',finScene);
 scene.addEventListener('pointercancel',finScene);
 
+function ouvrirClavier(n){
+  try{ n.focus({preventScroll:true}); }catch(e){ n.focus(); }
+  placerCurseur(n);
+}
 /* Place le curseur dans la zone, sans quoi iOS ouvre le clavier sans point d'insertion. */
 function placerCurseur(n){
   try{
